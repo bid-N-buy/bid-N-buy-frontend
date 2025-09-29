@@ -1,70 +1,204 @@
+/* Webfonts */
+@font-face {
+  font-family: "Pretendard";
+  src: url("https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Thin.woff")
+    format("woff");
+  font-weight: 100;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Pretendard";
+  src: url("https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-ExtraLight.woff")
+    format("woff");
+  font-weight: 200;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Pretendard";
+  src: url("https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Light.woff")
+    format("woff");
+  font-weight: 300;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Pretendard";
+  src: url("https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Regular.woff")
+    format("woff");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Pretendard";
+  src: url("https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Medium.woff")
+    format("woff");
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Pretendard";
+  src: url("https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-SemiBold.woff")
+    format("woff");
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Pretendard";
+  src: url("https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Bold.woff")
+    format("woff");
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Pretendard";
+  src: url("https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-ExtraBold.woff")
+    format("woff");
+  font-weight: 800;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Pretendard";
+  src: url("https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Black.woff")
+    format("woff");
+  font-weight: 900;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "GanaChocolate";
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_20-04@1.0/ghanachoco.woff")
+    format("woff");
+  font-weight: 400;
+  font-display: swap;
+}
+
+/* Tailwind */
 @import "tailwindcss";
 
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+@theme {
+  /* Colors */
+  --color-purple: #8322bf; /* 보라 */
+  --color-light-purple: #ecdef5; /* 연보라 */
+  --color-green: #7cdd40; /* 라임 */
+  --color-red: #bf3422; /* 레드 */
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  /* Gray scale */
+  --color-g100: #3a3a3a;
+  --color-g200: #606060;
+  --color-g300: #808080;
+  --color-g400: #d8d8d8;
+  --color-g500: #ececec;
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+  /* Fonts (Pretendard, GanaChocolate) */
+  --font-sans:
+    Pretendard, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Noto Sans", "Helvetica Neue", Arial, "Apple SD Gothic Neo", "Noto Sans KR",
+    "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji";
+  --font-display:
+    GanaChocolate, Pretendard, ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, "Noto Sans", "Helvetica Neue", Arial,
+    "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Apple Color Emoji",
+    "Segoe UI Emoji";
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
+  /* Base typography (17px / 22px / -1%) */
+  --text-base: 17px;
+  --leading-base: 22px;
+  --tracking-base: -0.01em;
 
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-}
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  /* Heading scale (px / line-height) */
+  --text-h1: 40px;
+  --leading-h1: 56px;
+  --text-h2: 35px;
+  --leading-h2: 49px;
+  --text-h3: 30px;
+  --leading-h3: 42px;
+  --text-h4: 25px;
+  --leading-h4: 35px;
+  --text-h5: 20px;
+  --leading-h5: 28px;
+  --text-h6: 18px;
+  --leading-h6: 25px;
+  --text-h7: 15px;
+  --leading-h7: 21px;
+  --text-h8: 12px;
+  --leading-h8: 17px;
+  --text-h9: 10px;
+  --leading-h9: 14px;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
+/* ===========================
+   Base 스타일
+   =========================== */
+@layer base {
+  html,
+  body {
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    line-height: var(--leading-base);
+    letter-spacing: var(--tracking-base);
+    color: var(--color-g900);
+    background: #fff;
   }
-  a:hover {
-    color: #747bff;
+
+  /* Heading: 디스플레이 폰트 + 지정 스케일 */
+  h1 {
+    font-family: var(--font-display);
+    font-size: var(--text-h1);
+    line-height: var(--leading-h1);
   }
-  button {
-    background-color: #f9f9f9;
+  h2 {
+    font-family: var(--font-display);
+    font-size: var(--text-h2);
+    line-height: var(--leading-h2);
+  }
+  h3 {
+    font-family: var(--font-display);
+    font-size: var(--text-h3);
+    line-height: var(--leading-h3);
+  }
+  h4 {
+    font-family: var(--font-display);
+    font-size: var(--text-h4);
+    line-height: var(--leading-h4);
+  }
+  h5 {
+    font-family: var(--font-display);
+    font-size: var(--text-h5);
+    line-height: var(--leading-h5);
+  }
+  h6 {
+    font-family: var(--font-display);
+    font-size: var(--text-h6);
+    line-height: var(--leading-h6);
+  }
+  /* 확장 헤딩 태그(h7~h9)는 의미 태그가 아니므로 block 처리 */
+  h7 {
+    display: block;
+    font-family: var(--font-display);
+    font-size: var(--text-h7);
+    line-height: var(--leading-h7);
+  }
+  h8 {
+    display: block;
+    font-family: var(--font-display);
+    font-size: var(--text-h8);
+    line-height: var(--leading-h8);
+  }
+  h9 {
+    display: block;
+    font-family: var(--font-display);
+    font-size: var(--text-h9);
+    line-height: var(--leading-h9);
+  }
+}
+
+/* ===========================
+   Utilities (선택)
+   =========================== */
+@layer utilities {
+  .font-display {
+    font-family: var(--font-display);
+  }
+  .font-sans {
+    font-family: var(--font-sans);
   }
 }
