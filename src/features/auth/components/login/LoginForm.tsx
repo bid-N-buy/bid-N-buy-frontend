@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import api from "../../api/api"; // axios 인스턴스
 import { useAuthStore } from "../../store/authStore"; // zustand store
+import axios from "axios";
 
 const LoginForm = () => {
   const [email, setEmail] = useState("");
@@ -31,10 +32,12 @@ const LoginForm = () => {
 
       // 로그인 성공 후 이동 (예시: 홈으로)
       window.location.href = "/";
-    } catch (err: any) {
-      setError(err?.response?.data?.message ?? "로그인 실패");
-    } finally {
-      setLoading(false);
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        setError(err.response?.data?.message ?? "로그인 실패");
+      } else {
+        setError("알 수 없는 오류가 발생했습니다.");
+      }
     }
   };
 
