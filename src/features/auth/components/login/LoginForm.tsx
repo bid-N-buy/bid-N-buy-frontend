@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import api from "../../api/api"; // axios 인스턴스
+import api from "../../../../shared/api/api"; // axios 인스턴스
 import { useAuthStore } from "../../store/authStore"; // zustand store
 import axios from "axios";
+import { Link } from "react-router-dom";
 
 const LoginForm = () => {
   const [email, setEmail] = useState("");
@@ -50,7 +51,7 @@ const LoginForm = () => {
         placeholder="이메일을 입력해 주세요"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
-        className="hover:border-purple w-full rounded border px-3 py-2"
+        className="hover:border-purple w-full rounded-md border px-3 py-2"
         disabled={loading}
       />
 
@@ -61,28 +62,28 @@ const LoginForm = () => {
         placeholder="비밀번호를 입력해 주세요"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
-        className="hover:border-purple w-full rounded border px-3 py-2"
+        className="hover:border-purple w-full rounded-md border px-3 py-2"
         disabled={loading}
       />
 
       <button
         type="submit"
         disabled={loading}
-        className="bg-purple w-full rounded py-2 text-white"
+        className="bg-purple w-full rounded-md py-2 text-white"
       >
         {loading ? "로그인 중..." : "로그인"}
       </button>
 
       {error && <p className="text-sm text-red-500">{error}</p>}
 
-      <div className="mt-[15px] flex justify-center gap-3 text-sm">
+      <div className="mt-[10px] flex justify-center gap-3 text-sm">
         <button type="button" className="text-h9 hover:underline">
           비밀번호 찾기
         </button>
         <span className="text-h9">|</span>
-        <button type="button" className="text-h9 hover:underline">
+        <Link to={"/signUp"} className="text-h9 hover:underline">
           회원가입
-        </button>
+        </Link>
       </div>
     </form>
   );

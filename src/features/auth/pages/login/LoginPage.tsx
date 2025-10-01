@@ -4,7 +4,7 @@ import LoginForm from "../../components/login/LoginForm";
 const LoginPage = () => {
   return (
     <>
-      <div className="mx-auto mt-[190px] w-[300px] text-center">
+      <div className="mx-auto mt-[100px] w-[300px] text-center">
         <a href="/">
           <h1 className="font-logo mb-[36px]">
             Bid<span className="text-purple">&</span>Buy
