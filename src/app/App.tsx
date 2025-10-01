@@ -3,6 +3,8 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Header from "../shared/components/Header";
 import AuctionDetail from "../features/auction/pages/AuctionDetail";
 import {WidgetCheckoutPage} from "../features/payment/pages/CheckoutPage";
+import {WidgetSuccessPage} from "../features/payment/pages/SuccessPage";
+import {FailPage} from "../features/payment/pages/FailPage";
 
 export default function App() {
   return (
@@ -16,6 +18,8 @@ export default function App() {
 
             {/* 결제 관련 */}
             <Route path="/payment/checkout" element={<WidgetCheckoutPage />} />
+            <Route path="/payment/success" element={<WidgetSuccessPage />} />
+            <Route path="/payment/fail" element={<FailPage />} />
 
             {/* 404 */}
             <Route
