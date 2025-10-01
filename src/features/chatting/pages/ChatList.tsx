@@ -3,9 +3,41 @@ import Chat from "../components/Chat";
 
 const ChatList = () => {
   return (
-    <div>
-      <Chat />
-    </div>
+    <ul>
+      <li className="border-b border-gray-300 last:border-0">
+        <Chat />
+      </li>
+      <li className="border-b border-gray-300 last:border-0">
+        <Chat />
+      </li>
+      <li className="border-b border-gray-300 last:border-0">
+        <Chat />
+      </li>
+      <li className="border-b border-gray-300 last:border-0">
+        <Chat />
+      </li>
+      <li className="border-b border-gray-300 last:border-0">
+        <Chat />
+      </li>
+      <li className="border-b border-gray-300 last:border-0">
+        <Chat />
+      </li>
+      <li className="border-b border-gray-300 last:border-0">
+        <Chat />
+      </li>
+      <li className="border-b border-gray-300 last:border-0">
+        <Chat />
+      </li>
+      <li className="border-b border-gray-300 last:border-0">
+        <Chat />
+      </li>
+      <li className="border-b border-gray-300 last:border-0">
+        <Chat />
+      </li>
+      <li className="border-b border-gray-300 last:border-0">
+        <Chat />
+      </li>
+    </ul>
   );
 };
 
