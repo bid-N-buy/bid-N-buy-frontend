@@ -2,6 +2,7 @@ import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Header from "../shared/components/Header";
 import AuctionDetail from "../features/auction/pages/AuctionDetail";
+import LoginPage from "../features/auth/pages/login/LoginPage";
 
 export default function App() {
   return (
@@ -12,6 +13,7 @@ export default function App() {
           <Routes>
             {/* 경매 상세 */}
             <Route path="/auctions/:id" element={<AuctionDetail />} />
+            <Route path="/login" element={<LoginPage />} />
 
             {/* 404 */}
             <Route
