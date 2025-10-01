@@ -50,7 +50,7 @@ const LoginForm = () => {
         placeholder="이메일을 입력해 주세요"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
-        className="w-full rounded border px-3 py-2"
+        className="hover:border-purple w-full rounded border px-3 py-2"
         disabled={loading}
       />
 
@@ -61,26 +61,26 @@ const LoginForm = () => {
         placeholder="비밀번호를 입력해 주세요"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
-        className="w-full rounded border px-3 py-2"
+        className="hover:border-purple w-full rounded border px-3 py-2"
         disabled={loading}
       />
 
       <button
         type="submit"
         disabled={loading}
-        className="w-full rounded bg-violet-600 py-2 text-white"
+        className="bg-purple w-full rounded py-2 text-white"
       >
         {loading ? "로그인 중..." : "로그인"}
       </button>
 
       {error && <p className="text-sm text-red-500">{error}</p>}
 
-      <div className="mt-2 flex justify-center gap-3 text-sm">
-        <button type="button" className="hover:underline">
+      <div className="mt-[15px] flex justify-center gap-3 text-sm">
+        <button type="button" className="text-h9 hover:underline">
           비밀번호 찾기
         </button>
-        <span>|</span>
-        <button type="button" className="hover:underline">
+        <span className="text-h9">|</span>
+        <button type="button" className="text-h9 hover:underline">
           회원가입
         </button>
       </div>
