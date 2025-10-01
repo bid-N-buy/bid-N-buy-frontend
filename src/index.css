@@ -64,7 +64,7 @@
 }
 
 @font-face {
-  font-family: "GanaChocolate";
+  font-family: "GhanaChocolate";
   src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_20-04@1.0/ghanachoco.woff")
     format("woff");
   font-weight: 400;
@@ -98,7 +98,7 @@
     "Noto Sans", "Helvetica Neue", Arial, "Apple SD Gothic Neo", "Noto Sans KR",
     "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji";
   --font-logo:
-    GanaChocolate, Pretendard, ui-sans-serif, system-ui, -apple-system,
+    GhanaChocolate, Pretendard, ui-sans-serif, system-ui, -apple-system,
     "Segoe UI", Roboto, "Noto Sans", "Helvetica Neue", Arial,
     "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Apple Color Emoji",
     "Segoe UI Emoji";
@@ -106,7 +106,7 @@
   /* Base typography (17px / 22px / -1%) */
   --text-base: 17px;
   --leading-base: 22px;
-  --tracking-base: -0.01em;
+  --tracking-base: -0.1rem;
 
   /* Heading scale (px / line-height) */
   --text-h1: 40px;
@@ -199,17 +199,6 @@
 
 /* Utilities */
 @layer utilities {
-  .font-display {
-    font-family: var(--font-display);
-  }
-  .font-sans {
-    font-family: var(--font-sans);
-  }
-  /* 로고 전용 */
-  .font-logo {
-    font-family: var(--font-logo);
-  }
-
   /* 전역 컨테이너 */
   .container {
     max-width: var(--container-max);
