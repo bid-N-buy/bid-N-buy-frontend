@@ -78,7 +78,7 @@
   /* Colors */
   --color-purple: #8322bf; /* 보라 */
   --color-light-purple: #ecdef5; /* 연보라 */
-  --color-deep-purple: #761fac; /*진보라 */
+  --color-deep-purple: #761fac; /* 진보라 */
   --color-green: #7cdd40; /* 라임 */
   --color-red: #bf3422; /* 레드 */
 
@@ -89,7 +89,7 @@
   --color-g400: #d8d8d8;
   --color-g500: #ececec;
 
-  /* Fonts (Pretendard, GanaChocolate) */
+  /* Fonts (Pretendard, GhanaChocolate) */
   --font-sans:
     Pretendard, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
     "Noto Sans", "Helvetica Neue", Arial, "Apple SD Gothic Neo", "Noto Sans KR",
