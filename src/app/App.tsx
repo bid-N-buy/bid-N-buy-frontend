@@ -2,6 +2,8 @@ import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Header from "../shared/components/Header";
 import AuctionDetail from "../features/auction/pages/AuctionDetail";
+import LoginPage from "../features/auth/pages/login/LoginPage";
+import SignUpPage from "../features/auth/pages/signUp/SignUpPage";
 import {WidgetCheckoutPage} from "../features/payment/pages/CheckoutPage";
 import {WidgetSuccessPage} from "../features/payment/pages/SuccessPage";
 import {FailPage} from "../features/payment/pages/FailPage";
@@ -15,6 +17,8 @@ export default function App() {
           <Routes>
             {/* 경매 상세 */}
             <Route path="/auctions/:id" element={<AuctionDetail />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/signUp" element={<SignUpPage />} />
 
             {/* 결제 관련 */}
             <Route path="/payment/checkout" element={<WidgetCheckoutPage />} />
