@@ -21,7 +21,7 @@ interface ProductInfoProps {
   onDeleteClick?: () => void;
 }
 
-const ProductInfo: React.FC<ProductInfoProps> = ({
+const ProductInfo = ({
   categoryMain = "카테고리(대)",
   categorySub = "카테고리(소)",
   title = "제품명",
@@ -38,7 +38,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
   onShareClick,
   onEditClick,
   onDeleteClick,
-}) => {
+}: ProductInfoProps) => {
   const [isLiked, setIsLiked] = useState(liked);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 

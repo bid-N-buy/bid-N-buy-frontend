@@ -2,7 +2,7 @@ import React from "react";
 import { Heart } from "lucide-react";
 import type { ProductCardProps } from "../types/product";
 
-const ProductCard: React.FC<ProductCardProps> = ({
+const ProductCard = ({
   auctionId,
   title,
   currentPrice,
@@ -14,7 +14,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   chatCount = 0,
   onCardClick,
   onLikeToggle,
-}) => {
+}: ProductCardProps) => {
   // 판매상태별..
   const getStatusColor = (status: string): string => {
     switch (status) {
