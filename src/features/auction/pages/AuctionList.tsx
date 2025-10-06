@@ -14,7 +14,7 @@ interface SelectedCategory {
   sub: string;
 }
 
-const AuctionList: React.FC = () => {
+const AuctionList = () => {
   const [minPrice, setMinPrice] = useState<number>(0);
   const [maxPrice, setMaxPrice] = useState<number>(30000);
   const [filterIncluded, setFilterIncluded] = useState<boolean>(true);
