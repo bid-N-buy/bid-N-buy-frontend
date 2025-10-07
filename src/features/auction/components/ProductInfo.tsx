@@ -1,4 +1,3 @@
-// todo 반응형 개선
 import { EllipsisVertical, Heart } from "lucide-react";
 import React, { useState } from "react";
 
@@ -48,15 +47,15 @@ const ProductInfo = ({
   };
 
   return (
-    <div className="aspect-[645/500] w-full">
-      <div className="flex h-full flex-col justify-between gap-[30px] px-[10px] py-[20px]">
+    <div className="w-full md:aspect-[645/500]">
+      <div className="flex h-full flex-col justify-between gap-5 px-4 py-5 md:gap-[30px] md:px-[10px] md:py-[20px]">
         {/* Top - 카테고리, 제목 */}
-        <div className="relative flex flex-[2] flex-col gap-3">
+        <div className="relative flex flex-[2] flex-col gap-2 md:gap-3">
           <div className="text-g300 text-h5">
             {categoryMain} &gt; {categorySub}
           </div>
 
-          <h3 className="text-g100 text-h2 pr-12 leading-tight font-bold">
+          <h3 className="text-g100 text-h2 max-w-full truncate pr-10 leading-snug font-bold md:pr-12 md:leading-tight">
             {title}
           </h3>
 
@@ -67,17 +66,17 @@ const ProductInfo = ({
               className="hover:bg-g500/50 rounded-full p-2 transition-colors"
               aria-label="더보기"
             >
-              <EllipsisVertical className="text-g200 h-8 w-8" />
+              <EllipsisVertical className="text-g200 h-7 w-7 md:h-8 md:w-8" />
             </button>
 
             {isMenuOpen && (
-              <div className="border-g400 absolute top-full right-0 z-10 mt-2 w-32 rounded border bg-white shadow-lg">
+              <div className="border-g400 absolute top-full right-0 z-10 mt-2 w-32 rounded-md border bg-white shadow-lg">
                 <button
                   onClick={() => {
                     onShareClick?.();
                     setIsMenuOpen(false);
                   }}
-                  className="text-g100 hover:bg-g500 w-full px-4 py-3 text-left text-base transition-colors"
+                  className="text-g100 hover:bg-g500 w-full px-4 py-2.5 text-left text-base transition-colors md:py-3"
                 >
                   공유
                 </button>
@@ -88,7 +87,7 @@ const ProductInfo = ({
                         onEditClick?.();
                         setIsMenuOpen(false);
                       }}
-                      className="border-g400 text-g100 hover:bg-g500 w-full border-t px-4 py-3 text-left text-base transition-colors"
+                      className="border-g400 text-g100 hover:bg-g500 w-full border-t px-4 py-2.5 text-left text-base transition-colors md:py-3"
                     >
                       수정
                     </button>
@@ -97,7 +96,7 @@ const ProductInfo = ({
                         onDeleteClick?.();
                         setIsMenuOpen(false);
                       }}
-                      className="border-g400 text-red hover:bg-g500 w-full border-t px-4 py-3 text-left text-base transition-colors"
+                      className="border-g400 text-red hover:bg-g500 w-full border-t px-4 py-2.5 text-left text-base transition-colors md:py-3"
                     >
                       삭제
                     </button>
@@ -109,8 +108,8 @@ const ProductInfo = ({
         </div>
 
         {/* Middle - 판매자 정보 */}
-        <div className="flex flex-[1] items-center gap-5">
-          <div className="bg-g500 h-20 w-20 flex-shrink-0 overflow-hidden rounded-full">
+        <div className="flex flex-[1] items-center gap-4 md:gap-5">
+          <div className="bg-g500 h-16 w-16 flex-shrink-0 overflow-hidden rounded-full md:h-20 md:w-20">
             {sellerProfileImage ? (
               <img
                 src={sellerProfileImage}
@@ -119,39 +118,41 @@ const ProductInfo = ({
               />
             ) : null}
           </div>
-          <div className="flex items-center gap-3">
-            <span className="text-g100 text-h4 font-medium">
+          <div className="flex min-w-0 items-center gap-2 md:gap-3">
+            <span className="text-g100 text-h4 max-w-[50vw] truncate font-medium md:max-w-none">
               {sellerNickname}
             </span>
-            <span className="text-g300 text-h5">{sellerTemperature}°C</span>
+            <span className="text-g300 text-h5 whitespace-nowrap">
+              {sellerTemperature}°C
+            </span>
           </div>
         </div>
 
         {/* Bottom - 가격, 버튼 등 */}
-        <div className="flex flex-[3] flex-col justify-end gap-[33px]">
-          <div className="flex items-baseline gap-3">
+        <div className="flex flex-[3] flex-col justify-end gap-4 md:gap-[33px]">
+          <div className="flex flex-wrap items-baseline gap-2 md:gap-3">
             <span className="text-g100 text-h2 leading-tight font-bold">
               현재
             </span>
             <span className="text-g100 text-h2 leading-tight font-bold">
               {currentPrice.toLocaleString()}원
             </span>
-            <span className="text-g300 text-h5">
+            <span className="text-g300 text-h5 whitespace-nowrap">
               (최소 입찰 단위 : {minBidUnit.toLocaleString()}원)
             </span>
           </div>
 
-          <div className="flex items-center gap-1.5">
-            <div className="grid flex-1 grid-cols-2 gap-3">
+          <div className="flex items-stretch gap-2 md:gap-1.5">
+            <div className="grid flex-1 grid-cols-1 gap-2 md:grid-cols-2 md:gap-3">
               <button
                 onClick={onChatClick}
-                className="text-h5 border-purple text-purple hover:bg-light-purple rounded-md border py-4 font-bold transition-colors"
+                className="text-h5 border-purple text-purple hover:bg-light-purple rounded-md border py-3 font-bold transition-colors md:py-4"
               >
                 판매자와 대화
               </button>
               <button
                 onClick={onBidClick}
-                className="text-h5 bg-purple hover:bg-deep-purple rounded-md py-4 font-bold text-white transition-colors"
+                className="text-h5 bg-purple hover:bg-deep-purple rounded-md py-3 font-bold text-white transition-colors md:py-4"
               >
                 입찰
               </button>
@@ -164,7 +165,7 @@ const ProductInfo = ({
               aria-label="찜"
             >
               <Heart
-                className={`h-8 w-8 ${isLiked ? "fill-purple text-purple" : "text-g300"}`}
+                className={`h-7 w-7 md:h-8 md:w-8 ${isLiked ? "fill-purple text-purple" : "text-g300"}`}
               />
             </button>
           </div>
