@@ -163,13 +163,13 @@ const ProductInfo = ({
               <div className="grid flex-1 grid-cols-1 gap-2 md:grid-cols-2 md:gap-3">
                 <button
                   onClick={onChatClick}
-                  className="text-h5 border-purple text-purple hover:bg-light-purple rounded-md border py-3 font-bold transition-colors md:py-4"
+                  className="text-h5 border-purple text-purple hover:bg-light-purple cursor-pointer rounded-md border py-3 font-bold transition-colors md:py-4"
                 >
                   판매자와 대화
                 </button>
                 <button
                   onClick={() => setIsBidModalOpen(true)}
-                  className="text-h5 bg-purple hover:bg-deep-purple rounded-md py-3 font-bold text-white transition-colors md:py-4"
+                  className="text-h5 bg-purple hover:bg-deep-purple cursor-pointer rounded-md py-3 font-bold text-white transition-colors md:py-4"
                 >
                   입찰
                 </button>
