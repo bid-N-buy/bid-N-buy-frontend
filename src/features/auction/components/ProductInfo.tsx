@@ -47,7 +47,7 @@ const ProductInfo = ({
   };
 
   return (
-    <div className="w-full md:aspect-[645/500]">
+    <div className="w-full lg:aspect-[645/500]">
       <div className="flex h-full flex-col justify-between gap-5 px-4 py-5 md:gap-[30px] md:px-[10px] md:py-[20px]">
         {/* Top - 카테고리, 제목 */}
         <div className="relative flex flex-[2] flex-col gap-2 md:gap-3">
