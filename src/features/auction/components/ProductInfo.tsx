@@ -1,3 +1,4 @@
+// todo 시작 시간 마감 시간 입찰 회수 추가*****
 // todo 컴포넌트 분리
 import React, { useState } from "react";
 import BidModal from "./BidModal";
