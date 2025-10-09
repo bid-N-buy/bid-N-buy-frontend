@@ -1,8 +1,9 @@
-import { EllipsisVertical, Heart } from "lucide-react";
+// todo 컴포넌트 분리
 import React, { useState } from "react";
 import BidModal from "./BidModal";
 import Toast from "../../../shared/components/Toast";
 import useToast from "../../../shared/hooks/useToast";
+import { EllipsisVertical, Heart } from "lucide-react";
 
 interface ProductInfoProps {
   categoryMain?: string;
@@ -66,7 +67,7 @@ const ProductInfo = ({
     <>
       <div className="w-full lg:aspect-[645/500]">
         <div className="flex h-full flex-col justify-between gap-5 px-4 py-5 md:gap-[30px] md:px-[10px] md:py-[20px]">
-          {/* Top - 카테고리, 제목 */}
+          {/* Top 카테고리, 제목 */}
           <div className="relative flex flex-[2] flex-col gap-2 md:gap-3">
             <div className="text-g300 text-h5">
               {categoryMain} &gt; {categorySub}
@@ -76,7 +77,7 @@ const ProductInfo = ({
               {title}
             </h3>
 
-            {/* 더보기? 아이콘 */}
+            {/* 더보기? 아이콘 - todo 분리 */}
             <div className="absolute top-0 right-0">
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -124,7 +125,7 @@ const ProductInfo = ({
             </div>
           </div>
 
-          {/* Middle - 판매자 정보 */}
+          {/* Middle 판매자 정보 - todo 분리 */}
           <div className="flex flex-[1] items-center gap-4 md:gap-5">
             <div className="bg-g500 h-16 w-16 flex-shrink-0 overflow-hidden rounded-full md:h-20 md:w-20">
               {sellerProfileImage ? (
@@ -145,7 +146,7 @@ const ProductInfo = ({
             </div>
           </div>
 
-          {/* Bottom - 가격, 버튼 등 */}
+          {/* Bottom 가격, 버튼 등 */}
           <div className="flex flex-[3] flex-col justify-end gap-4 md:gap-[33px]">
             <div className="flex flex-wrap items-baseline gap-2 md:gap-3">
               <span className="text-g100 text-h2 leading-tight font-bold">
