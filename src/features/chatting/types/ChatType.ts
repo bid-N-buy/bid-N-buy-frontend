@@ -1,13 +1,29 @@
-export interface ChatModalProps {
-  // 모달을 닫기 위해 부모로부터 받는 함수
-  // 이 함수는 아무런 인자도 받지 않고 (()) 아무것도 반환하지 않습니다 (void).
+export interface ModalProps {
   onClose: () => void;
 }
 
-export interface Chat {
-  user_id: bigint;
+export interface ChatListProps {
+  onSelectRoom: (chatroom_id: bigint) => void;
+  chatRooms: ChatRoomProps[];
+}
+
+export interface ChatRoomProps {
+  user_id?: bigint;
   nickname: string;
   image_url: string;
   chatroom_id: bigint;
+  message?: string;
+  created_at: string;
+}
+
+export interface ChatMessageProps {
+  chatmessage_id: bigint;
+  chatroom_id: bigint;
+  sender_id: bigint;
+  payment_id: bigint;
+  image_url: string;
   message: string;
+  message_type: string;
+  created_at: string;
+  is_read: boolean;
 }
