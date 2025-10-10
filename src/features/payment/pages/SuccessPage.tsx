@@ -32,7 +32,7 @@ export function WidgetSuccessPage() {
     confirm()
       .then((data) => setResponseData(data))
       .catch((error) => {
-        navigate(`/fail?code=${error.code}&message=${error.message}`);
+        navigate(`/payment/fail?code=${error.code}&message=${error.message}`);
       });
   }, [searchParams, navigate]);
 

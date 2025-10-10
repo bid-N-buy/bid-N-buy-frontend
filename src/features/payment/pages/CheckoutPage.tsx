@@ -8,7 +8,8 @@ const customerKey = generateRandomString();
 
 export function WidgetCheckoutPage() {
   const navigate = useNavigate();
-  const [amount, setAmount] = useState({ currency: "KRW", value: 50000 });
+
+  const [amount, setAmount] = useState({ currency: "KRW", value: 1000 });
   const [ready, setReady] = useState(false);
   const [widgets, setWidgets] = useState(null);
 
@@ -57,8 +58,8 @@ export function WidgetCheckoutPage() {
               await widgets.requestPayment({
                 orderId: generateRandomString(),
                 orderName: "토스 티셔츠 외 2건",
-                successUrl: window.location.origin + "/widget/success",
-                failUrl: window.location.origin + "/fail",
+                successUrl: window.location.origin + "/payment/success",
+                failUrl: window.location.origin + "/payment/fail",
                 customerEmail: "customer123@gmail.com",
                 customerName: "김토스",
               });
