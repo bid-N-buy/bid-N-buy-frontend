@@ -223,10 +223,10 @@ const AuctionForm = () => {
         </div>
 
         <div className="grid grid-cols-2 gap-[30px]">
-          <button className="border-purple text-purple hover:bg-light-purple rounded-md border py-4 font-medium transition-colors">
+          <button className="border-purple text-purple hover:bg-light-purple cursor-pointer rounded-md border py-4 font-medium transition-colors">
             취소
           </button>
-          <button className="bg-purple hover:bg-deep-purple rounded-md py-4 font-medium text-white transition-colors">
+          <button className="bg-purple hover:bg-deep-purple cursor-pointer rounded-md py-4 font-medium text-white transition-colors">
             등록
           </button>
         </div>
