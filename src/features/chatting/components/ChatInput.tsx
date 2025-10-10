@@ -9,11 +9,11 @@ const ChatInput = () => {
           name="chatMessage"
           id="chatMessage"
           placeholder="메시지를 입력해 주세요."
-          className="border-purple w-80 rounded-md border-2 p-2"
+          className="border-purple w-[80%] rounded-md border-2 p-2"
         />
         <button
           type="submit"
-          className="bg-purple w-20 rounded-md py-2 text-white"
+          className="bg-purple w-[20%] rounded-md py-2 text-white"
         >
           전송
         </button>

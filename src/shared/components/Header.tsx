@@ -92,7 +92,12 @@ const Header = () => {
         </nav>
       </div>
       {isChatOpen && <ChatModal onClose={() => setIsChatOpen(false)} />}
-      {isNotiOpen && <NotiModal onClose={() => setIsNotiOpen(false)} />}
+      {isNotiOpen && (
+        <NotiModal
+          onClose={() => setIsNotiOpen(false)}
+          onDelete={() => setIsNotiOpen(false)}
+        />
+      )}
     </header>
   );
 };

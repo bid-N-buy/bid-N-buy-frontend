@@ -10,7 +10,7 @@ const ChatList = ({ chatRooms, onSelectRoom }: ChatListProps) => {
         <li
           key={chat.chatroom_id.toString()}
           onClick={() => onSelectRoom(chat.chatroom_id)}
-          className="flex cursor-pointer items-center gap-2 border-b p-4 hover:bg-gray-50"
+          className="border-g400 flex cursor-pointer items-center gap-2 border-b p-4 hover:bg-gray-50"
         >
           <Avatar image_url={chat.image_url} />
           <div>
