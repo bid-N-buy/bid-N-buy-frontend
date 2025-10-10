@@ -9,6 +9,7 @@ import {
 import { useAuthStore } from "../features/auth/store/authStore";
 import { useAdminStore } from "../features/admin/store/adminStore";
 import ProtectedRoute from "../shared/routes/ProtectedRoute";
+import GuestOnlyRoute from "../shared/routes/GuestOnlyRoute";
 
 // 공통
 const Header = React.lazy(() => import("../shared/components/Header"));
@@ -74,18 +75,6 @@ const AdminUserList = React.lazy(
 const AdminAuctionList = React.lazy(
   () => import("../features/admin/pages/AdminAuctionList")
 );
-
-// 라우트 가드(임의)
-// function ProtectedRoute() {
-//   const token = useAuthStore.getState().token;
-//   if (!token) return <Navigate to="/login" replace />;
-//   return <Outlet />;
-// } - 분리
-function GuestOnlyRoute() {
-  const token = useAuthStore.getState().token;
-  if (token) return <Navigate to="/" replace />;
-  return <Outlet />;
-}
 
 // 관리자 가드(임의)
 function AdminProtectedRoute() {
