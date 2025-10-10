@@ -36,9 +36,6 @@ const AuctionDetail = React.lazy(
 const AuctionForm = React.lazy(
   () => import("../features/auction/pages/AuctionForm")
 );
-const AuctionEdit = React.lazy(
-  () => import("../features/auction/pages/AuctionForm")
-); // 재사용
 
 // 마이페이지
 const MyPageMain = React.lazy(
@@ -123,7 +120,6 @@ export default function App() {
             <Route path=":id" element={<AuctionDetail />} />
             <Route element={<ProtectedRoute />}>
               <Route path="new" element={<AuctionForm />} />
-              <Route path=":id/edit" element={<AuctionEdit />} />
             </Route>
           </Route>
 
