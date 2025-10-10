@@ -1,16 +1,19 @@
 import axios from "axios";
 import { useAuthStore } from "../../features/auth/store/authStore";
 
+// 개발 환경인지 배포 환경인지
+const baseURL = import.meta.env.DEV
+  ? "/api"
+  : import.meta.env.VITE_BACKEND_ADDRESS;
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_BACKEND_ADDRESS, //localhost:8080
-  withCredentials: true, // refresh token이 쿠키로 올 경우
+  baseURL,
+  withCredentials: true,
 });
 
 api.interceptors.request.use((config) => {
   const token = useAuthStore.getState().token;
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
+  if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
