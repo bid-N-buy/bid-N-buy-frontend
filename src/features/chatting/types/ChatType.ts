@@ -1,5 +1,7 @@
 export interface ModalProps {
   onClose: () => void;
+  onDelete?: () => void;
+  onRate?: () => void;
 }
 
 export interface ChatListProps {

@@ -1,4 +1,8 @@
-export interface NotiProps {
+export interface NotiModalProps {
+  notis: NotiListProps[];
+}
+
+export interface NotiListProps {
   notification_id: bigint;
   user_id?: bigint;
   type: string;
