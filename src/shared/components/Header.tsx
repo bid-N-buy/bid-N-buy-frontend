@@ -4,13 +4,14 @@ import { Link, useNavigate } from "react-router-dom";
 import { Search, Menu, MessageCircleMore, Bell } from "lucide-react";
 import New from "./New";
 import ChatModal from "../../features/chatting/pages/ChatModal";
+import NotiModal from "../../features/notification/pages/NotiModal";
 
 const Header = () => {
   const navigate = useNavigate();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [isAlarmOpen, setIsAlarmOpen] = useState(false);
+  const [isNotiOpen, setIsNotiOpen] = useState(false);
 
   // 검색 버튼을 클릭하면 검색화면으로 이동
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
@@ -83,7 +84,7 @@ const Header = () => {
               </button>
             </li>
             <li className="relative">
-              <button className="relative" onClick={() => setIsAlarmOpen(true)}>
+              <button className="relative" onClick={() => setIsNotiOpen(true)}>
                 <Bell />
               </button>
             </li>
@@ -91,7 +92,7 @@ const Header = () => {
         </nav>
       </div>
       {isChatOpen && <ChatModal onClose={() => setIsChatOpen(false)} />}
-      {/* {isAlarmOpen && <AlarmModal onClose={() => setIsAlarmOpen(false)} />} */}
+      {isNotiOpen && <NotiModal onClose={() => setIsNotiOpen(false)} />}
     </header>
   );
 };
