@@ -30,7 +30,7 @@ const Main = () => {
   return (
     <div className="w-full">
       {/* 배너 */}
-      <section className="pt-[90px]">
+      <section className="pt-[60px]">
         <div className="container">
           <div className="bg-g500 flex h-[500px] w-full items-center justify-center">
             <span className="text-g300 text-[20px]">
@@ -65,7 +65,7 @@ const Main = () => {
       </section>
 
       {/* 판매 중인 상품 영역 */}
-      <section className="pb-[80px]">
+      <section className="pb-[60px]">
         <div className="container">
           <div className="mb-8 flex items-center justify-between">
             <h4 className="text-g100 font-bold">경매 중인 상품</h4>
@@ -84,7 +84,7 @@ const Main = () => {
       </section>
 
       {/* 보류 */}
-      <section className="pb-[80px]">
+      <section className="pb-[60px]">
         <div className="container">
           <div className="mb-8 flex items-center justify-between">
             <h4 className="text-g100 font-bold">(보류) 인기 경매</h4>
