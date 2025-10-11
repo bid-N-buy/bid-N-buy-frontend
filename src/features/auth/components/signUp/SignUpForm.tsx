@@ -1,31 +1,40 @@
 // src/features/auth/components/SignUpForm.tsx
 import React, { useEffect, useMemo, useState } from "react";
-import axios, { type AxiosError } from "axios";
+import axios, { AxiosError } from "axios";
 
 /** 백엔드 절대 주소 (.env에 VITE_BACKEND_ADDRESS 정의) */
 const BASE = import.meta.env.VITE_BACKEND_ADDRESS ?? "http://localhost:8080";
 
-/** ✅ 공개 전용 axios (Authorization 절대 안 붙음) */
+/** 공개 전용 axios (Authorization 절대 안 붙음) */
 const publicApi = axios.create({
   baseURL: BASE,
-  withCredentials: true, // 서버가 쿠키 세션을 쓴다면 true 유지. (JWT 헤더면 false 가능)
+  withCredentials: true,
   timeout: 10_000,
 });
 
-type ApiErr = {
-  message?: string;
-  error?: string;
-  ok?: boolean;
-  available?: boolean;
+/* =======================
+ *        Types
+ * ======================= */
+type ApiErr = { message?: string; error?: string };
+type EmailCheckResponse = { available: boolean };
+type UserDto = {
+  userId: number;
+  adminId: number;
+  addressId: number;
+  email: string;
+  password: string | null;
+  nickname: string;
+  authStatus: "Y" | "N" | null;
+  userStatus: string | null;
+  userType: string | null;
+  createdAt: string | null;
+  updatedAt: string | null;
+  deletedAt: string | null;
 };
 
-/**
- * 엔드포인트 요약 (백엔드 명세에 맞춰 조정):
- * GET  /auth/email/check?email=...
- * POST /auth/email/send   { email }
- * POST /auth/email/verify { email, code }
- * POST /signup            { email, password, nickname }
- */
+/* 이메일 정규화(서버와 통일) */
+const normEmail = (raw: string) => raw.trim().toLowerCase();
+
 const SignUpForm: React.FC = () => {
   // form
   const [email, setEmail] = useState("");
@@ -34,10 +43,11 @@ const SignUpForm: React.FC = () => {
   const [password2, setPassword2] = useState("");
   const [nickname, setNickname] = useState("");
 
-  // UX 상태(제출은 막지 않음)
+  // UX 상태
   const [isEmailChecked, setIsEmailChecked] = useState<boolean | null>(null); // null=미확인
   const [isCodeSent, setIsCodeSent] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
+  const [lastSentEmail, setLastSentEmail] = useState<string | null>(null); // ✅ 보낸 이메일 기억
 
   // timer/msg/loading
   const [leftSec, setLeftSec] = useState(0);
@@ -51,14 +61,14 @@ const SignUpForm: React.FC = () => {
   const [loadingSend, setLoadingSend] = useState(false);
   const [loadingVerify, setLoadingVerify] = useState(false);
   const [loadingSubmit, setLoadingSubmit] = useState(false);
-
   const [msg, setMsg] = useState<string | null>(null);
 
-  // 이메일 변경 시 인증 단계 초기화
+  // 이메일 바뀌면 인증 단계 초기화
   useEffect(() => {
     setIsEmailChecked(null);
     setIsCodeSent(false);
     setIsVerified(false);
+    setLastSentEmail(null);
     setCode("");
     setLeftSec(0);
   }, [email]);
@@ -70,15 +80,19 @@ const SignUpForm: React.FC = () => {
     return () => clearInterval(t);
   }, [isCodeSent, leftSec]);
 
-  // 1) 이메일 중복확인 (선택)
+  /* =======================
+   *        Handlers
+   * ======================= */
+
+  // 1) 이메일 중복확인
   const checkEmail = async () => {
     setMsg(null);
     try {
       setLoadingCheck(true);
-      const { data } = await publicApi.get<{ available: boolean }>(
+      const { data } = await publicApi.get<EmailCheckResponse>(
         "/auth/email/check",
         {
-          params: { email },
+          params: { email: normEmail(email) },
         }
       );
       setIsEmailChecked(!!data?.available);
@@ -96,14 +110,16 @@ const SignUpForm: React.FC = () => {
     }
   };
 
-  // 2) 코드 전송 (선택)
+  // 2) 코드 전송
   const sendCode = async () => {
     setMsg(null);
     try {
       setLoadingSend(true);
-      await publicApi.post("/auth/email/send", { email });
+      await publicApi.post("/auth/email/send", { email: normEmail(email) });
+
+      setLastSentEmail(normEmail(email)); // ✅ 이 이메일로만 verify 허용
       setIsCodeSent(true);
-      setLeftSec(600);
+      setLeftSec(300); // ✅ 서버 만료(5분)와 동일
       setMsg("인증코드를 전송했어요. 메일함을 확인하세요.");
     } catch (e) {
       const err = e as AxiosError<ApiErr>;
@@ -117,21 +133,28 @@ const SignUpForm: React.FC = () => {
     }
   };
 
-  // 3) 코드 검증 (선택)
+  // 3) 코드 검증 (HTTP 200이면 성공)
   const verifyCode = async () => {
     setMsg(null);
+
+    // 보낸 이메일과 현재 이메일이 같지 않으면 차단
+    if (!lastSentEmail || normEmail(email) !== lastSentEmail) {
+      setMsg(
+        "코드를 전송한 이메일과 현재 이메일이 달라요. 이메일을 맞춰주세요."
+      );
+      return;
+    }
+
     try {
       setLoadingVerify(true);
-      const { data } = await publicApi.post<{ ok: boolean }>(
-        "/auth/email/verify",
-        { email, code }
-      );
-      setIsVerified(!!data?.ok);
-      setMsg(
-        data?.ok
-          ? "이메일 인증이 완료되었습니다. ✅"
-          : "인증 실패: 코드가 틀리거나 만료되었습니다."
-      );
+
+      await publicApi.post("/auth/email/verify", {
+        email: normEmail(email), // ✅ 필수
+        code: code.trim(), // ✅ 숫자 변환 금지(앞자리 0 보존)
+      });
+
+      setIsVerified(true);
+      setMsg("이메일 인증이 완료되었습니다. ✅");
     } catch (e) {
       const err = e as AxiosError<ApiErr>;
       setIsVerified(false);
@@ -143,12 +166,11 @@ const SignUpForm: React.FC = () => {
     }
   };
 
-  // 4) 회원가입 제출 (서버 판정 우선)
+  // 4) 회원가입 제출
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setMsg(null);
 
-    // 최소 입력 체크 (원하면 제거 가능)
     if (!email || !password || !nickname) {
       setMsg("이메일 / 비밀번호 / 닉네임을 입력해 주세요.");
       return;
@@ -160,16 +182,18 @@ const SignUpForm: React.FC = () => {
 
     try {
       setLoadingSubmit(true);
-      const { data } = await publicApi.post("/signup", {
-        email,
+      const { data } = await publicApi.post<UserDto>("/auth/signup", {
+        email: normEmail(email),
         password,
         nickname,
       });
-      if (data?.email || data?.ok) {
-        setMsg("회원가입이 완료되었습니다.");
-        // TODO: 필요 시 이동 → window.location.href = "/login";
+
+      if (data?.email) {
+        setMsg("회원가입이 완료되었습니다. (인증메일 발송됨)");
+        // 필요 시 이동:
+        // window.location.href = "/login";
       } else {
-        setMsg(data?.message ?? "회원가입 처리에 실패했습니다.");
+        setMsg("회원가입 처리에 실패했습니다.");
       }
     } catch (e) {
       const err = e as AxiosError<ApiErr>;
@@ -182,6 +206,10 @@ const SignUpForm: React.FC = () => {
       setLoadingSubmit(false);
     }
   };
+
+  /* =======================
+   *          UI
+   * ======================= */
 
   return (
     <form onSubmit={handleSubmit} className="m-auto w-[420px]">
@@ -223,6 +251,7 @@ const SignUpForm: React.FC = () => {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            disabled={isCodeSent && !isVerified}
             className="focus:border-purple mb-[15px] h-[40px] w-[420px] rounded-md border px-3 outline-none focus:border-2"
             placeholder="이메일을 입력해 주세요"
             autoComplete="email"
