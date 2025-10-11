@@ -1,4 +1,4 @@
-// shared/api/axiosInstance.ts
+// shared/api/axiosInstance.ts (핵심 부분만)
 import axios, { AxiosError } from "axios";
 import type {
   AxiosInstance,
@@ -7,50 +7,38 @@ import type {
 } from "axios";
 import { useAuthStore } from "../../features/auth/store/authStore";
 import type {
-  ErrorResponse,
   ReissueRequest,
   ReissueResponse,
   LoginResponse,
-} from "../types/CommonType";
+} from "../types/auth";
 
-/** 환경별 API 베이스 URL */
-// export const API_BASE = import.meta.env.PROD
-//   ? import.meta.env.VITE_BACKEND_ADDRESS
-//   : "http://localhost:8080";
-
-// 프록시 설정용
 export const API_BASE = import.meta.env.PROD
   ? import.meta.env.VITE_BACKEND_ADDRESS
   : "/api";
-
-/** 공용 axios 인스턴스 */
 const api: AxiosInstance = axios.create({
   baseURL: API_BASE,
-  withCredentials: true, // 필요 없더라도 유지해도 무방
-  timeout: 10_000,
+  withCredentials: true,
+  timeout: 10000,
 });
 
-/** tokenInfo가 있는 최신 스펙인지 확인 */
-function hasTokenInfo(
-  d:
-    | LoginResponse
-    | ReissueResponse
-    | { accessToken?: string; refreshToken?: string }
-): d is LoginResponse | ReissueResponse {
-  return typeof (d as LoginResponse).tokenInfo !== "undefined";
-}
+const isAuthEndpoint = (url: string) =>
+  url.includes("/auth/reissue") ||
+  url.includes("/auth/login") ||
+  url.includes("/auth/signup");
 
-/** 요청 인터셉터: Authorization 주입 */
-api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  const { accessToken } = useAuthStore.getState();
-  if (accessToken) {
-    config.headers = config.headers ?? {};
-    config.headers.Authorization = `Bearer ${accessToken}`;
+// 요청: /auth/* 에는 Authorization 붙이지 않기
+api.interceptors.request.use((config) => {
+  const url = config.url ?? "";
+  if (!isAuthEndpoint(url)) {
+    const { accessToken } = useAuthStore.getState();
+    if (accessToken) {
+      config.headers = config.headers ?? {};
+      config.headers.Authorization = `Bearer ${accessToken}`;
+    }
   }
   return config;
 });
 
-/** 동시 갱신 방지용 락 & 대기열 */
 let isRefreshing = false;
 let waitQueue: Array<(t: string | null) => void> = [];
 const flush = (t: string | null) => {
@@ -60,47 +48,43 @@ const flush = (t: string | null) => {
 
 api.interceptors.response.use(
   (res: AxiosResponse) => res,
-  async (error: AxiosError<ErrorResponse>) => {
+  async (error: AxiosError) => {
     const { response, config } = error;
     if (!response || !config) throw error;
     if (response.status !== 401) throw error;
+
+    const url = config.url ?? "";
+    if (isAuthEndpoint(url)) {
+      useAuthStore.getState().clear();
+      return Promise.reject(error);
+    }
 
     const original = config as InternalAxiosRequestConfig & {
       _retry?: boolean;
     };
     if (original._retry) {
-      // 이미 재시도 했는데 또 401 → 로그아웃 처리
       useAuthStore.getState().clear();
       throw error;
     }
     original._retry = true;
 
-    // 다른 요청이 refresh 중이면 대기
     if (isRefreshing) {
-      const newToken = await new Promise<string | null>((resolve) =>
-        waitQueue.push(resolve)
-      );
-      if (newToken) {
+      const token = await new Promise<string | null>((r) => waitQueue.push(r));
+      if (token) {
         original.headers = original.headers ?? {};
-        original.headers.Authorization = `Bearer ${newToken}`;
+        original.headers.Authorization = `Bearer ${token}`;
       }
       return api(original);
     }
 
     isRefreshing = true;
     try {
-      const { accessToken, refreshToken, setTokens, clear } =
-        useAuthStore.getState();
+      const { refreshToken, setTokens, clear } = useAuthStore.getState();
 
-      // ① 쿠키 기반 서버: 본문 없이 호출
-      // ② 본문(JSON) 기반 서버: accesstoken / refreshtoken 함께 전달
-      let body: ReissueRequest | undefined;
-      if (refreshToken) {
-        body = {
-          accesstoken: accessToken ?? "",
-          refreshtoken: refreshToken,
-        };
-      }
+      // ✅ 서버는 refreshToken만 필요
+      const body: ReissueRequest | undefined = refreshToken
+        ? { refreshToken }
+        : undefined;
 
       const refreshRes = await axios.post<
         | ReissueResponse
@@ -108,14 +92,17 @@ api.interceptors.response.use(
         | { accessToken?: string; refreshToken?: string }
       >(`${API_BASE}/auth/reissue`, body ?? {}, { withCredentials: true });
 
-      // 응답 파싱 (tokenInfo 혹은 top-level)
       const payload = refreshRes.data;
-      const newAccess = hasTokenInfo(payload)
-        ? payload.tokenInfo.accessToken
-        : (payload.accessToken ?? null);
-      const newRefresh = hasTokenInfo(payload)
-        ? (payload.tokenInfo.refreshToken ?? null)
-        : (payload.refreshToken ?? null);
+      const newAccess =
+        "tokenInfo" in (payload as object)
+          ? (payload as ReissueResponse | LoginResponse).tokenInfo.accessToken
+          : ((payload as { accessToken?: string }).accessToken ?? null);
+
+      const newRefresh =
+        "tokenInfo" in (payload as object)
+          ? ((payload as ReissueResponse | LoginResponse).tokenInfo
+              .refreshToken ?? null)
+          : ((payload as { refreshToken?: string }).refreshToken ?? null);
 
       if (!newAccess) {
         clear();
@@ -123,10 +110,9 @@ api.interceptors.response.use(
         throw error;
       }
 
-      setTokens(newAccess, newRefresh); // refresh가 쿠키 기반이면 null일 수 있음
+      setTokens(newAccess, newRefresh ?? null);
       flush(newAccess);
 
-      // 원 요청 재시도
       original.headers = original.headers ?? {};
       original.headers.Authorization = `Bearer ${newAccess}`;
       return api(original);

@@ -8,7 +8,7 @@ import {
   Outlet,
 } from "react-router-dom";
 
-import { useAuthInit } from "../features/auth/hooks/UsetAuthInit"; // ✅ 추가된 부분
+import { useAuthInit } from "../features/auth/hooks/UseAuthInit"; // ✅ 추가된 부분
 import { useAuthStore } from "../features/auth/store/authStore";
 import { useAdminStore } from "../features/admin/store/adminStore";
 // import ProtectedRoute from "../shared/routes/ProtectedRoute";

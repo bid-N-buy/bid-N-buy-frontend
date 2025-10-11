@@ -1,38 +1,39 @@
 import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
 
-/**
- * 인증 상태 타입 정의
- * - accessToken / refreshToken: 현재 메모리에 저장된 JWT 토큰
- * - setTokens: 로그인 또는 재발급 시 토큰 갱신
- * - clear: 로그아웃 시 모든 토큰 제거
- */
+export interface Profile {
+  nickname: string;
+  email?: string;
+}
 export interface AuthState {
   accessToken: string | null;
   refreshToken: string | null;
-  setTokens: (access: string | null, refresh: string | null) => void;
+  profile: Profile | null;
+  setTokens: (a: string | null, r: string | null, p?: Profile | null) => void;
+  setProfile: (p: Profile | null) => void;
   clear: () => void;
 }
 
-/**
- * Zustand 전역 스토어 (React 전역 상태 관리)
- * - 메모리 기반이라 새로고침 시 초기화됨
- * - 쿠키 기반 refresh 로직과 함께 쓰면 안전
- */
-export const useAuthStore = create<AuthState>((set) => ({
-  accessToken: null,
-  refreshToken: null,
-
-  setTokens: (access, refresh) => {
-    set({
-      accessToken: access,
-      refreshToken: refresh,
-    });
-  },
-
-  clear: () => {
-    set({
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set) => ({
       accessToken: null,
       refreshToken: null,
-    });
-  },
-}));
+      profile: null,
+      setTokens: (a, r, p = null) =>
+        set((s) => ({
+          accessToken: a,
+          refreshToken: r,
+          profile: p ?? s.profile,
+        })),
+      setProfile: (p) => set({ profile: p }),
+      clear: () =>
+        set({ accessToken: null, refreshToken: null, profile: null }),
+    }),
+    {
+      name: "auth",
+      storage: createJSONStorage(() => sessionStorage), // dev: sessionStorage
+      // partialize: (s) => ({ refreshToken: s.refreshToken }), // 원하면 최소 저장
+    }
+  )
+);

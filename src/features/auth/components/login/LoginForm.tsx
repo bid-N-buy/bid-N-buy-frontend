@@ -13,15 +13,19 @@ import naverBg from "../../../../assets/img/naver_login.png";
 
 // 서버가 top-level 로 토큰을 주는 경우까지 커버
 type LegacyLoginResponse = {
-  accessToken?: string;
-  refreshToken?: string;
+  accessToken?: string | null;
+  refreshToken?: string | null;
+  // 서버에 따라 expiresIn 등이 있을 수 있음
 };
 
 function hasTokenInfo(
   d: LoginResponse | LegacyLoginResponse
 ): d is LoginResponse {
-  return (d as LoginResponse).tokenInfo !== undefined;
+  return typeof (d as LoginResponse).tokenInfo !== "undefined";
 }
+
+// 간단 이메일 형식 체크(프론트 보조용)
+const isEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
 
 const LoginForm: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -30,6 +34,7 @@ const LoginForm: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const setTokens = useAuthStore((s: AuthState) => s.setTokens);
+  const setProfile = useAuthStore((s: AuthState) => s.setProfile);
   const navigate = useNavigate();
 
   // (?token=...) 소셜 콜백 대응 — 가능하면 서버가 쿠키만 심고 /auth/reissue로 통일 권장
@@ -37,7 +42,6 @@ const LoginForm: React.FC = () => {
     const url = new URL(window.location.href);
     const token = url.searchParams.get("token");
     if (token) {
-      // 구형 방식 대응: access 만 저장(refresh는 서버 쿠키가 있거나, 이후 reissue로 회복)
       setTokens(token, null);
       url.searchParams.delete("token");
       window.history.replaceState({}, "", url.pathname + url.search);
@@ -51,8 +55,19 @@ const LoginForm: React.FC = () => {
 
     setError(null);
 
-    if (!email || !password) {
+    const emailTrim = email.trim();
+    const pwTrim = password.trim();
+
+    if (!emailTrim || !pwTrim) {
       setError("아이디와 비밀번호를 입력해 주세요.");
+      return;
+    }
+    if (!isEmail(emailTrim)) {
+      setError("올바른 이메일 형식이 아닙니다.");
+      return;
+    }
+    if (pwTrim.length < 4) {
+      setError("비밀번호가 너무 짧습니다.");
       return;
     }
 
@@ -62,10 +77,20 @@ const LoginForm: React.FC = () => {
       // 1) 로그인 호출
       const { data } = await api.post<LoginResponse | LegacyLoginResponse>(
         "/auth/login",
-        { email, password }
+        { email: emailTrim, password: pwTrim },
+        {
+          headers: { "Content-Type": "application/json" },
+          withCredentials: true, // 쿠키 전략이라면 필수
+        }
       );
 
-      // 2) 응답에서 access/refresh 추출 (여러 스펙 대응)
+      if (import.meta.env.DEV) {
+        // 개발 모드에서만 로그
+        // eslint-disable-next-line no-console
+        console.debug("[login] response", data);
+      }
+
+      // 2) 응답에서 access/refresh 추출 (최신/레거시 모두 대응)
       const access = hasTokenInfo(data)
         ? data.tokenInfo.accessToken
         : (data.accessToken ?? null);
@@ -74,24 +99,43 @@ const LoginForm: React.FC = () => {
         ? (data.tokenInfo.refreshToken ?? null)
         : (data.refreshToken ?? null);
 
-      // ─────────────────────────────────────────────────────────
-      // 중요한 포인트:
-      // - 서버가 refresh를 HttpOnly 쿠키로만 주는 경우, 본문엔 refresh가 없습니다.
-      // - 이때는 access 만 저장하고, 새로고침 때 useAuthInit()에서 /auth/reissue 로 access 회복.
-      // ─────────────────────────────────────────────────────────
       if (!access) {
         throw new Error(
           "accessToken이 응답에 없습니다. 서버 응답 형식을 확인하세요."
         );
       }
 
-      // refresh가 본문에 없더라도 '쿠키 기반'이면 정상.
-      setTokens(access, refresh /* null일 수 있음(쿠키 관리) */);
+      // 최신 스펙이면 nickname/email이 올 수 있음 → 프로필 세팅
+      if (hasTokenInfo(data)) {
+        // 서버가 nickname/email을 내려주는 스펙이면 저장
+        const nickname = data.nickname as string | undefined;
+        const emailFromRes = data.email as string | undefined;
+        if (nickname) setProfile({ nickname, email: emailFromRes });
+      }
 
-      navigate("/"); // 새로고침 없이 이동 (zustand 메모리 유지)
+      // refresh가 본문에 없더라도 '쿠키 기반'이면 정상 (zustand persist 권장)
+      setTokens(access, refresh ?? null);
+
+      navigate("/"); // 로그인 성공 → 홈
     } catch (err) {
       if (axios.isAxiosError<ErrorResponse>(err)) {
-        setError(err.response?.data?.message ?? "로그인 실패");
+        // 401/403 등 서버 메시지 우선
+        const msg =
+          err.response?.data?.message ??
+          (err.response?.status === 401
+            ? "아이디 또는 비밀번호가 올바르지 않습니다."
+            : "로그인에 실패했습니다.");
+        setError(msg);
+
+        if (import.meta.env.DEV) {
+          // eslint-disable-next-line no-console
+          console.error("[login] failed", {
+            url: err.config?.url,
+            method: err.config?.method,
+            status: err.response?.status,
+            data: err.response?.data,
+          });
+        }
       } else if (err instanceof Error) {
         setError(err.message);
       } else {
@@ -104,12 +148,13 @@ const LoginForm: React.FC = () => {
 
   const startKakao = () => {
     if (loading) return;
-    window.location.href = `${API_BASE}/auth/kakao`;
+    // 히스토리에 남는 게 괜찮다면 assign, 대체 이동은 replace
+    window.location.assign(`${API_BASE}/auth/kakao`);
   };
 
   const startNaver = () => {
     if (loading) return;
-    window.location.href = `${API_BASE}/auth/naver/loginstart`;
+    window.location.assign(`${API_BASE}/auth/naver/loginstart`);
   };
 
   return (
@@ -158,7 +203,8 @@ const LoginForm: React.FC = () => {
           비밀번호 찾기
         </Link>
         <span className="text-h9">|</span>
-        <Link to="/signUp" className="text-h9 hover:underline">
+        {/* 라우트 경로 케이스(대소문자)와 실제 라우트 일치 확인! */}
+        <Link to="/signup" className="text-h9 hover:underline">
           회원가입
         </Link>
       </div>

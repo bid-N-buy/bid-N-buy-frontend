@@ -12,7 +12,7 @@ export default defineConfig({
         secure: false,
         // /api 제거
         rewrite: (path) => path.replace(/^\/api/, ""),
-        cookieDomainRewrite: "localhost",
+        // cookieDomainRewrite: "localhost",
       },
     },
   },
