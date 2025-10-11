@@ -8,8 +8,8 @@ const notiList = ({ notis }: NotiModalProps) => {
     <ul>
       {notis.map((noti) => (
         <li
-          key={noti.notification_id.toString()}
-          className="border-g400 flex gap-2 border-b p-4 hover:bg-gray-50"
+          key={noti.notification_id}
+          className={`border-g400 flex gap-2 border-b p-4 hover:bg-gray-50 ${noti.content.length < 27 && `items-center`}`}
         >
           {noti.type === "alert" ? (
             <Bell />
