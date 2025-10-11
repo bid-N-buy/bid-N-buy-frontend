@@ -8,7 +8,7 @@ const ChatList = ({ chatRooms, onSelectRoom }: ChatListProps) => {
     <ul>
       {chatRooms.map((chat) => (
         <li
-          key={chat.chatroom_id.toString()}
+          key={chat.chatroom_id}
           onClick={() => onSelectRoom(chat.chatroom_id)}
           className="border-g400 flex cursor-pointer items-center gap-2 border-b p-4 hover:bg-gray-50"
         >
@@ -20,7 +20,10 @@ const ChatList = ({ chatRooms, onSelectRoom }: ChatListProps) => {
                 {formatTime(chat.created_at)}
               </span>
             </p>
-            <p>{chat.message}</p>
+            <p>
+              {chat.message.substring(0, 27)}
+              {chat.message.length > 27 ? "..." : null}
+            </p>
           </div>
         </li>
       ))}

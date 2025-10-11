@@ -1,3 +1,5 @@
+import type { UserProps, ImageProps } from "../../../shared/types/CommonType";
+
 export interface ModalProps {
   onClose: () => void;
   onDelete?: () => void;
@@ -5,27 +7,36 @@ export interface ModalProps {
 }
 
 export interface ChatListProps {
-  onSelectRoom: (chatroom_id: bigint) => void;
+  onSelectRoom: (chatroom_id: string) => void;
   chatRooms: ChatRoomProps[];
 }
 
 export interface ChatRoomProps {
-  user_id?: bigint;
-  nickname: string;
-  image_url: string;
-  chatroom_id: bigint;
-  message?: string;
-  created_at: string;
+  chatroom_id: string;
+  buyer_id: UserProps["user_id"];
+  seller_id?: UserProps["user_id"];
+  auction_id: string;
+  nickname: UserProps["nickname"];
+  image_url: ImageProps["image_url"];
+  message?: ChatMessageProps["message"];
+  created_at?: ChatMessageProps["created_at"];
 }
 
 export interface ChatMessageProps {
-  chatmessage_id: bigint;
-  chatroom_id: bigint;
-  sender_id: bigint;
-  payment_id: bigint;
-  image_url: string;
+  chatmessage_id: string;
+  chatroom_id: ChatRoomProps["chatroom_id"];
+  sender_id: UserProps["user_id"];
+  payment_id: string;
+  image_url: ChatRoomProps["image_url"];
   message: string;
   message_type: string;
   created_at: string;
   is_read: boolean;
+}
+
+export interface ChatInputProps {
+  isConnected: boolean;
+  inputMessage: string;
+  setInputMessage: (message: string) => void;
+  sendMessage: () => void;
 }

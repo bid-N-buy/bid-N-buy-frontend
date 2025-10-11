@@ -6,7 +6,6 @@ import {
   Navigate,
   Outlet,
 } from "react-router-dom";
-import { useAuthStore } from "../features/auth/store/authStore";
 import { useAdminStore } from "../features/admin/store/adminStore";
 import ProtectedRoute from "../shared/routes/ProtectedRoute";
 import GuestOnlyRoute from "../shared/routes/GuestOnlyRoute";
@@ -111,6 +110,7 @@ export default function App() {
           {/* 로그인/회원가입 */}
           <Route element={<GuestOnlyRoute />}>
             <Route path="/login" element={<LoginPage />} />
+
             <Route path="/signup" element={<SignUpPage />} />
           </Route>
 
@@ -148,7 +148,7 @@ export default function App() {
           {/* 관리자 로그인/회원가입 */}
           <Route element={<AdminGuestOnlyRoute />}>
             <Route path="login" element={<AdminLoginPage />} />
-            <Route path="signup" element={<SignUpPage />} />
+            <Route path="signup" element={<AdminSignUpPage />} />
           </Route>
 
           {/* 관리자 페이지 (로그인 필요) */}

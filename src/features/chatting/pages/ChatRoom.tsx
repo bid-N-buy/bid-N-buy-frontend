@@ -1,37 +1,164 @@
-import React from "react";
+import { useState, useEffect, useRef } from "react";
+import { Client, type IMessage } from "@stomp/stompjs";
+import SockJS from "sockjs-client";
+import { useAuthStore } from "../../auth/store/authStore";
 import ChatProductInfo from "../components/ChatProductInfo";
 import ChatMe from "../components/ChatMe";
 import ChatYou from "../components/ChatYou";
 import ChatInput from "../components/ChatInput";
-import type { ChatRoomProps } from "../types/ChatType";
-import ChatDate from "../components/ChatDate";
+// import ChatDate from "../components/ChatDate"; 날짜 넘어갈 시에 사용
+import type { ChatRoomProps, ChatMessageProps } from "../types/ChatType";
 
-// Pick을 통해 필요한 값만 채택하여 새로운 타입 정의
-type ChatRoomComponentProps = Pick<ChatRoomProps, "nickname" | "image_url"> & {
-  // roomId는 ChatModal에서 string으로 변환되어 오므로 string으로 명시
-  roomId: string;
-};
+const ChatRoom = ({
+  chatroom_id,
+  buyer_id,
+  auction_id,
+  image_url,
+  nickname,
+}: ChatRoomProps) => {
+  // STOMP 클라이언트 인스턴스를 저장하기 위해 useRef 사용 (재렌더링 시에도 값이 유지됨)
+  const clientRef = useRef<Client | null>(null);
+  const [messages, setMessages] = useState<ChatMessageProps[]>([]);
+  const [inputMessage, setInputMessage] = useState<string>("");
+  const [isConnected, setIsConnected] = useState<boolean>(false);
 
-const ChatRoom = ({ roomId, image_url, nickname }: ChatRoomComponentProps) => {
+  // 토큰 전역에서 들고 오기
+  const jwtToken = useAuthStore((state) => state.token);
+  // 웹소켓 주소
+  const wsUrl = "http://localhost:8080/ws/bid";
+
+  useEffect(() => {
+    // STOMP 클라이언트 인스턴스 생성
+    const client = new Client({
+      // 💡 SockJS 연결을 사용하도록 webSocketFactory 설정
+      webSocketFactory: () => {
+        return new SockJS(wsUrl);
+      },
+
+      reconnectDelay: 5000,
+
+      // CONNECT 헤더에 JWT 토큰 추가
+      connectHeaders: {
+        "Auth-Token": `${jwtToken}`,
+      },
+
+      onConnect: () => {
+        console.log("STOMP 연결 성공!");
+        setIsConnected(true);
+
+        // 연결 성공 시 채팅방 구독
+        const subDestination = `/topic/chat/room/${chatroom_id}`;
+
+        client.subscribe(subDestination, (message) => {
+          handleMessageReceived(message); // 3단계 함수 호출
+        });
+      },
+
+      onStompError: (frame) => {
+        console.error("STOMP Error:", frame);
+        setIsConnected(false);
+      },
+
+      onWebSocketClose: () => {
+        setIsConnected(false);
+      },
+    });
+
+    // 3. 클라이언트 활성화 (연결 시도 시작)
+    client.activate();
+    clientRef.current = client; // Ref에 인스턴스 저장
+
+    // 4. Cleanup: 컴포넌트 언마운트 시 연결 해제
+    return () => {
+      if (clientRef.current && clientRef.current.connected) {
+        clientRef.current.deactivate();
+      }
+    };
+  }, [wsUrl, chatroom_id, jwtToken]);
+
+  // 메시지 수신 및 화면 업데이스 로직
+  const handleMessageReceived = (message: IMessage) => {
+    try {
+      // 1. 메시지 바디는 JSON 문자열이므로 파싱
+      const messageBody: ChatMessageProps = JSON.parse(message.body);
+
+      // 2. 메시지 배열 상태 업데이트
+      setMessages((prevMessages) => [...prevMessages, messageBody]);
+
+      // TODO: 메시지 스크롤을 맨 아래로 이동시키는 로직 추가
+    } catch (e) {
+      console.error("메시지 파싱 오류:", e, message.body);
+    }
+  };
+
+  // 메시지 전송 로직
+  const sendMessage = () => {
+    const client = clientRef.current;
+
+    // 1. 유효성 검사
+    if (!client || !client.connected || !inputMessage.trim()) {
+      console.warn("연결되지 않았거나 메시지가 비어있습니다.");
+      return;
+    }
+
+    // 2. 메시지 생성
+    const chatMessage = {
+      chatroomId: parseInt(chatroom_id), // 백엔드가 number를 요구할 수 있으므로 파싱
+      message: inputMessage.trim(),
+      senderId: nickname, // HTML 클라이언트의 senderId 필드와 맞춤
+      type: "CHAT",
+    };
+
+    // 3. 전송 실행
+    client.publish({
+      destination: `/app/chat/message`,
+      body: JSON.stringify(chatMessage),
+      headers: { "content-type": "application/json" },
+    });
+
+    // 4. 입력 상태 초기화
+    setInputMessage("");
+  };
+
   return (
     <>
-      <ChatProductInfo />
-      <div key={roomId} className="h-[calc(100%-179px)] overflow-y-scroll">
-        <ChatMe />
-        <ChatYou image_url={image_url} nickname={nickname} />
-        <ChatMe />
-        <ChatMe />
-        <ChatMe />
-        <ChatDate />
-        <ChatMe />
-        <ChatYou image_url={image_url} nickname={nickname} />
-        <ChatYou image_url={image_url} nickname={nickname} />
-        <ChatYou image_url={image_url} nickname={nickname} />
-        <ChatYou image_url={image_url} nickname={nickname} />
-        <ChatYou image_url={image_url} nickname={nickname} />
-        <ChatYou image_url={image_url} nickname={nickname} />
+      <ChatProductInfo
+        auction_id={auction_id}
+        title={""}
+        currentPrice={0}
+        mainImageUrl={null}
+      />
+      <div
+        key={chatroom_id}
+        className="h-[calc(100%-179px)] w-[100%] overflow-x-hidden overflow-y-scroll"
+      >
+        {messages.map((msg, index) =>
+          msg.sender_id != buyer_id ? (
+            <ChatMe
+              key={index}
+              message={msg.message}
+              created_at={new Date(msg.created_at).toLocaleTimeString()}
+              is_read={msg.is_read}
+            />
+          ) : (
+            <ChatYou
+              key={index}
+              image_url={image_url}
+              nickname={nickname}
+              message={msg.message}
+              created_at={new Date(msg.created_at).toLocaleTimeString()}
+              is_read={msg.is_read}
+            />
+          )
+        )}
       </div>
-      <ChatInput />
+
+      <ChatInput
+        isConnected={isConnected}
+        inputMessage={inputMessage}
+        setInputMessage={setInputMessage}
+        sendMessage={sendMessage}
+      />
     </>
   );
 };
