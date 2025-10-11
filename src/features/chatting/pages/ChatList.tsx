@@ -20,7 +20,10 @@ const ChatList = ({ chatRooms, onSelectRoom }: ChatListProps) => {
                 {formatTime(chat.created_at)}
               </span>
             </p>
-            <p>{chat.message}</p>
+            <p>
+              {chat.message.substring(0, 27)}
+              {chat.message.length > 27 ? "..." : null}
+            </p>
           </div>
         </li>
       ))}

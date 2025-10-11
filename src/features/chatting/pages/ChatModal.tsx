@@ -1,5 +1,4 @@
-import React from "react";
-import { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import type { ModalProps, ChatRoomProps } from "../types/ChatType";
 import ChatList from "./ChatList";
 import ChatRoom from "./ChatRoom";
@@ -12,7 +11,8 @@ const DUMMY_CHAT_ROOMS: ChatRoomProps[] = [
     nickname: "홍길동",
     image_url: "",
     chatroom_id: BigInt(101),
-    message: "안녕하세요.",
+    message:
+      "안녕하세요.안녕하세요.안녕하세요.안녕하세요.안녕하세요.안녕하세요.안녕하세요.안녕하세요.안녕하세요.안녕하세요.안녕하세요.안녕하세요.안녕하세요.안녕하세요.",
     created_at: Date(),
   },
   {
@@ -65,77 +65,66 @@ const ChatModal = ({ onClose, onDelete, onRate }: ModalProps) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50">
-      <div
-        className="border-g500 absolute inset-0 z-51 h-full w-full overflow-hidden rounded-md border-1 bg-white shadow-lg md:top-[380px] md:left-[80%] md:h-150 md:w-100 md:translate-[-50%]"
-        ref={modalRef}
-      >
-        <div className="border-purple flex flex-shrink-0 items-center justify-between border-b p-4">
-          {/* 5. 현재 뷰에 따라 제목 및 돌아가기 버튼 표시 */}
-          {currentView === "list" ? (
-            <>
-              <p className="font-bold">채팅목록</p>
-              <button onClick={onClose} aria-label="채팅 모달 닫기">
-                <X />
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                onClick={handleGoToList}
-                className="font-bold text-purple-600"
-                aria-label="채팅목록으로 가기"
-              >
-                <ChevronLeft />
-              </button>
-              <p>
-                {selectedRoomInfo?.nickname
-                  ? selectedRoomInfo.nickname
-                  : "사용자"}
-              </p>
-              <button
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                aria-label="더보기"
-              >
-                <EllipsisVertical className="text-g200 relative" />
-              </button>
-              {isMenuOpen && (
-                <div className="border-g400 absolute top-10 right-3 mt-2 w-32 rounded-md border bg-white shadow-lg">
-                  <button
-                    onClick={() => {
-                      onRate?.();
-                      setIsMenuOpen(false);
-                    }}
-                    className="border-g400 text-g100 hover:bg-g500 w-full px-4 py-2.5 text-left text-base transition-colors md:py-3"
-                  >
-                    상대 평점 매기기
-                  </button>
-                  <button
-                    onClick={() => {
-                      onDelete?.();
-                      setIsMenuOpen(false);
-                    }}
-                    className="border-g400 text-red hover:bg-g500 w-full border-t px-4 py-2.5 text-left text-base transition-colors md:py-3"
-                  >
-                    채팅방 삭제
-                  </button>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-        <div className="h-[calc(100%-59px)] overflow-y-auto">
-          {currentView === "list" && (
-            <ChatList chatRooms={chatRooms} onSelectRoom={handleSelectRoom} />
-          )}
-          {currentView === "room" && selectedRoomInfo && (
-            <ChatRoom
-              roomId={selectedRoomInfo.chatroom_id.toString()}
-              image_url={selectedRoomInfo.image_url}
-              nickname={selectedRoomInfo.nickname}
-            />
-          )}
-        </div>
+    <div
+      className="border-g500 fixed inset-0 z-51 h-full w-full rounded-md border-1 bg-white text-wrap shadow-lg md:absolute md:inset-auto md:top-[72px] md:right-8 md:h-150 md:w-100"
+      ref={modalRef}
+    >
+      <div className="border-purple flex flex-shrink-0 items-center justify-between border-b p-4">
+        {/* 5. 현재 뷰에 따라 제목 및 돌아가기 버튼 표시 */}
+        {currentView === "list" ? (
+          <>
+            <p className="font-bold">채팅목록</p>
+            <button onClick={onClose} aria-label="채팅 모달 닫기">
+              <X />
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              onClick={handleGoToList}
+              className="font-bold text-purple-600"
+              aria-label="채팅목록으로 가기"
+            >
+              <ChevronLeft />
+            </button>
+            <p>
+              {selectedRoomInfo?.nickname
+                ? selectedRoomInfo.nickname
+                : "사용자"}
+            </p>
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              aria-label="더보기"
+            >
+              <EllipsisVertical className="text-g200 relative" />
+            </button>
+            {isMenuOpen && (
+              <div className="border-g400 absolute top-10 right-3 mt-2 w-32 rounded-md border bg-white shadow-lg">
+                <button
+                  onClick={() => {
+                    onDelete?.();
+                    setIsMenuOpen(false);
+                  }}
+                  className="text-red hover:bg-g500 w-full px-4 py-2.5 text-left text-base transition-colors md:py-3"
+                >
+                  채팅방 삭제
+                </button>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+      <div className="h-[calc(100%-59px)] overflow-x-hidden overflow-y-auto">
+        {currentView === "list" && (
+          <ChatList chatRooms={chatRooms} onSelectRoom={handleSelectRoom} />
+        )}
+        {currentView === "room" && selectedRoomInfo && (
+          <ChatRoom
+            roomId={selectedRoomInfo.chatroom_id.toString()}
+            image_url={selectedRoomInfo.image_url}
+            nickname={selectedRoomInfo.nickname}
+          />
+        )}
       </div>
     </div>
   );

@@ -163,7 +163,7 @@ export default function App() {
           {/* 관리자 로그인/회원가입 */}
           <Route element={<AdminGuestOnlyRoute />}>
             <Route path="login" element={<AdminLoginPage />} />
-            <Route path="signup" element={<SignUpPage />} />
+            <Route path="signup" element={<AdminSignUpPage />} />
           </Route>
 
           {/* 관리자 페이지 (로그인 필요) */}
