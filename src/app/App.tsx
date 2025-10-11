@@ -9,6 +9,7 @@ import {
 import { useAdminStore } from "../features/admin/store/adminStore";
 import ProtectedRoute from "../shared/routes/ProtectedRoute";
 import GuestOnlyRoute from "../shared/routes/GuestOnlyRoute";
+import { useAuthInit } from "../features/auth/hooks/UseAuthInit";
 
 // 공통
 const Header = React.lazy(() => import("../shared/components/Header"));
@@ -100,6 +101,9 @@ function AppLayout() {
 }
 
 export default function App() {
+  const { ready } = useAuthInit();
+  if (!ready) return <div className="p-6 text-center">초기화 중...</div>;
+
   return (
     <BrowserRouter>
       <Routes>
