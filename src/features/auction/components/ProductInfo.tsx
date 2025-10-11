@@ -1,4 +1,4 @@
-// todo 시작 시간 마감 시간 입찰 회수 추가*****
+// *****todo 시작 시간 마감 시간 입찰 회수 추가*****
 // todo 컴포넌트 분리
 import React, { useState } from "react";
 import BidModal from "./BidModal";
@@ -20,7 +20,6 @@ interface ProductInfoProps {
   onLikeToggle?: () => void;
   onChatClick?: () => void;
   onShareClick?: () => void;
-  onEditClick?: () => void;
   onDeleteClick?: () => void;
 }
 
@@ -38,7 +37,6 @@ const ProductInfo = ({
   onLikeToggle,
   onChatClick,
   onShareClick,
-  onEditClick,
   onDeleteClick,
 }: ProductInfoProps) => {
   const [isLiked, setIsLiked] = useState(liked);
@@ -100,26 +98,15 @@ const ProductInfo = ({
                     공유
                   </button>
                   {isSeller && (
-                    <>
-                      <button
-                        onClick={() => {
-                          onEditClick?.();
-                          setIsMenuOpen(false);
-                        }}
-                        className="border-g400 text-g100 hover:bg-g500 w-full border-t px-4 py-2.5 text-left text-base transition-colors md:py-3"
-                      >
-                        수정
-                      </button>
-                      <button
-                        onClick={() => {
-                          onDeleteClick?.();
-                          setIsMenuOpen(false);
-                        }}
-                        className="border-g400 text-red hover:bg-g500 w-full border-t px-4 py-2.5 text-left text-base transition-colors md:py-3"
-                      >
-                        삭제
-                      </button>
-                    </>
+                    <button
+                      onClick={() => {
+                        onDeleteClick?.();
+                        setIsMenuOpen(false);
+                      }}
+                      className="border-g400 text-red hover:bg-g500 w-full border-t px-4 py-2.5 text-left text-base transition-colors md:py-3"
+                    >
+                      삭제
+                    </button>
                   )}
                 </div>
               )}

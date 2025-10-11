@@ -2,10 +2,10 @@ import React from "react";
 import { useAuthStore } from "../../features/auth/store/authStore";
 import { Navigate, Outlet } from "react-router-dom";
 
-const ProtectedRoute = () => {
+const GuestOnlyRoute = () => {
   const token = useAuthStore.getState().accessToken;
-  if (!token) return <Navigate to="/login" replace />;
+  if (token) return <Navigate to="/" replace />;
   return <Outlet />;
 };
 
-export default ProtectedRoute;
+export default GuestOnlyRoute;
