@@ -9,7 +9,7 @@ const notiList = ({ notis }: NotiModalProps) => {
       {notis.map((noti) => (
         <li
           key={noti.notification_id.toString()}
-          className="border-g400 flex items-center gap-2 border-b p-4 hover:bg-gray-50"
+          className="border-g400 flex gap-2 border-b p-4 hover:bg-gray-50"
         >
           {noti.type === "alert" ? (
             <Bell />
@@ -18,7 +18,7 @@ const notiList = ({ notis }: NotiModalProps) => {
           ) : (
             <TriangleAlert />
           )}
-          <div>
+          <div className="w-[90%]">
             <p className="mb-1 text-xs text-gray-400">
               {formatTime(noti.created_at)}
             </p>

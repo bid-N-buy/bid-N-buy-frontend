@@ -16,7 +16,10 @@ const ChatRoom = ({ roomId, image_url, nickname }: ChatRoomComponentProps) => {
   return (
     <>
       <ChatProductInfo />
-      <div key={roomId} className="h-[calc(100%-179px)] overflow-y-scroll">
+      <div
+        key={roomId}
+        className="h-[calc(100%-179px)] w-[100%] overflow-x-hidden overflow-y-scroll"
+      >
         <ChatMe />
         <ChatYou image_url={image_url} nickname={nickname} />
         <ChatMe />

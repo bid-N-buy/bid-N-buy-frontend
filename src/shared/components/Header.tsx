@@ -1,5 +1,6 @@
 import React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Link, useNavigate } from "react-router-dom";
 import { Search, Menu, MessageCircleMore, Bell } from "lucide-react";
 import New from "./New";
@@ -21,8 +22,46 @@ const Header = () => {
     navigate(`search?query=${encodeURIComponent(searchQuery)}`);
   };
 
+  // portal용 div 확인 위한 변수 추가
+  const modalRoot = document.getElementById("modal-root");
+
+  useEffect(() => {
+    // 미디어 쿼리 객체 생성
+    const mediaQueryList = window.matchMedia("screen and (max-width: 768px)");
+
+    // 모달 아래 화면 스크롤 잠금/해제 로직
+    const applyScrollLock = () => {
+      const isSmallScreen = mediaQueryList.matches;
+
+      if ((isChatOpen || isNotiOpen) && isSmallScreen) {
+        document.body.style.overflow = "hidden";
+      } else {
+        document.body.style.overflow = "";
+      }
+    };
+
+    applyScrollLock();
+
+    // 리스너 등록
+    mediaQueryList.addEventListener("change", applyScrollLock);
+
+    // Cleanup
+    return () => {
+      // 리스너 제거
+      mediaQueryList.removeEventListener("change", applyScrollLock);
+      // 최종 overflow 해제
+      document.body.style.overflow = "";
+    };
+  }, [isChatOpen, isNotiOpen]); // 모달 상태가 바뀔 때마다 실행되어야 함
+
+  // modalRoot이 존재하지 않으면 렌더링 x
+  if (!modalRoot) {
+    console.error("Portal root element '#modal-root' not found.");
+    return null;
+  }
+
   return (
-    <header className="m-auto h-20 w-full md:h-23">
+    <header className="relative m-auto h-20 w-full md:h-23">
       <div className="flex h-full items-center justify-between gap-8 px-6 lg:px-10 xl:px-40">
         <Link to="/" className="font-logo text-h3 md:text-h2 lg:text-h1 block">
           Bid<span className="text-purple">&amp;</span>Buy
@@ -83,21 +122,27 @@ const Header = () => {
                 <New />
               </button>
             </li>
-            <li className="relative">
+            {isChatOpen &&
+              createPortal(
+                <ChatModal onClose={() => setIsChatOpen(false)} />,
+                modalRoot
+              )}
+            <li>
               <button className="relative" onClick={() => setIsNotiOpen(true)}>
                 <Bell />
               </button>
             </li>
+            {isNotiOpen &&
+              createPortal(
+                <NotiModal
+                  onClose={() => setIsNotiOpen(false)}
+                  onDelete={() => setIsNotiOpen(false)}
+                />,
+                modalRoot
+              )}
           </ul>
         </nav>
       </div>
-      {isChatOpen && <ChatModal onClose={() => setIsChatOpen(false)} />}
-      {isNotiOpen && (
-        <NotiModal
-          onClose={() => setIsNotiOpen(false)}
-          onDelete={() => setIsNotiOpen(false)}
-        />
-      )}
     </header>
   );
 };

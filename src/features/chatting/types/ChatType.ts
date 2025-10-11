@@ -14,7 +14,7 @@ export interface ChatRoomProps {
   nickname: string;
   image_url: string;
   chatroom_id: bigint;
-  message?: string;
+  message: string;
   created_at: string;
 }
 

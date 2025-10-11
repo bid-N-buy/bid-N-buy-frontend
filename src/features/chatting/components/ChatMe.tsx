@@ -7,11 +7,7 @@ const ChatMe = () => {
         <span className="text-g300 mr-1 text-xs">읽음</span>
         <span className="text-g300 text-xs">time</span>
       </div>
-      <div className="bg-light-purple max-w-80 rounded-md p-3">
-        <p className="text-right">
-          메세지메세지메세지메세지메세지메세지메세지메세지메세지메세지메세지메세지메세지메세지메세지메세지메세지메세지메세지메세지메세지메세지메세지메세지메세지메세지메세지
-        </p>
-      </div>
+      <div className="bg-light-purple max-w-80 rounded-md p-3">메세지</div>
     </div>
   );
 };
