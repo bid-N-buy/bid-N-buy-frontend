@@ -8,7 +8,7 @@ const ChatList = ({ chatRooms, onSelectRoom }: ChatListProps) => {
     <ul>
       {chatRooms.map((chat) => (
         <li
-          key={chat.chatroom_id.toString()}
+          key={chat.chatroom_id}
           onClick={() => onSelectRoom(chat.chatroom_id)}
           className="border-g400 flex cursor-pointer items-center gap-2 border-b p-4 hover:bg-gray-50"
         >

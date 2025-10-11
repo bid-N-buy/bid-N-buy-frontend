@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState } from "react";
 import type { ModalProps, ChatRoomProps } from "../types/ChatType";
 import ChatList from "./ChatList";
 import ChatRoom from "./ChatRoom";
@@ -7,21 +7,23 @@ import { X, ChevronLeft, EllipsisVertical } from "lucide-react";
 // 더미 데이터
 const DUMMY_CHAT_ROOMS: ChatRoomProps[] = [
   {
-    user_id: BigInt(1),
+    buyer_id: "1",
     nickname: "홍길동",
     image_url: "",
-    chatroom_id: BigInt(101),
+    chatroom_id: "101",
+    auction_id: "101",
     message:
       "안녕하세요.안녕하세요.안녕하세요.안녕하세요.안녕하세요.안녕하세요.안녕하세요.안녕하세요.안녕하세요.안녕하세요.안녕하세요.안녕하세요.안녕하세요.안녕하세요.",
-    created_at: Date(),
+    created_at: "07:23",
   },
   {
-    user_id: BigInt(2),
+    buyer_id: "2",
     nickname: "김철수",
     image_url: "",
-    chatroom_id: BigInt(102),
+    chatroom_id: "102",
+    auction_id: "102",
     message: "네고 가능할까요?",
-    created_at: Date(),
+    created_at: "07:23",
   },
 ];
 
@@ -49,7 +51,7 @@ const ChatModal = ({ onClose, onDelete, onRate }: ModalProps) => {
   }, [modalRef, onClose]);
 
   // 각 Chat 누를 시 채팅방으로 넘어가는 함수
-  const handleSelectRoom = (chatroom_id: bigint) => {
+  const handleSelectRoom = (chatroom_id: string) => {
     const roomInfo = chatRooms.find((chat) => chat.chatroom_id === chatroom_id);
     if (roomInfo) {
       // 3. 찾은 정보를 상태로 저장 (이전 단계에서 논의된 ChatRoomProps 상태 사용)
@@ -120,9 +122,13 @@ const ChatModal = ({ onClose, onDelete, onRate }: ModalProps) => {
         )}
         {currentView === "room" && selectedRoomInfo && (
           <ChatRoom
-            roomId={selectedRoomInfo.chatroom_id.toString()}
-            image_url={selectedRoomInfo.image_url}
+            chatroom_id={selectedRoomInfo.chatroom_id}
+            buyer_id={selectedRoomInfo.buyer_id}
+            auction_id={selectedRoomInfo.auction_id}
             nickname={selectedRoomInfo.nickname}
+            image_url={selectedRoomInfo.image_url}
+            message={selectedRoomInfo.message}
+            created_at={selectedRoomInfo.created_at}
           />
         )}
       </div>
