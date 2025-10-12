@@ -1,63 +1,44 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../../../shared/api/axiosInstance";
+import { useAuthStore } from "../../auth/store/authStore";
 import type { ChatRoomProps } from "../types/ChatType";
-
-// 더미 데이터
-const DUMMY_CHAT_ROOMS: ChatRoomProps[] = [
-  {
-    user_id: BigInt(1),
-    nickname: "홍길동",
-    image_url: "",
-    chatroom_id: BigInt(101),
-    message: "안녕하세요.",
-    created_at: Date(),
-  },
-  {
-    user_id: BigInt(2),
-    nickname: "김철수",
-    image_url: "",
-    chatroom_id: BigInt(102),
-    message: "네고 가능할까요?",
-    created_at: Date(),
-  },
-  // ...
-];
 
 export const useChatApi = () => {
   // list에 더이 데이터 표시
-  const [chatRooms, setChatRooms] = useState<ChatRoomProps[]>(DUMMY_CHAT_ROOMS);
+  const [chatRooms, setChatRooms] = useState<ChatRoomProps[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  if (isLoading) {
-    // return <Skeleton />
-  }
-
-  if (error) {
-    // return (
-    //   <div className="flex justify-center items-center h-48 text-red-500">
-    //     {error}
-    //   </div>
-    // );
-  }
+  const token = useAuthStore((state) => state.accessToken);
 
   // 임시 데이터 로딩 로직
   useEffect(() => {
+    if (!token) {
+      setError("채팅목록을 불러올 수 없습니다.");
+      setIsLoading(false);
+      return;
+    }
+
     const loadChatList = async () => {
       try {
         setIsLoading(true);
         setError(null);
-        const response = await axios.get<ChatRoomProps[]>("/chatrooms/list");
+        const response = await api.get<ChatRoomProps[]>("/chatrooms/list", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
         setChatRooms(response.data);
       } catch (error) {
         console.error("Failed to load chat rooms:", error);
+        setError(`채팅 목록을 불러올 수 없습니다: ${error}`);
       } finally {
         setIsLoading(false);
       }
     };
     loadChatList();
-  }, []);
+  }, [token]);
 
   return { chatRooms, isLoading, error };
 };

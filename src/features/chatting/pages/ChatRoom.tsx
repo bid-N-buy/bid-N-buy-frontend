@@ -23,7 +23,8 @@ const ChatRoom = ({
   const [isConnected, setIsConnected] = useState<boolean>(false);
 
   // 토큰 전역에서 들고 오기
-  const jwtToken = useAuthStore((state) => state.token);
+  const token = useAuthStore((state) => state.accessToken);
+
   // 웹소켓 주소
   const wsUrl = "http://localhost:8080/ws/bid";
 
@@ -39,7 +40,7 @@ const ChatRoom = ({
 
       // CONNECT 헤더에 JWT 토큰 추가
       connectHeaders: {
-        "Auth-Token": `${jwtToken}`,
+        "Auth-Token": `${token}`,
       },
 
       onConnect: () => {
@@ -74,7 +75,7 @@ const ChatRoom = ({
         clientRef.current.deactivate();
       }
     };
-  }, [wsUrl, chatroom_id, jwtToken]);
+  }, [wsUrl, chatroom_id, token]);
 
   // 메시지 수신 및 화면 업데이스 로직
   const handleMessageReceived = (message: IMessage) => {
@@ -136,6 +137,7 @@ const ChatRoom = ({
           msg.sender_id != buyer_id ? (
             <ChatMe
               key={index}
+              message_type={msg.message_type}
               message={msg.message}
               created_at={new Date(msg.created_at).toLocaleTimeString()}
               is_read={msg.is_read}
@@ -145,6 +147,7 @@ const ChatRoom = ({
               key={index}
               image_url={image_url}
               nickname={nickname}
+              message_type={msg.message_type}
               message={msg.message}
               created_at={new Date(msg.created_at).toLocaleTimeString()}
               is_read={msg.is_read}
