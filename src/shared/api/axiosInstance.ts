@@ -1,4 +1,3 @@
-// shared/api/axiosInstance.ts (핵심 부분만)
 import axios, { AxiosError } from "axios";
 import type {
   AxiosInstance,
@@ -12,9 +11,8 @@ import type {
   LoginResponse,
 } from "../types/auth";
 
-export const API_BASE = import.meta.env.PROD
-  ? import.meta.env.VITE_BACKEND_ADDRESS
-  : "/api";
+export const API_BASE = import.meta.env.VITE_BACKEND_ADDRESS;
+
 const api: AxiosInstance = axios.create({
   baseURL: API_BASE,
   withCredentials: true,
