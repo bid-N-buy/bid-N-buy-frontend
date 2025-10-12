@@ -9,7 +9,7 @@ const ChatInput = ({
 }: ChatInputProps) => {
   return (
     <div className="bg-white p-4">
-      <form className="flex gap-2">
+      <form className="flex gap-2" onSubmit={sendMessage}>
         <input
           type="text"
           name="chatMessage"
@@ -19,14 +19,12 @@ const ChatInput = ({
           disabled={!isConnected}
           value={inputMessage}
           onChange={(e) => setInputMessage(e.target.value)}
-          onKeyDown={(e) => {
-            e.key === "Enter" && sendMessage();
-          }}
+          onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+          required
         />
         <button
           type="submit"
           className="bg-purple w-[20%] rounded-md py-2 text-white"
-          onClick={sendMessage}
         >
           전송
         </button>

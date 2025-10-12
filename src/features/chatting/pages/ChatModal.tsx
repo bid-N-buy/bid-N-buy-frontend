@@ -2,42 +2,22 @@ import { useRef, useEffect, useState } from "react";
 import type { ModalProps, ChatRoomProps } from "../types/ChatType";
 import ChatList from "./ChatList";
 import ChatRoom from "./ChatRoom";
+// import { useAuthStore } from "../../auth/store/authStore";
 import { X, ChevronLeft, EllipsisVertical } from "lucide-react";
-
-// 더미 데이터
-const DUMMY_CHAT_ROOMS: ChatRoomProps[] = [
-  {
-    buyer_id: "1",
-    nickname: "홍길동",
-    image_url: "",
-    chatroom_id: "101",
-    auction_id: "101",
-    message:
-      "안녕하세요.안녕하세요.안녕하세요.안녕하세요.안녕하세요.안녕하세요.안녕하세요.안녕하세요.안녕하세요.안녕하세요.안녕하세요.안녕하세요.안녕하세요.안녕하세요.",
-    created_at: "07:23",
-  },
-  {
-    buyer_id: "2",
-    nickname: "김철수",
-    image_url: "",
-    chatroom_id: "102",
-    auction_id: "102",
-    message: "네고 가능할까요?",
-    created_at: "07:23",
-  },
-];
+import { useChatApi } from "../api/useChatApi";
 
 const ChatModal = ({ onClose, onDelete, onRate }: ModalProps) => {
   const modalRef = useRef<HTMLDivElement>(null);
   // 채팅목록/채팅방 화면 상태관리
   const [currentView, setCurrentView] = useState<string>("list");
-  // list에 더미 데이터 표시: useChatApi로 이동할 것
-  const [chatRooms, setChatRooms] = useState<ChatRoomProps[]>(DUMMY_CHAT_ROOMS);
+  // 채팅목록 불러오기
+  const { chatRooms, isLoading, error } = useChatApi();
   // 이동할 roomInfo
   const [selectedRoomInfo, setSelectedRoomInfo] =
     useState<ChatRoomProps | null>(null);
   // chatroom에서 해당 채팅방 삭제 메뉴
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  // const actualChatRoomId = 1;
 
   // modal창 닫기: 여백 누를 시 꺼지도록
   useEffect(() => {
@@ -119,6 +99,16 @@ const ChatModal = ({ onClose, onDelete, onRate }: ModalProps) => {
       <div className="h-[calc(100%-59px)] overflow-x-hidden overflow-y-auto">
         {currentView === "list" && (
           <ChatList chatRooms={chatRooms} onSelectRoom={handleSelectRoom} />
+        )}
+        {isLoading && (
+          <p className="flex-column flex h-[100%] items-center justify-center p-4 text-center">
+            채팅 목록 로딩 중...
+          </p>
+        )}
+        {error && (
+          <p className="flex-column flex h-[100%] items-center justify-center p-4 text-red-500">
+            {error}
+          </p>
         )}
         {currentView === "room" && selectedRoomInfo && (
           <ChatRoom
