@@ -3,6 +3,7 @@ import type {
   AxiosInstance,
   InternalAxiosRequestConfig,
   AxiosResponse,
+  AxiosRequestHeaders,
 } from "axios";
 import { useAuthStore } from "../../features/auth/store/authStore";
 import type {
@@ -19,29 +20,69 @@ const api: AxiosInstance = axios.create({
   timeout: 10000,
 });
 
-const isAuthEndpoint = (url: string) =>
-  url.includes("/auth/reissue") ||
-  url.includes("/auth/login") ||
-  url.includes("/auth/signup");
+// 경로 매칭
+const getPath = (url: string) => {
+  try {
+    return new URL(url, API_BASE).pathname;
+  } catch {
+    return url;
+  }
+};
 
-// 요청: /auth/* 에는 Authorization 붙이지 않기
+const isAuthEndpoint = (url: string) => {
+  const p = getPath(url);
+  return (
+    p.startsWith("/auth/signup") ||
+    p.startsWith("/auth/login") ||
+    p.startsWith("/auth/reissue")
+  );
+};
+
+// 요청 인터셉터
 api.interceptors.request.use((config) => {
   const url = config.url ?? "";
-  if (!isAuthEndpoint(url)) {
+
+  const isSameOrigin =
+    url.startsWith("/") || (API_BASE && url.startsWith(API_BASE));
+
+  if (isSameOrigin && !isAuthEndpoint(url)) {
     const { accessToken } = useAuthStore.getState();
     if (accessToken) {
-      config.headers = config.headers ?? {};
-      config.headers.Authorization = `Bearer ${accessToken}`;
+      const h = (config.headers ?? {}) as AxiosRequestHeaders;
+      h.Authorization = `Bearer ${accessToken}`;
+      config.headers = h;
     }
   }
   return config;
 });
 
+// refresh token 큐 관리 변수
 let isRefreshing = false;
 let waitQueue: Array<(t: string | null) => void> = [];
 const flush = (t: string | null) => {
   waitQueue.forEach((r) => r(t));
   waitQueue = [];
+};
+
+// 재발급 응답 파싱 로직 함수화
+interface TokenResult {
+  access: string | null;
+  refresh: string | null;
+}
+
+const pickTokens = (p: Record<string, any> | undefined): TokenResult => {
+  if (!p) return { access: null, refresh: null };
+
+  if (p.tokenInfo) {
+    return {
+      access: p.tokenInfo.accessToken ?? null,
+      refresh: p.tokenInfo.refreshToken ?? null,
+    };
+  }
+  return {
+    access: p.accessToken ?? null,
+    refresh: p.refreshToken ?? null,
+  };
 };
 
 api.interceptors.response.use(
@@ -69,8 +110,9 @@ api.interceptors.response.use(
     if (isRefreshing) {
       const token = await new Promise<string | null>((r) => waitQueue.push(r));
       if (token) {
-        original.headers = original.headers ?? {};
-        original.headers.Authorization = `Bearer ${token}`;
+        const h = (original.headers ?? {}) as AxiosRequestHeaders;
+        h.Authorization = `Bearer ${token}`;
+        original.headers = h;
       }
       return api(original);
     }
@@ -79,28 +121,24 @@ api.interceptors.response.use(
     try {
       const { refreshToken, setTokens, clear } = useAuthStore.getState();
 
-      // ✅ 서버는 refreshToken만 필요
-      const body: ReissueRequest | undefined = refreshToken
-        ? { refreshToken }
-        : undefined;
+      // refreshToken 부재 시 갱신 시도 차단
+      if (!refreshToken) {
+        clear();
+        flush(null);
+        throw error;
+      }
 
-      const refreshRes = await axios.post<
-        | ReissueResponse
-        | LoginResponse
-        | { accessToken?: string; refreshToken?: string }
-      >(`${API_BASE}/auth/reissue`, body ?? {}, { withCredentials: true });
+      const body: ReissueRequest = { refreshToken };
 
-      const payload = refreshRes.data;
-      const newAccess =
-        "tokenInfo" in (payload as object)
-          ? (payload as ReissueResponse | LoginResponse).tokenInfo.accessToken
-          : ((payload as { accessToken?: string }).accessToken ?? null);
+      const refreshRes = await axios.post<unknown>(
+        `${API_BASE}/auth/reissue`,
+        body,
+        { withCredentials: true }
+      );
 
-      const newRefresh =
-        "tokenInfo" in (payload as object)
-          ? ((payload as ReissueResponse | LoginResponse).tokenInfo
-              .refreshToken ?? null)
-          : ((payload as { refreshToken?: string }).refreshToken ?? null);
+      const { access: newAccess, refresh: newRefresh } = pickTokens(
+        refreshRes.data as Record<string, any>
+      );
 
       if (!newAccess) {
         clear();
@@ -111,8 +149,10 @@ api.interceptors.response.use(
       setTokens(newAccess, newRefresh ?? null);
       flush(newAccess);
 
-      original.headers = original.headers ?? {};
-      original.headers.Authorization = `Bearer ${newAccess}`;
+      const h2 = (original.headers ?? {}) as AxiosRequestHeaders;
+      h2.Authorization = `Bearer ${newAccess}`;
+      original.headers = h2;
+
       return api(original);
     } catch (e) {
       useAuthStore.getState().clear();
