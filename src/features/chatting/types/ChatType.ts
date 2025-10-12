@@ -34,6 +34,17 @@ export interface ChatMessageProps {
   is_read: boolean;
 }
 
+export type ChatYouProps = Pick<
+  ChatMessageProps,
+  "created_at" | "image_url" | "message" | "is_read" | "message_type"
+> &
+  Pick<ChatRoomProps, "nickname">;
+
+export type ChatMeProps = Pick<
+  ChatMessageProps,
+  "created_at" | "message" | "is_read" | "message_type"
+>;
+
 export interface ChatInputProps {
   isConnected: boolean;
   inputMessage: string;
