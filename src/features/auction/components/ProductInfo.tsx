@@ -1,4 +1,3 @@
-// *****todo 시작 시간 마감 시간 입찰 회수 추가*****
 // todo 컴포넌트 분리
 import React, { useState } from "react";
 import BidModal from "./BidModal";
@@ -21,6 +20,9 @@ interface ProductInfoProps {
   onChatClick?: () => void;
   onShareClick?: () => void;
   onDeleteClick?: () => void;
+  startTime?: string;
+  endTime?: string;
+  bidCount?: number;
 }
 
 const ProductInfo = ({
@@ -38,6 +40,9 @@ const ProductInfo = ({
   onChatClick,
   onShareClick,
   onDeleteClick,
+  startTime = "2025-09-12T10:00:00",
+  endTime = "2025-10-15T18:00:00",
+  bidCount = 0,
 }: ProductInfoProps) => {
   const [isLiked, setIsLiked] = useState(liked);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -49,6 +54,18 @@ const ProductInfo = ({
     onLikeToggle?.();
   };
 
+  // 일시 포맷
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+
+    return `${year}. ${month}. ${day}. ${hours}:${minutes}`;
+  };
+
   const handleBidSubmit = (bidPrice: number) => {
     if (bidPrice === 0) {
       showToast("입찰 가능 금액 이상 입력해 주세요.", "error");
@@ -57,7 +74,6 @@ const ProductInfo = ({
 
     // 여기서 API 호출 (추후 구현)
     console.log("입찰가: ", bidPrice);
-
     showToast("정상적으로 입찰되었습니다.", "success");
     setIsBidModalOpen(false);
   };
@@ -65,57 +81,63 @@ const ProductInfo = ({
   return (
     <>
       <div className="w-full lg:aspect-[645/500]">
-        <div className="flex h-full flex-col justify-between gap-5 px-4 py-5 md:gap-[30px] md:px-[10px] md:py-[20px]">
-          {/* Top 카테고리, 제목 */}
-          <div className="relative flex flex-[2] flex-col gap-2 md:gap-3">
-            <div className="text-g300 text-h5">
-              {categoryMain} &gt; {categorySub}
-            </div>
+        <div className="flex h-full flex-col justify-between gap-5 px-1.5 py-3 sm:gap-4 sm:px-2 sm:py-4 md:gap-4.5 md:px-2.5 md:py-5 lg:gap-5">
+          {/* 1-2. 카테고리 ~ 제목 */}
+          <div className="flex flex-col gap-1 sm:gap-1.5 md:gap-2 lg:gap-3.5">
+            {/* 1. 카테고리 + 더보기 */}
+            <div className="relative">
+              <div className="text-g300 text-h7 md:text-h6 sm:text-base">
+                {categoryMain} &gt; {categorySub}
+              </div>
 
-            <h3 className="text-g100 text-h2 max-w-full truncate pr-10 leading-snug font-bold md:pr-12 md:leading-tight">
-              {title}
-            </h3>
+              {/* 더보기? 아이콘 - todo 분리 */}
+              <div className="absolute top-0 right-0">
+                <button
+                  onClick={() => setIsMenuOpen(!isMenuOpen)}
+                  className="hover:bg-g500/50 rounded-full p-1.5 transition-colors sm:p-2"
+                  aria-label="더보기"
+                >
+                  <EllipsisVertical className="text-g200 h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8" />
+                </button>
 
-            {/* 더보기? 아이콘 - todo 분리 */}
-            <div className="absolute top-0 right-0">
-              <button
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="hover:bg-g500/50 rounded-full p-2 transition-colors"
-                aria-label="더보기"
-              >
-                <EllipsisVertical className="text-g200 h-7 w-7 md:h-8 md:w-8" />
-              </button>
-
-              {isMenuOpen && (
-                <div className="border-g400 absolute top-full right-0 z-10 mt-2 w-32 rounded-md border bg-white shadow-lg">
-                  <button
-                    onClick={() => {
-                      onShareClick?.();
-                      setIsMenuOpen(false);
-                    }}
-                    className="text-g100 hover:bg-g500 w-full px-4 py-2.5 text-left text-base transition-colors md:py-3"
-                  >
-                    공유
-                  </button>
-                  {isSeller && (
+                {isMenuOpen && (
+                  <div className="border-g400 absolute top-full right-0 z-10 mt-2 w-18 rounded-md border bg-white shadow-lg">
                     <button
                       onClick={() => {
-                        onDeleteClick?.();
+                        onShareClick?.();
                         setIsMenuOpen(false);
                       }}
-                      className="border-g400 text-red hover:bg-g500 w-full border-t px-4 py-2.5 text-left text-base transition-colors md:py-3"
+                      className="text-g100 hover:bg-g500 w-full px-4 py-2.5 text-center text-base transition-colors md:py-3"
                     >
-                      삭제
+                      공유
                     </button>
-                  )}
-                </div>
-              )}
+                    {isSeller && (
+                      <button
+                        onClick={() => {
+                          onDeleteClick?.();
+                          setIsMenuOpen(false);
+                        }}
+                        className="border-g400 text-red hover:bg-g500 w-full border-t px-4 py-2.5 text-left text-base transition-colors md:py-3"
+                      >
+                        삭제
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* 2. 제목 */}
+            <div>
+              <span className="text-g100 text-h4 sm:text-h4 md:text-h3 lg:text-h2 max-w-full truncate pr-10 font-bold md:pr-12">
+                {title}
+              </span>
             </div>
           </div>
 
-          {/* Middle 판매자 정보 - todo 분리 */}
-          <div className="flex flex-[1] items-center gap-4 md:gap-5">
-            <div className="bg-g500 h-16 w-16 flex-shrink-0 overflow-hidden rounded-full md:h-20 md:w-20">
+          {/* 3. 판매자 정보 - todo 분리 */}
+          <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
+            <div className="bg-g500 h-11 w-11 flex-shrink-0 overflow-hidden rounded-full sm:h-12 sm:w-12 md:h-13 md:w-13 lg:h-17 lg:w-17">
               {sellerProfileImage ? (
                 <img
                   src={sellerProfileImage}
@@ -124,41 +146,40 @@ const ProductInfo = ({
                 />
               ) : null}
             </div>
-            <div className="flex min-w-0 items-center gap-2 md:gap-3">
-              <span className="text-g100 text-h4 max-w-[50vw] truncate font-medium md:max-w-none">
+            <div className="flex min-w-0 items-center gap-1 sm:gap-2">
+              <span className="text-g100 text-h7 md:text-h6 lg:text-h5 max-w-[50vw] truncate font-medium sm:text-base md:max-w-none">
                 {sellerNickname}
               </span>
-              <span className="text-g300 text-h5 whitespace-nowrap">
+              <span className="text-g300 text-h8 sm:text-h7 lg:text-h6 whitespace-nowrap md:text-base">
                 {sellerTemperature}°C
               </span>
             </div>
           </div>
 
-          {/* Bottom 가격, 버튼 등 */}
-          <div className="flex flex-[3] flex-col justify-end gap-4 md:gap-[33px]">
-            <div className="flex flex-wrap items-baseline gap-2 md:gap-3">
-              <span className="text-g100 text-h2 leading-tight font-bold">
-                현재
-              </span>
-              <span className="text-g100 text-h2 leading-tight font-bold">
-                {currentPrice.toLocaleString()}원
-              </span>
-              <span className="text-g300 text-h5 whitespace-nowrap">
-                (최소 입찰 단위 : {minBidUnit.toLocaleString()}원)
-              </span>
-            </div>
+          {/* 4. 가격 + 최소 입찰 단위 */}
+          <div className="flex flex-wrap items-baseline gap-1.5 sm:gap-2.5">
+            <span className="text-g100 text-h4 sm:text-h4 md:text-h3 lg:text-h2 font-bold">
+              현재 {currentPrice.toLocaleString()}원
+            </span>
+            <span className="text-g300 text-h7 md:text-h6 whitespace-nowrap sm:text-base">
+              (최소 입찰 단위 : {minBidUnit.toLocaleString()}원)
+            </span>
+          </div>
 
+          {/* 5-6. 버튼들 ~ 기타 */}
+          <div className="flex flex-col justify-end gap-1 sm:gap-1.5 md:gap-2 lg:gap-3.5">
+            {/* 5. 버튼들 + 찜 */}
             <div className="flex items-stretch gap-2 md:gap-1.5">
-              <div className="grid flex-1 grid-cols-1 gap-2 md:grid-cols-2 md:gap-3">
+              <div className="grid flex-1 grid-cols-1 gap-2 md:grid-cols-2 md:gap-2.5">
                 <button
                   onClick={onChatClick}
-                  className="text-h5 border-purple text-purple hover:bg-light-purple cursor-pointer rounded-md border py-3 font-bold transition-colors md:py-4"
+                  className="text-h7 md:text-h6 lg:text-h5 border-purple text-purple hover:bg-light-purple cursor-pointer rounded-md border py-2 font-bold transition-colors sm:py-3 sm:text-base md:py-4"
                 >
                   판매자와 대화
                 </button>
                 <button
                   onClick={() => setIsBidModalOpen(true)}
-                  className="text-h5 bg-purple hover:bg-deep-purple cursor-pointer rounded-md py-3 font-bold text-white transition-colors md:py-4"
+                  className="text-h7 md:text-h6 lg:text-h5 bg-purple hover:bg-deep-purple cursor-pointer rounded-md py-2 font-bold text-white transition-colors sm:py-3 sm:text-base md:py-4"
                 >
                   입찰
                 </button>
@@ -167,13 +188,27 @@ const ProductInfo = ({
               {/* 찜 */}
               <button
                 onClick={handleLikeClick}
-                className="hover:bg-g500/50 flex-shrink-0 rounded-full p-2 transition-colors"
+                className="group flex-shrink-0 rounded-full p-1.5 transition-colors focus:outline-none sm:p-2"
                 aria-label="찜"
               >
                 <Heart
-                  className={`h-7 w-7 md:h-8 md:w-8 ${isLiked ? "fill-purple text-purple" : "text-g300"}`}
+                  className={`h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 ${isLiked ? "fill-purple text-purple" : "text-g300 group-hover:text-purple"}`}
                 />
               </button>
+            </div>
+
+            {/* 6. 기간 + 입찰 횟수 */}
+            <div className="bg-g500/50 text-h7 md:text-h6 flex items-center gap-2 rounded-md px-2 py-1.5 sm:gap-3 sm:px-3 sm:py-2 sm:text-base">
+              <span className="text-g300">
+                기간{" "}
+                <span className="text-g200">
+                  {formatDate(startTime)} - {formatDate(endTime)}
+                </span>
+              </span>
+              <span className="text-g300">|</span>
+              <span className="text-g200">
+                입찰 <span className="text-purple font-bold">{bidCount}</span>회
+              </span>
             </div>
           </div>
         </div>
