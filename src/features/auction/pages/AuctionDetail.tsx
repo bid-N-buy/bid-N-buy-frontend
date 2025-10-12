@@ -12,11 +12,11 @@ const AuctionDetail = () => {
       <section className="w-full pt-8 md:pt-12">
         <div className="grid grid-cols-12 gap-4 sm:gap-6 md:gap-[30px]">
           {/* 좌측 - ProductImage */}
-          <div className="col-span-12 md:col-span-6">
+          <div className="col-span-12 lg:col-span-6">
             <ProductImage />
           </div>
           {/* 우측 - ProductInfo */}
-          <div className="col-span-12 md:col-span-6">
+          <div className="col-span-12 lg:col-span-6">
             <ProductInfo />
           </div>
         </div>
