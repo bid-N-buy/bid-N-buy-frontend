@@ -50,6 +50,7 @@ const AuctionDetail = () => {
               categoryMain={auction.categoryName}
               sellerNickname={auction.sellerNickname}
               currentPrice={auction.currentPrice}
+              minBidPrice={auction.minBidPrice}
               endTime={auction.endTime}
               wishCount={auction.wishCount}
               sellingStatus={auction.sellingStatus}
