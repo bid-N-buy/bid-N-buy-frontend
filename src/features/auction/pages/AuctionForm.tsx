@@ -1,5 +1,5 @@
 // todo 시간 입력 fix.. 등
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Camera } from "lucide-react";
 import { useAuctionFormStore } from "../store/auctionFormStore";
 import { createAuction } from "../api/auctions";
@@ -8,6 +8,8 @@ import { validateCreateAuction } from "../utils/validation";
 import { capToTen, ensureSingleMain } from "../utils/images";
 import type { ImageType } from "../types/auctions";
 import Toast from "../../../shared/components/Toast";
+import { useNavigate } from "react-router-dom";
+import { useCategoryStore } from "../store/categoryStore";
 
 // 숫자 파싱
 const parseNum = (s: string) => {
@@ -31,6 +33,7 @@ const combineDateTime = (dateStr: string, timeStr: string) => {
 };
 
 const AuctionForm = () => {
+  const navigate = useNavigate();
   const { toast, showToast, hideToast } = useToast();
 
   const {
@@ -48,6 +51,13 @@ const AuctionForm = () => {
     reset,
   } = useAuctionFormStore();
 
+  const mains = useCategoryStore((s) => s.mains);
+  const subsByParent = useCategoryStore((s) => s.subsByParent);
+  const loadingTop = useCategoryStore((s) => s.loadingTop);
+  const loadedTop = useCategoryStore((s) => s.loadedTop);
+  const loadTop = useCategoryStore((s) => s.loadTop);
+  const loadSubs = useCategoryStore((s) => s.loadSubs);
+
   // UI 편의용 로컬 상태(텍스트 -> date/time 토글)
   const [dateStart, setDateStart] = useState("");
   const [timeStart, setTimeStart] = useState("");
@@ -56,16 +66,37 @@ const AuctionForm = () => {
 
   const [loading, setLoading] = useState(false);
 
-  // 임시 카테고리 - todo
-  const onChangeCategoryMain = (v: string) => {
-    set("categoryMain", v);
+  useEffect(() => {
+    if (loadedTop) return;
+
+    let shown = false;
+    loadTop().catch((err) => {
+      console.error("[Category] useEffect catch (loadTop):", err);
+      if (!shown) {
+        shown = true;
+        showToast("카테고리를 불러오지 못했습니다.", "error");
+      }
+    });
+  }, [loadedTop]);
+
+  const onChangeCategoryMain = async (val: string) => {
+    set("categoryMain", val);
     set("categorySub", "");
     set("categoryId", null);
+
+    const parentId = Number(val);
+    if (Number.isFinite(parentId)) {
+      try {
+        await loadSubs(parentId);
+      } catch {
+        showToast("소분류를 불러오지 못했습니다.", "error");
+      }
+    }
   };
-  const onChangeCategorySub = (v: string) => {
-    set("categorySub", v);
-    const fakeMap: Record<string, number> = { sub1: 101, sub2: 102 };
-    set("categoryId", fakeMap[v] ?? null);
+
+  const onChangeCategorySub = (val: string) => {
+    set("categorySub", val);
+    set("categoryId", val ? Number(val) : null);
   };
 
   // 파일 선택 핸들러
@@ -149,7 +180,7 @@ const AuctionForm = () => {
       revokeAll();
       reset();
 
-      // todo - navigate(`/auctions/${res.auctionId}`);
+      navigate("/auctions", { replace: true }); // todo 추후 경로 수정
     } catch (err: any) {
       // toRequest 에러 여기로
       const msg =
@@ -209,7 +240,15 @@ const AuctionForm = () => {
                     <button
                       className="underline"
                       type="button"
-                      onClick={() => setMainImage(i)}
+                      onClick={() => {
+                        const curMain = images.find(
+                          (img) => img.imageType === "MAIN"
+                        );
+                        if (curMain?.imageUrl.startsWith("blob:")) {
+                          URL.revokeObjectURL(curMain.imageUrl);
+                        }
+                        setMainImage(i);
+                      }}
                     >
                       대표
                     </button>
@@ -260,19 +299,39 @@ const AuctionForm = () => {
               value={categoryMain}
               onChange={(e) => onChangeCategoryMain(e.target.value)}
               className="border-g400 focus:border-purple cursor-pointer appearance-none rounded-md border bg-white px-3 py-2.5 text-base focus:outline-none"
+              disabled={loadingTop && !loadedTop}
             >
-              <option value="">대분류</option>
-              <option value="category1">카테고리 1</option>
-              <option value="category2">카테고리 2</option>
+              <option value="">
+                {loadingTop ? "불러오는 중..." : "대분류"}
+              </option>
+              {mains.map((m) => (
+                <option key={m.categoryId} value={m.categoryId.toString()}>
+                  {m.categoryName}
+                </option>
+              ))}
             </select>
             <select
               value={categorySub}
               onChange={(e) => onChangeCategorySub(e.target.value)}
               className="border-g400 focus:border-purple cursor-pointer appearance-none rounded-md border bg-white px-3 py-2.5 text-base focus:outline-none"
+              disabled={!categoryMain}
             >
-              <option value="">소분류</option>
-              <option value="sub1">소분류 1</option>
-              <option value="sub2">소분류 2</option>
+              <option value="">
+                {!categoryMain
+                  ? "소분류"
+                  : (subsByParent[Number(categoryMain)]?.length ?? 0) > 0
+                    ? "소분류"
+                    : "소분류 없음"}
+              </option>
+
+              {(categoryMain
+                ? (subsByParent[Number(categoryMain)] ?? [])
+                : []
+              ).map((s) => (
+                <option key={s.categoryId} value={s.categoryId.toString()}>
+                  {s.categoryName}
+                </option>
+              ))}
             </select>
           </div>
         </div>
