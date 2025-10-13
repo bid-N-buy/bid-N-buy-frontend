@@ -209,24 +209,37 @@ const LoginForm: React.FC = () => {
         </Link>
       </div>
 
-      {/* 소셜 로그인 */}
+      {/* 소셜 로그인 (네이버/카카오 새 스타일) */}
       <div className="mt-4 space-y-3">
+        {/* 네이버 */}
         <button
           type="button"
           onClick={startNaver}
-          style={{ backgroundImage: `url(${naverBg})` }}
-          className="flex h-[50px] w-full items-center justify-center rounded-md bg-cover bg-center"
           disabled={loading}
           aria-label="네이버 로그인"
-        />
+          className="flex h-[50px] w-full items-center justify-center gap-2 rounded-md bg-[#03C75A] text-white transition hover:brightness-105 focus:ring-2 focus:ring-[#03C75A]/40 focus:outline-none active:brightness-95 disabled:opacity-60"
+        >
+          {/* 네이버 아이콘 (화이트 사각형 + N) */}
+          <span className="grid h-6 w-6 place-items-center rounded-[4px] bg-white font-black text-[#03C75A]">
+            N
+          </span>
+          <span className="text-[15px] font-semibold">네이버로 로그인</span>
+        </button>
+
+        {/* 카카오 */}
         <button
           type="button"
           onClick={startKakao}
-          style={{ backgroundImage: `url(${kakaoBg})` }}
-          className="flex h-[50px] w-full items-center justify-center rounded-md bg-cover bg-center"
           disabled={loading}
           aria-label="카카오 로그인"
-        />
+          className="flex h-[50px] w-full items-center justify-center gap-2 rounded-md bg-[#FEE500] text-black transition hover:brightness-105 focus:ring-2 focus:ring-[#FEE500]/40 focus:outline-none active:brightness-95 disabled:opacity-60"
+        >
+          {/* 카카오 아이콘 (검정 원형 + K) – 이미지 없이 심볼만 */}
+          <span className="grid h-6 w-6 place-items-center rounded-full bg-black text-[13px] font-bold text-[#FEE500]">
+            K
+          </span>
+          <span className="text-[15px] font-semibold">카카오로 로그인</span>
+        </button>
       </div>
     </form>
   );
