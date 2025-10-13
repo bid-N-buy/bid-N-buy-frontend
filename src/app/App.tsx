@@ -10,6 +10,10 @@ import { useAdminStore } from "../features/admin/store/adminStore";
 import ProtectedRoute from "../shared/routes/ProtectedRoute";
 import GuestOnlyRoute from "../shared/routes/GuestOnlyRoute";
 import { useAuthInit } from "../features/auth/hooks/UseAuthInit";
+import ProfileDetails from "../features/mypage/components/profile/ProfileDetails";
+import ProfileSetting from "../features/mypage/components/profile/ProfileSetting";
+import ResetPassword from "../features/auth/components/login/ResetPasswordForm";
+import MypageLayout from "../features/mypage/pages/MypageLayout";
 
 // 공통
 const Header = React.lazy(() => import("../shared/components/Header"));
@@ -110,14 +114,13 @@ export default function App() {
         {/* 기본 레이아웃 */}
         <Route element={<AppLayout />}>
           <Route index element={<Main />} />
-
           {/* 로그인/회원가입 */}
           <Route element={<GuestOnlyRoute />}>
             <Route path="/login" element={<LoginPage />} />
 
             <Route path="/signup" element={<SignUpPage />} />
+            <Route path="/resetPassword" element={<ResetPassword />} />
           </Route>
-
           {/* 경매 */}
           <Route path="/auctions">
             <Route index element={<AuctionList />} />
@@ -126,22 +129,22 @@ export default function App() {
               <Route path="new" element={<AuctionForm />} />
             </Route>
           </Route>
-
           {/* 마이페이지 */}
           <Route element={<ProtectedRoute />}>
-            <Route path="/mypage">
+            <Route path="/mypage" element={<MypageLayout />}>
               <Route index element={<MyPageMain />} />
               <Route path="purchases" element={<PurchaseList />} />
               <Route path="sales" element={<SaleList />} />
               <Route path="wishlist" element={<WishList />} />
               <Route path="account" element={<AccountSettings />} />
+              <Route path="profile" element={<ProfileDetails />} />
+              <Route path="profile/settings" element={<ProfileSetting />} />
 
               {/* 문의/신고 */}
               <Route path="inquiries" element={<InquiryList />} />
               {/* <Route path="inquiries/:id" element={<InquiryDetail />} /> */}
             </Route>
           </Route>
-
           {/* 기타 */}
           {/* <Route path="/error" element={<ErrorPage />} />
           <Route path="*" element={<NotFoundPage />} /> */}

@@ -1,5 +1,6 @@
 // ProfilePreview.tsx
 import React from "react";
+import { Link } from "react-router-dom";
 
 type Props = {
   avatarUrl?: string;
@@ -21,10 +22,10 @@ const ProfilePreview: React.FC<Props> = ({
   const clamped = Math.max(0, Math.min(100, temperature));
 
   return (
-    <section className="w-full rounded-[32px] bg-[#ECDEF5] p-6 shadow-[0_10px_30px_rgba(0,0,0,0.06)] md:p-10">
-      <div className="flex items-center gap-6 md:gap-10">
+    <section className="h-[200px] w-[786px] rounded-[20px] bg-[#ECDEF5] pt-[20px] pr-[30px] pl-[25px] shadow-[0_10px_30px_rgba(0,0,0,0.06)]">
+      <div className="flex items-center gap-6">
         {/* 아바타 */}
-        <div className="size-[96px] shrink-0 overflow-hidden rounded-full bg-neutral-700/90 md:size-[176px]">
+        <div className="size-[150px] rounded-full bg-neutral-700/90 md:size-[150px]">
           {avatarUrl && (
             <img
               src={avatarUrl}
@@ -35,17 +36,17 @@ const ProfilePreview: React.FC<Props> = ({
         </div>
 
         {/* 가운데 정보 */}
-        <div className="min-w-0 flex-1">
-          <h3 className="text-[28px] leading-tight font-extrabold text-neutral-900 md:text-[48px]">
+        <div className="min-w-0 flex-1 gap-[10px]">
+          <h3 className="leading-tight font-bold text-neutral-900">
             {nickname}
           </h3>
-          <p className="mt-2 truncate text-[20px] text-neutral-700 md:text-[40px]">
+          <h4 className="mt-1 truncate text-[20px] text-neutral-700">
             {email}
-          </p>
+          </h4>
 
           {/* 온도 바 */}
-          <div className="mt-5 max-w-[800px] md:mt-8">
-            <div className="relative h-6 md:h-8">
+          <div className="mt-4 h-[14px] max-w-[354px]">
+            <div className="relative md:h-[20px]">
               {/* 바(배경) */}
               <div className="absolute inset-0 rounded-full bg-neutral-900/90" />
               {/* 채워진 부분 */}
@@ -62,26 +63,30 @@ const ProfilePreview: React.FC<Props> = ({
             </div>
 
             {/* 툴팁 */}
-            <div className="mt-3 inline-flex items-center rounded-full bg-neutral-400/60 px-3 py-1 text-sm text-neutral-900 md:px-4 md:py-1.5 md:text-base">
+            {/* <div className="mt-3 inline-flex items-center rounded-full bg-neutral-400/60 text-sm text-neutral-900 md:px-4 md:py-1.5 md:text-base">
               온도 : {clamped}°C
-            </div>
+            </div> */}
           </div>
         </div>
 
         {/* 오른쪽 버튼 */}
         <div className="hidden flex-col gap-5 self-start md:flex">
-          <button
-            onClick={onManageProfile}
-            className="rounded-2xl bg-white/90 px-7 py-4 text-[20px] font-bold text-neutral-900 shadow-[0_6px_16px_rgba(0,0,0,0.08)] transition hover:bg-white active:translate-y-[1px]"
-          >
-            프로필 관리
-          </button>
-          <button
-            onClick={onAuction}
-            className="rounded-2xl bg-white/90 px-7 py-4 text-[20px] font-bold text-neutral-900 shadow-[0_6px_16px_rgba(0,0,0,0.08)] transition hover:bg-white active:translate-y-[1px]"
-          >
-            경매 하기
-          </button>
+          <Link to={"/mypage/profile"}>
+            <button
+              onClick={onManageProfile}
+              className="hover:border-purple h-[40px] w-[120px] rounded-[10px] bg-white/90 px-7 text-[15px] font-bold text-neutral-900 shadow-[0_6px_16px_rgba(0,0,0,0.08)] transition hover:bg-white active:translate-y-[5px]"
+            >
+              프로필 보기
+            </button>
+          </Link>
+          <Link to={"/auctions/new"}>
+            <button
+              onClick={onAuction}
+              className="h-[40px] w-[120px] rounded-[10px] bg-white/90 px-7 text-[15px] font-bold text-neutral-900 shadow-[0_6px_16px_rgba(0,0,0,0.08)] transition hover:bg-white active:translate-y-[5px]"
+            >
+              경매 하기
+            </button>
+          </Link>
         </div>
       </div>
 
