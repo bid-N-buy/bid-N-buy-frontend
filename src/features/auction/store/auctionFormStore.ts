@@ -1,8 +1,9 @@
 import { create } from "zustand";
-import type { CreateAuctionReq, ImageType } from "../types/auctions";
+import type { CreateAuctionReq } from "../types/auctions";
 import { toLocalKst } from "../../../shared/utils/datetime";
 
-type Img = { imageUrl: string; imageType: ImageType };
+// 이미지 순서 관리
+type UiImg = { imageUrl: string };
 
 type FormState = {
   title: string;
@@ -16,14 +17,14 @@ type FormState = {
   startAt: Date | null;
   endAt: Date | null;
 
-  images: Img[];
+  images: UiImg[];
 };
 
 type Actions = {
   set<K extends keyof FormState>(k: K, v: FormState[K]): void;
-  addImage(img: Img): void;
+  addImage(img: UiImg): void;
   removeImage(i: number): void;
-  setMainImage(i: number): void; // i번째를 MAIN, 나머지 DETAIL
+  moveImageToFront(i: number): void; // 임의 이미지 맨 앞으로 (대표로)
   toRequest(): CreateAuctionReq; // dto 변환
   reset(): void;
 };
@@ -50,13 +51,13 @@ export const useAuctionFormStore = create<FormState & Actions>((set, get) => ({
   addImage: (img) => set((s) => ({ images: [...s.images, img] })),
   removeImage: (idx) =>
     set((s) => ({ images: s.images.filter((_, i) => i !== idx) })),
-  setMainImage: (idx) =>
-    set((s) => ({
-      images: s.images.map((it, i) => ({
-        ...it,
-        imageType: i === idx ? "MAIN" : "DETAIL",
-      })),
-    })),
+  moveImageToFront: (idx) =>
+    set((s) => {
+      const next = [...s.images];
+      const [picked] = next.splice(idx, 1);
+      if (picked) next.unshift(picked);
+      return { images: next };
+    }),
 
   toRequest: () => {
     const s = get();
@@ -73,6 +74,12 @@ export const useAuctionFormStore = create<FormState & Actions>((set, get) => ({
     if (!s.startAt || !s.endAt)
       throw new Error("시작/마감 일시를 입력해 주세요.");
 
+    // 전송용 변환 imageType 모두 "PRODUCT"
+    const txImages = s.images.slice(0, 10).map((it) => ({
+      imageUrl: it.imageUrl,
+      imageType: "PRODUCT" as const,
+    }));
+
     return {
       categoryId: s.categoryId,
       title: s.title.trim(),
@@ -81,7 +88,7 @@ export const useAuctionFormStore = create<FormState & Actions>((set, get) => ({
       minBidPrice: s.minBidPrice,
       startTime: toLocalKst(s.startAt),
       endTime: toLocalKst(s.endAt),
-      images: s.images,
+      images: txImages,
     };
   },
 
