@@ -1,18 +1,12 @@
 import React, { useState } from "react";
-import type { ProductCardProps } from "../../auction/types/product";
 import type { ChatRoomProps } from "../types/ChatType";
 
-type ChatProductInfoProps = Pick<ChatRoomProps, "auctionId" | "buyerId"> &
-  Pick<ProductCardProps, "title" | "currentPrice" | "mainImageUrl">;
+type ChatProductInfoProps = Pick<ChatRoomProps, "auctionId">;
 
-const ChatProductInfo = ({
-  auctionId,
-  buyerId,
-  title,
-  currentPrice,
-  mainImageUrl,
-}: ChatProductInfoProps) => {
+const ChatProductInfo = ({ auctionId }: ChatProductInfoProps) => {
   const [mode, setMode] = useState<string>("sell");
+
+  // auction api 통해서 title currentprice mainimageurl 불러올 것
 
   return (
     <div
@@ -20,15 +14,17 @@ const ChatProductInfo = ({
       className="bg-light-purple flex justify-between gap-2 p-4"
     >
       <div className="bg-g300 size-15">
-        <img className="w-100" src={mainImageUrl ? mainImageUrl : ""} />
+        <img className="w-100" src="" />
       </div>
       <div className="flex w-[72%] flex-col gap-1 text-sm md:w-[60%]">
-        <p className="font-bold">{title}</p>
+        {/* <p className="font-bold">{title}</p> */}
+        <p className="font-bold">제목</p>
         <p className="text-xs">
           판매물품 설명~~판매물품 설명~~
           {/* 추후 substring(0, 30) 처리 */}
         </p>
-        <p className="text-g300">{currentPrice}</p>
+        {/* <p className="text-g300">{currentPrice}</p> */}
+        <p className="text-g300">20,000</p>
       </div>
       <div className="flex w-[15%] flex-col gap-2">
         <button

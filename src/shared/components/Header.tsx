@@ -156,7 +156,7 @@ const Header: React.FC = () => {
               <li>
                 <button
                   className="relative"
-                  onClick={() => openChatList}
+                  onClick={openChatList}
                   aria-label="채팅"
                 >
                   <MessageCircleMore />
@@ -164,7 +164,7 @@ const Header: React.FC = () => {
                 </button>
               </li>
               {isChatOpen &&
-                createPortal(<ChatModal onClose={() => onClose} />, modalRoot)}
+                createPortal(<ChatModal onClose={onClose} />, modalRoot)}
 
               <li>
                 <button

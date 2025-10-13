@@ -1,6 +1,8 @@
+import type { AuctionResponse } from "../../features/auction/types/product";
+
 export interface UserProps {
-  userId: string;
-  adminId?: string;
+  userId: number;
+  adminId?: number;
   email: string;
   password: string;
   nickname: string;
@@ -12,7 +14,7 @@ export interface UserProps {
 
 export interface ImageProps {
   imageId: string;
-  auctionId?: string;
+  auctionId?: AuctionResponse["auctionId"];
   userId?: UserProps["userId"];
   imageUrl: string;
   imageType?: string;

@@ -1,5 +1,5 @@
 import type { UserProps, ImageProps } from "../../../shared/types/CommonType";
-
+import type { AuctionResponse } from "../../auction/types/product";
 export interface ModalProps {
   onClose: () => void;
   onDelete?: () => void;
@@ -8,13 +8,24 @@ export interface ModalProps {
 export interface ChatListProps {
   onSelectRoom: (chatroomId: string) => void;
   chatRooms: ChatRoomProps[];
+  chatroomId: ChatRoomProps["chatroomId"];
+  auctionId: AuctionResponse["auctionId"];
+  counterpartId: string;
+  counterpartNickname: UserProps["nickname"];
+  counterpartProfileImageUrl: string | null;
+  auctionTitle: string;
+  auctionImageUrl: string | null;
+  lastMessageTime: string;
+  lastMessagePreview: string;
+  unreadCount: number;
 }
 
 export interface ChatRoomProps {
   chatroomId: string;
   buyerId: UserProps["userId"];
   sellerId: UserProps["userId"];
-  auctionId: string;
+  auctionId: AuctionResponse["auctionId"];
+  title: AuctionResponse["title"];
   nickname: UserProps["nickname"];
   imageUrl: ImageProps["imageUrl"];
   message?: ChatMessageProps["message"];
