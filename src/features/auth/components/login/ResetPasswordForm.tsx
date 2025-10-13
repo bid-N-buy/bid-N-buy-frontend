@@ -1,30 +1,34 @@
-// src/pages/auth/ResetPassword.tsx
 import React, { useEffect, useMemo, useState } from "react";
 import axios, { AxiosError } from "axios";
+import { useNavigate } from "react-router-dom";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL ?? "http://localhost:4000",
+  baseURL: import.meta.env.VITE_BACKEND_ADDRESS ?? "http://localhost:8080",
   withCredentials: true,
   timeout: 10_000,
 });
 
-type Step = "request" | "reset"; // ← 단계 분리
+/** 서버가 기대하는 전송 포맷: 필요 시 "form" 으로 변경 */
+const REQUEST_MODE: "json" | "form" = "json";
+
+type Step = "request" | "reset";
 
 export default function ResetPassword() {
+  const navigate = useNavigate();
   const [step, setStep] = useState<Step>("request");
 
   // 공통 상태
   const [email, setEmail] = useState("");
   const [msg, setMsg] = useState<string | null>(null);
 
-  // 1단계: 코드 전송/인증
+  // 1단계: 임시비밀번호(코드) 전송/인증
   const [code, setCode] = useState("");
   const [isCodeSent, setIsCodeSent] = useState(false);
   const [loadingSend, setLoadingSend] = useState(false);
   const [loadingVerify, setLoadingVerify] = useState(false);
 
-  // 서버가 임시비번을 요구하면 true로
-  const useTempPassword = false;
+  // 서버 스펙: verify 는 tempPassword 로 받음
+  // const useTempPassword = true;
 
   // 타이머
   const [leftSec, setLeftSec] = useState(0);
@@ -36,8 +40,8 @@ export default function ResetPassword() {
 
   useEffect(() => {
     if (!isCodeSent || leftSec <= 0) return;
-    const t = setInterval(() => setLeftSec((s) => s - 1), 1000);
-    return () => clearInterval(t);
+    const t = window.setInterval(() => setLeftSec((s) => s - 1), 1000);
+    return () => window.clearInterval(t);
   }, [isCodeSent, leftSec]);
 
   // 이메일 바뀌면 1단계 초기화
@@ -49,12 +53,43 @@ export default function ResetPassword() {
     setStep("request");
   }, [email]);
 
+  const asJson = (url: string, body: Record<string, any>) =>
+    api.post(url, body, { headers: { "Content-Type": "application/json" } });
+
+  const asForm = (url: string, body: Record<string, any>) => {
+    const form = new URLSearchParams();
+    Object.entries(body).forEach(([k, v]) => form.append(k, String(v)));
+    return api.post(url, form, {
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    });
+  };
+
+  const post = (url: string, body: Record<string, any>) =>
+    REQUEST_MODE === "json" ? asJson(url, body) : asForm(url, body);
+
+  const normalizedEmail = email.trim().toLowerCase();
+  const normalizedCode = code.trim();
+
+  /** 1) 임시비밀번호(코드) 전송 */
   const sendCode = async () => {
     setMsg(null);
+
+    if (!normalizedEmail) {
+      setMsg("이메일을 입력해주세요.");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      setMsg("이메일 형식을 확인해주세요.");
+      return;
+    }
+
     try {
       setLoadingSend(true);
-      const { data } = await api.post("/auth/password/request", { email });
-      setMsg(data?.message ?? "인증코드를 이메일로 전송했습니다.");
+      // 서버 스펙: request 는 email 만
+      const { data } = await post("/auth/password/request", {
+        email: normalizedEmail,
+      });
+      setMsg(data?.message ?? "임시비밀번호를 이메일로 전송했습니다.");
       setIsCodeSent(true);
       setLeftSec(600);
     } catch (e) {
@@ -67,20 +102,32 @@ export default function ResetPassword() {
     }
   };
 
+  /** 2) 임시비밀번호(코드) 인증 */
   const verifyCode = async () => {
     setMsg(null);
+
+    if (!isCodeSent) {
+      setMsg("먼저 임시비밀번호를 전송해주세요.");
+      return;
+    }
+    if (!normalizedCode) {
+      setMsg("임시비밀번호를 입력해주세요.");
+      return;
+    }
+
     try {
       setLoadingVerify(true);
-      const body = useTempPassword
-        ? { email, tempPassword: code }
-        : { email, code };
-      const { data } = await api.post("/auth/password/verify", body);
-      if (data?.ok ?? true) {
-        setMsg(data?.message ?? "인증이 완료되었습니다.");
-        setStep("reset"); // ← 인증되면 2단계로 전환
-      } else {
+      // 서버 스펙: verify 는 tempPassword 로 받음
+      const body = { email: normalizedEmail, tempPassword: normalizedCode };
+      const { data } = await post("/auth/password/verify", body);
+
+      if (data?.ok === false) {
         setMsg(data?.message ?? "인증 실패");
+        return;
       }
+
+      setMsg(data?.message ?? "인증이 완료되었습니다.");
+      setStep("reset");
     } catch (e) {
       const err = e as AxiosError<{ message?: string; error?: string }>;
       setMsg(
@@ -91,7 +138,7 @@ export default function ResetPassword() {
     }
   };
 
-  // 2단계: 비밀번호 재설정
+  // 3) 비밀번호 재설정
   const [newPw, setNewPw] = useState("");
   const [newPw2, setNewPw2] = useState("");
   const [loadingReset, setLoadingReset] = useState(false);
@@ -111,12 +158,15 @@ export default function ResetPassword() {
 
     try {
       setLoadingReset(true);
-      const { data } = await api.post("/auth/password/reset", {
-        email,
-        newPassword: newPw,
-      });
+      // 서버 스펙: reset 은 email + newPassword
+      const payload = { email: normalizedEmail, newPassword: newPw };
+      const { data } = await post("/auth/password/reset", payload);
       setMsg(data?.message ?? "비밀번호가 재설정되었습니다. 로그인 해주세요.");
-      // 필요 시 여기서 로그인 페이지로 이동 처리 가능
+
+      // 성공 후 메인으로 이동 (잠깐 메시지 보여주고 이동)
+      window.setTimeout(() => {
+        navigate("/", { replace: true });
+      }, 600);
     } catch (e) {
       const err = e as AxiosError<{ message?: string; error?: string }>;
       setMsg(
@@ -137,7 +187,7 @@ export default function ResetPassword() {
       </h1>
       <div className="mb-6 h-px w-full bg-gray-300" />
 
-      {/* 1단계: 코드 요청/인증 (왼쪽 화면) */}
+      {/* 1단계: 임시비밀번호 요청/인증 */}
       {step === "request" && (
         <div className="space-y-4">
           <div>
@@ -157,9 +207,7 @@ export default function ResetPassword() {
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
                 className="focus:border-purple h-[40px] w-[210px] rounded-md border px-3 outline-none focus:border-2"
-                placeholder={
-                  useTempPassword ? "임시비밀번호 입력" : "인증코드 입력"
-                }
+                placeholder="임시비밀번호 입력"
                 disabled={!isCodeSent}
               />
               <button
@@ -189,7 +237,7 @@ export default function ResetPassword() {
         </div>
       )}
 
-      {/* 2단계: 비밀번호 변경 (오른쪽 화면) */}
+      {/* 2단계: 비밀번호 변경 */}
       {step === "reset" && (
         <form onSubmit={resetPassword} className="space-y-5">
           <div>
@@ -215,9 +263,8 @@ export default function ResetPassword() {
             />
           </div>
 
-          {/* 현재 이메일 고정 노출 (선택) */}
           <div className="text-sm text-gray-500">
-            계정 이메일: <span className="font-medium">{email}</span>
+            계정 이메일: <span className="font-medium">{normalizedEmail}</span>
           </div>
 
           {msg && (

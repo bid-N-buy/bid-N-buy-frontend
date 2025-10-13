@@ -1,7 +1,12 @@
 import React from "react";
+import ProfileSetting from "../components/profile/ProfileSetting";
 
 const AccountSettings = () => {
-  return <div>AccountSettings</div>;
+  return (
+    <>
+      <ProfileSetting />
+    </>
+  );
 };
 
 export default AccountSettings;
