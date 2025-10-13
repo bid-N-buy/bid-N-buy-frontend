@@ -123,13 +123,7 @@ const ChatRoom = ({
 
   return (
     <>
-      <ChatProductInfo
-        auctionId={auctionId}
-        buyerId=""
-        title={""}
-        currentPrice={0}
-        mainImageUrl={null}
-      />
+      <ChatProductInfo auctionId={auctionId} />
       <div
         key={chatroomId}
         className="h-[calc(100%-179px)] w-[100%] overflow-x-hidden overflow-y-scroll"
