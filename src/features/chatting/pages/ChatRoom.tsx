@@ -10,10 +10,10 @@ import ChatInput from "../components/ChatInput";
 import type { ChatRoomProps, ChatMessageProps } from "../types/ChatType";
 
 const ChatRoom = ({
-  chatroom_id,
-  buyer_id,
-  auction_id,
-  image_url,
+  chatroomId,
+  buyerId,
+  auctionId,
+  imageUrl,
   nickname,
 }: ChatRoomProps) => {
   // STOMP 클라이언트 인스턴스를 저장하기 위해 useRef 사용 (재렌더링 시에도 값이 유지됨)
@@ -48,7 +48,7 @@ const ChatRoom = ({
         setIsConnected(true);
 
         // 연결 성공 시 채팅방 구독
-        const subDestination = `/topic/chat/room/${chatroom_id}`;
+        const subDestination = `/topic/chat/room/${chatroomId}`;
 
         client.subscribe(subDestination, (message) => {
           handleMessageReceived(message); // 3단계 함수 호출
@@ -75,7 +75,7 @@ const ChatRoom = ({
         clientRef.current.deactivate();
       }
     };
-  }, [wsUrl, chatroom_id, token]);
+  }, [wsUrl, chatroomId, token]);
 
   // 메시지 수신 및 화면 업데이스 로직
   const handleMessageReceived = (message: IMessage) => {
@@ -104,7 +104,7 @@ const ChatRoom = ({
 
     // 2. 메시지 생성
     const chatMessage = {
-      chatroomId: parseInt(chatroom_id), // 백엔드가 number를 요구할 수 있으므로 파싱
+      chatroomId: parseInt(chatroomId), // 백엔드가 number를 요구할 수 있으므로 파싱
       message: inputMessage.trim(),
       senderId: nickname, // HTML 클라이언트의 senderId 필드와 맞춤
       type: "CHAT",
@@ -124,33 +124,34 @@ const ChatRoom = ({
   return (
     <>
       <ChatProductInfo
-        auction_id={auction_id}
+        auctionId={auctionId}
+        buyerId=""
         title={""}
         currentPrice={0}
         mainImageUrl={null}
       />
       <div
-        key={chatroom_id}
+        key={chatroomId}
         className="h-[calc(100%-179px)] w-[100%] overflow-x-hidden overflow-y-scroll"
       >
         {messages.map((msg, index) =>
-          msg.sender_id != buyer_id ? (
+          msg.senderId != buyerId ? (
             <ChatMe
               key={index}
-              message_type={msg.message_type}
+              messageType={msg.messageType}
               message={msg.message}
-              created_at={new Date(msg.created_at).toLocaleTimeString()}
-              is_read={msg.is_read}
+              createdAt={new Date(msg.createdAt).toLocaleTimeString()}
+              isRead={msg.isRead}
             />
           ) : (
             <ChatYou
               key={index}
-              image_url={image_url}
+              imageUrl={imageUrl}
               nickname={nickname}
-              message_type={msg.message_type}
+              messageType={msg.messageType}
               message={msg.message}
-              created_at={new Date(msg.created_at).toLocaleTimeString()}
-              is_read={msg.is_read}
+              createdAt={new Date(msg.createdAt).toLocaleTimeString()}
+              isRead={msg.isRead}
             />
           )
         )}

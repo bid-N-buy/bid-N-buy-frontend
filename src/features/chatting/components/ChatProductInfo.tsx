@@ -2,11 +2,12 @@ import React, { useState } from "react";
 import type { ProductCardProps } from "../../auction/types/product";
 import type { ChatRoomProps } from "../types/ChatType";
 
-type ChatProductInfoProps = Pick<ChatRoomProps, "auction_id"> &
+type ChatProductInfoProps = Pick<ChatRoomProps, "auctionId" | "buyerId"> &
   Pick<ProductCardProps, "title" | "currentPrice" | "mainImageUrl">;
 
 const ChatProductInfo = ({
-  auction_id,
+  auctionId,
+  buyerId,
   title,
   currentPrice,
   mainImageUrl,
@@ -15,7 +16,7 @@ const ChatProductInfo = ({
 
   return (
     <div
-      key={auction_id}
+      key={auctionId}
       className="bg-light-purple flex justify-between gap-2 p-4"
     >
       <div className="bg-g300 size-15">
@@ -37,12 +38,14 @@ const ChatProductInfo = ({
           결제 요청
         </button>
         {mode === "sell" && (
-          <button
-            type="button"
-            className="bg-purple w-full rounded-md px-2 py-1.5 text-xs text-white"
-          >
-            주소 입력
-          </button>
+          <>
+            <button
+              type="button"
+              className="bg-purple w-full rounded-md px-2 py-1.5 text-xs text-white"
+            >
+              주소 입력
+            </button>
+          </>
         )}
       </div>
     </div>
