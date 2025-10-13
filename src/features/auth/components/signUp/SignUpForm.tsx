@@ -1,6 +1,7 @@
 // src/features/auth/components/SignUpForm.tsx
 import React, { useEffect, useMemo, useState } from "react";
 import axios, { AxiosError } from "axios";
+import { useNavigate } from "react-router-dom";
 
 /** 백엔드 절대 주소 (.env에 VITE_BACKEND_ADDRESS 정의) */
 const BASE = import.meta.env.VITE_BACKEND_ADDRESS ?? "http://localhost:8080";
@@ -36,6 +37,8 @@ type UserDto = {
 const normEmail = (raw: string) => raw.trim().toLowerCase();
 
 const SignUpForm: React.FC = () => {
+  const navigate = useNavigate(); // ✅ 추가
+
   // form
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
@@ -182,16 +185,24 @@ const SignUpForm: React.FC = () => {
 
     try {
       setLoadingSubmit(true);
+
+      // ⚠️ 서버 스펙이 '이메일 인증 후 가입'이라면 verify 완료를 강제하고 싶으면 아래 주석 해제
+      // if (!isVerified) {
+      //   setMsg("이메일 인증을 완료해 주세요.");
+      //   return;
+      // }
+
       const { data } = await publicApi.post<UserDto>("/auth/signup", {
         email: normEmail(email),
         password,
         nickname,
+        // 서버가 validCode를 요구한다면 아래도 함께 전송:
+        // validCode: Number(code) // (앞자리 0 필요하면 문자열 유지해야 함)
       });
 
       if (data?.email) {
-        setMsg("회원가입이 완료되었습니다. (인증메일 발송됨)");
-        // 필요 시 이동:
-        // window.location.href = "/login";
+        // ✅ 가입 성공 → 로그인 페이지로 이동 (+ 배너 표시용 쿼리)
+        navigate("/login?signedUp=1", { replace: true });
       } else {
         setMsg("회원가입 처리에 실패했습니다.");
       }
@@ -341,7 +352,7 @@ const SignUpForm: React.FC = () => {
         disabled={loadingSubmit}
         className="bg-purple hover:bg-deep-purple h-[50px] w-[420px] rounded-md text-white disabled:opacity-60"
       >
-        회원가입 하기
+        {loadingSubmit ? "가입 중..." : "회원가입 하기"}
       </button>
     </form>
   );

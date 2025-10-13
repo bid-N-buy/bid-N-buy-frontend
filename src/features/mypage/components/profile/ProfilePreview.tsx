@@ -71,7 +71,7 @@ const ProfilePreview: React.FC<Props> = ({
 
         {/* 오른쪽 버튼 */}
         <div className="hidden flex-col gap-5 self-start md:flex">
-          <Link to={"/mypage/profile"}>
+          <Link to={"/profile"}>
             <button
               onClick={onManageProfile}
               className="hover:border-purple h-[40px] w-[120px] rounded-[10px] bg-white/90 px-7 text-[15px] font-bold text-neutral-900 shadow-[0_6px_16px_rgba(0,0,0,0.08)] transition hover:bg-white active:translate-y-[5px]"
