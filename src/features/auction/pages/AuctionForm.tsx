@@ -5,8 +5,8 @@ import { useAuctionFormStore } from "../store/auctionFormStore";
 import { createAuction } from "../api/auctions";
 import useToast from "../../../shared/hooks/useToast";
 import { validateCreateAuction } from "../utils/validation";
-import { capToTen, ensureSingleMain } from "../utils/images";
-import type { ImageType } from "../types/auctions";
+// import { capToTen, ensureSingleMain } from "../utils/images";
+// import type { ImageType } from "../types/auctions";
 import Toast from "../../../shared/components/Toast";
 import { useNavigate } from "react-router-dom";
 import { useCategoryStore } from "../store/categoryStore";
@@ -46,7 +46,7 @@ const AuctionForm = () => {
     images,
     set,
     removeImage,
-    setMainImage,
+    moveImageToFront,
     toRequest,
     reset,
   } = useAuctionFormStore();
@@ -106,27 +106,15 @@ const AuctionForm = () => {
     const taking = files.slice(0, room);
 
     if (files.length > room) {
-      showToast(
-        "이미지는 최대 10장까지 가능합니다. 초과분은 제외했습니다.",
-        "error"
-      );
+      showToast("이미지는 최대 10장까지 가능합니다.", "error");
     }
 
-    // 새 이미지 생성 (미리보기용 blob URL) — todo 실제론 업로드 후 공개 URL 사용
-    const newImages: { imageUrl: string; imageType: ImageType }[] = taking.map(
-      (f, i) => {
-        const url = URL.createObjectURL(f);
-        const isMain = images.length === 0 && i === 0;
-        const imageType: ImageType = isMain ? "MAIN" : "DETAIL";
-        return { imageUrl: url, imageType };
-      }
-    );
+    // ui는 순서만 관리, 대표/상세 삭제 (첫 번째가 대표로)
+    const newImages = taking.map((f) => ({
+      imageUrl: URL.createObjectURL(f),
+    }));
 
-    // 보정) MAIN 1장 + 10장 제한
-    const combined = [...images, ...newImages];
-    const fixed = ensureSingleMain(capToTen(combined));
-
-    set("images", fixed);
+    set("images", [...images, ...newImages]);
   };
 
   // blob URL 메모리 누수 방지(삭제/리셋 시 revoke)
@@ -158,9 +146,6 @@ const AuctionForm = () => {
 
     try {
       setLoading(true);
-
-      // 보정 1회 더(중간 수정 대비)
-      set("images", ensureSingleMain(capToTen(images)));
 
       // DTO 변환(스토어에서 필수 가드 ㅇㅇ 누락 시 throw)
       const payload = toRequest();
@@ -233,27 +218,17 @@ const AuctionForm = () => {
                     alt=""
                     className="h-24 w-24 rounded-md object-cover"
                   />
-                  <div className="text-h8 mt-1 text-center">
-                    {img.imageType === "MAIN" ? "대표" : "상세"}
-                  </div>
-                  <div className="text-h8 mt-1 flex gap-2">
+                  <div className="text-h8 mt-1 flex justify-center gap-2">
                     <button
-                      className="underline"
+                      className=""
                       type="button"
-                      onClick={() => {
-                        const curMain = images.find(
-                          (img) => img.imageType === "MAIN"
-                        );
-                        if (curMain?.imageUrl.startsWith("blob:")) {
-                          URL.revokeObjectURL(curMain.imageUrl);
-                        }
-                        setMainImage(i);
-                      }}
+                      onClick={() => moveImageToFront(i)}
+                      title="이동"
                     >
-                      대표
+                      이동
                     </button>
                     <button
-                      className="underline"
+                      className=""
                       type="button"
                       onClick={() => onRemoveImage(i)}
                     >
