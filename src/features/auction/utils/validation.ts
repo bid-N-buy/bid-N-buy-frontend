@@ -23,10 +23,7 @@ export function validateCreateAuction(p: CreateAuctionReq) {
   if (len < 1) errs.push("이미지를 최소 1장 등록해 주세요.");
   if (len > 10) errs.push("이미지는 최대 10장까지 등록할 수 있습니다.");
 
-  const mainCnt = p.images.filter((i) => i.imageType === "MAIN").length;
-  if (mainCnt !== 1) errs.push("대표(MAIN) 이미지는 정확히 1장이어야 합니다.");
-
-  // 로컬...
+  // 개발 중..
   if (p.images.some((i) => !/^(https?:\/\/|blob:|data:)/.test(i.imageUrl))) {
     errs.push("이미지 URL 형식이 올바르지 않습니다.");
   }

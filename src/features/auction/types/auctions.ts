@@ -1,4 +1,9 @@
-export type ImageType = "MAIN" | "DETAIL"; // 일단 있으니까..
+export type ImageType = "PRODUCT";
+
+export interface AuctionImage {
+  imageUrl: string; // "https://fake-s3-bucket.com/images/vintage_lego_main.jpg"
+  imageType: ImageType;
+}
 
 // 요청 dto
 export interface CreateAuctionReq {
@@ -10,11 +15,6 @@ export interface CreateAuctionReq {
   startTime: string; // "2025-10-12T03:20:00"
   endTime: string;
   images: AuctionImage[];
-}
-
-export interface AuctionImage {
-  imageUrl: string; // "https://fake-s3-bucket.com/images/vintage_lego_main.jpg"
-  imageType: ImageType; // "MAIN" | "DETAIL"
 }
 
 // 응답 dto
