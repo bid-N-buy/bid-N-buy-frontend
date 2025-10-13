@@ -137,13 +137,14 @@ export default function App() {
               <Route path="sales" element={<SaleList />} />
               <Route path="wishlist" element={<WishList />} />
               <Route path="account" element={<AccountSettings />} />
-              <Route path="profile" element={<ProfileDetails />} />
+              {/* <Route path="profile" element={<ProfileDetails />} /> */}
               <Route path="profile/settings" element={<ProfileSetting />} />
 
               {/* 문의/신고 */}
               <Route path="inquiries" element={<InquiryList />} />
               {/* <Route path="inquiries/:id" element={<InquiryDetail />} /> */}
             </Route>
+            <Route path="profile" element={<ProfileDetails />} />
           </Route>
           {/* 기타 */}
           {/* <Route path="/error" element={<ErrorPage />} />
