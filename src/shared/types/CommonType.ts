@@ -1,24 +1,24 @@
 export interface UserProps {
-  user_id: string;
-  admin_id?: string;
+  userId: string;
+  adminId?: string;
   email: string;
   password: string;
   nickname: string;
-  auth_status?: string;
-  user_status?: string;
-  user_type?: string;
-  deleted_at?: number;
+  authStatus?: string;
+  userStatus?: string;
+  userType?: string;
+  deletedAt?: number;
 }
 
 export interface ImageProps {
-  image_id: string;
-  auction_id?: string;
-  user_id?: UserProps["user_id"];
-  image_url: string;
-  image_type?: string;
+  imageId: string;
+  auctionId?: string;
+  userId?: UserProps["userId"];
+  imageUrl: string;
+  imageType?: string;
 }
 export interface AvatarProps {
-  image_url: ImageProps["image_url"];
+  imageUrl: ImageProps["imageUrl"];
   nickname?: UserProps["nickname"];
 }
 

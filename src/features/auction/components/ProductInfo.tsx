@@ -1,12 +1,17 @@
 // todo 컴포넌트 분리
 import React, { useState } from "react";
 import BidModal from "./BidModal";
+import { useAuthStore } from "../../auth/store/authStore";
+import { useChatModalStore } from "../../../shared/store/ChatModalStore";
 import Toast from "../../../shared/components/Toast";
 import useToast from "../../../shared/hooks/useToast";
+import api from "../../../shared/api/axiosInstance";
 import { EllipsisVertical, Heart } from "lucide-react";
 import { formatDate } from "../../../shared/utils/datetime";
 
 interface ProductInfoProps {
+  auctionId?: string /* 채팅방 생성 시 필요함 */;
+  sellerId?: string /* 채팅방 생성 시 필요함 */;
   categoryMain?: string;
   categorySub?: string;
   title?: string;
@@ -18,7 +23,6 @@ interface ProductInfoProps {
   liked?: boolean;
   isSeller?: boolean;
   onLikeToggle?: () => void;
-  onChatClick?: () => void;
   onShareClick?: () => void;
   onDeleteClick?: () => void;
   startTime?: string;
@@ -27,6 +31,8 @@ interface ProductInfoProps {
 }
 
 const ProductInfo = ({
+  auctionId = "1",
+  sellerId = "1",
   categoryMain = "카테고리(대)",
   categorySub = "카테고리(소)",
   title = "제품명",
@@ -38,7 +44,6 @@ const ProductInfo = ({
   liked = false,
   isSeller = false,
   onLikeToggle,
-  onChatClick,
   onShareClick,
   onDeleteClick,
   startTime = "2025-09-12T10:00:00",
@@ -65,6 +70,34 @@ const ProductInfo = ({
     console.log("입찰가: ", bidPrice);
     showToast("정상적으로 입찰되었습니다.", "success");
     setIsBidModalOpen(false);
+  };
+
+  // 채팅방 생성
+  const handleChatAdd = async (auctionId: string, sellerId: string) => {
+    const token = useAuthStore.getState().accessToken;
+
+    if (!token) {
+      showToast("로그인이 필요합니다.", "error");
+      return;
+    }
+
+    try {
+      const response = await api.post(
+        `/chatrooms/${auctionId}`,
+        { sellerId },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      const chatroomId = response.data.chatroomId;
+      // 채팅 모달이 헤더에 종속된 컴포넌트이므로 zustand로 상태 변경
+      useChatModalStore.getState().openChatRoom(chatroomId);
+    } catch (error) {
+      showToast("채팅방 생성에 실패했습니다.", "error");
+      console.error("Chat creation failed:", error);
+    }
   };
 
   return (
@@ -161,7 +194,7 @@ const ProductInfo = ({
             <div className="flex items-stretch gap-2 md:gap-1.5">
               <div className="grid flex-1 grid-cols-1 gap-2 md:grid-cols-2 md:gap-2.5">
                 <button
-                  onClick={onChatClick}
+                  onClick={() => handleChatAdd(auctionId, sellerId)}
                   className="text-h7 md:text-h6 lg:text-h5 border-purple text-purple hover:bg-light-purple cursor-pointer rounded-md border py-2 font-bold transition-colors sm:py-3 sm:text-base md:py-4"
                 >
                   판매자와 대화

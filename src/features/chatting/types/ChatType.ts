@@ -3,46 +3,45 @@ import type { UserProps, ImageProps } from "../../../shared/types/CommonType";
 export interface ModalProps {
   onClose: () => void;
   onDelete?: () => void;
-  onRate?: () => void;
 }
 
 export interface ChatListProps {
-  onSelectRoom: (chatroom_id: string) => void;
+  onSelectRoom: (chatroomId: string) => void;
   chatRooms: ChatRoomProps[];
 }
 
 export interface ChatRoomProps {
-  chatroom_id: string;
-  buyer_id: UserProps["user_id"];
-  seller_id?: UserProps["user_id"];
-  auction_id: string;
+  chatroomId: string;
+  buyerId: UserProps["userId"];
+  sellerId: UserProps["userId"];
+  auctionId: string;
   nickname: UserProps["nickname"];
-  image_url: ImageProps["image_url"];
+  imageUrl: ImageProps["imageUrl"];
   message?: ChatMessageProps["message"];
-  created_at?: ChatMessageProps["created_at"];
+  createdAt: Date;
 }
 
 export interface ChatMessageProps {
-  chatmessage_id: string;
-  chatroom_id: ChatRoomProps["chatroom_id"];
-  sender_id: UserProps["user_id"];
-  payment_id: string;
-  image_url: ChatRoomProps["image_url"];
+  chatmessageId: string;
+  chatroomId: ChatRoomProps["chatroomId"];
+  senderId: UserProps["userId"];
+  paymentId?: string;
+  imageUrl: ChatRoomProps["imageUrl"];
   message: string;
-  message_type: string;
-  created_at: string;
-  is_read: boolean;
+  messageType: string;
+  createdAt: string;
+  isRead: boolean;
 }
 
 export type ChatYouProps = Pick<
   ChatMessageProps,
-  "created_at" | "image_url" | "message" | "is_read" | "message_type"
+  "createdAt" | "imageUrl" | "message" | "isRead" | "messageType" | "paymentId"
 > &
   Pick<ChatRoomProps, "nickname">;
 
 export type ChatMeProps = Pick<
   ChatMessageProps,
-  "created_at" | "message" | "is_read" | "message_type"
+  "createdAt" | "message" | "isRead" | "messageType" | "paymentId"
 >;
 
 export interface ChatInputProps {

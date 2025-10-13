@@ -14,6 +14,7 @@ import {
 } from "../../features/auth/store/authStore";
 import { useAuthInit } from "../../features/auth/hooks/UseAuthInit";
 import api from "../../shared/api/axiosInstance";
+import { useChatModalStore } from "../store/ChatModalStore";
 
 const Header: React.FC = () => {
   const navigate = useNavigate();
@@ -28,9 +29,10 @@ const Header: React.FC = () => {
   );
   const clearAuth = useAuthStore((s: AuthState) => s.clear);
 
+  const { isChatOpen, openChatList, onClose } = useChatModalStore();
+
   // ✅ 로컬 상태
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [isChatOpen, setIsChatOpen] = useState<boolean>(false);
   const [isNotiOpen, setIsNotiOpen] = useState<boolean>(false);
 
   // ✅ 로그인 여부: 재발급 완료 && accessToken 존재
@@ -58,6 +60,7 @@ const Header: React.FC = () => {
     }
   };
 
+  // 채팅 관련 함수
   // 모바일에서 모달 열릴 때 스크롤 잠금
   useEffect(() => {
     const mql: MediaQueryList = window.matchMedia(
@@ -153,7 +156,7 @@ const Header: React.FC = () => {
               <li>
                 <button
                   className="relative"
-                  onClick={() => setIsChatOpen(true)}
+                  onClick={() => openChatList}
                   aria-label="채팅"
                 >
                   <MessageCircleMore />
@@ -161,10 +164,7 @@ const Header: React.FC = () => {
                 </button>
               </li>
               {isChatOpen &&
-                createPortal(
-                  <ChatModal onClose={() => setIsChatOpen(false)} />,
-                  modalRoot
-                )}
+                createPortal(<ChatModal onClose={() => onClose} />, modalRoot)}
 
               <li>
                 <button

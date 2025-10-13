@@ -1,15 +1,17 @@
 import { useRef, useEffect, useState } from "react";
 import type { ModalProps, ChatRoomProps } from "../types/ChatType";
+import { useChatModalStore } from "../../../shared/store/ChatModalStore";
 import ChatList from "./ChatList";
 import ChatRoom from "./ChatRoom";
 // import { useAuthStore } from "../../auth/store/authStore";
 import { X, ChevronLeft, EllipsisVertical } from "lucide-react";
 import { useChatApi } from "../api/useChatApi";
 
-const ChatModal = ({ onClose, onDelete, onRate }: ModalProps) => {
+const ChatModal = ({ onClose, onDelete }: ModalProps) => {
   const modalRef = useRef<HTMLDivElement>(null);
   // 채팅목록/채팅방 화면 상태관리
-  const [currentView, setCurrentView] = useState<string>("list");
+  const { targetView } = useChatModalStore();
+  const [currentView, setCurrentView] = useState<string>(targetView);
   // 채팅목록 불러오기
   const { chatRooms, isLoading, error } = useChatApi();
   // 이동할 roomInfo
@@ -31,8 +33,8 @@ const ChatModal = ({ onClose, onDelete, onRate }: ModalProps) => {
   }, [modalRef, onClose]);
 
   // 각 Chat 누를 시 채팅방으로 넘어가는 함수
-  const handleSelectRoom = (chatroom_id: string) => {
-    const roomInfo = chatRooms.find((chat) => chat.chatroom_id === chatroom_id);
+  const handleSelectRoom = (chatroomId: string) => {
+    const roomInfo = chatRooms.find((chat) => chat.chatroomId === chatroomId);
     if (roomInfo) {
       // 3. 찾은 정보를 상태로 저장 (이전 단계에서 논의된 ChatRoomProps 상태 사용)
       setSelectedRoomInfo(roomInfo);
@@ -112,13 +114,14 @@ const ChatModal = ({ onClose, onDelete, onRate }: ModalProps) => {
         )}
         {currentView === "room" && selectedRoomInfo && (
           <ChatRoom
-            chatroom_id={selectedRoomInfo.chatroom_id}
-            buyer_id={selectedRoomInfo.buyer_id}
-            auction_id={selectedRoomInfo.auction_id}
+            chatroomId={selectedRoomInfo.chatroomId}
+            buyerId={selectedRoomInfo.buyerId}
+            sellerId={selectedRoomInfo.sellerId}
+            auctionId={selectedRoomInfo.auctionId}
             nickname={selectedRoomInfo.nickname}
-            image_url={selectedRoomInfo.image_url}
+            imageUrl={selectedRoomInfo.imageUrl}
             message={selectedRoomInfo.message}
-            created_at={selectedRoomInfo.created_at}
+            createdAt={selectedRoomInfo.createdAt}
           />
         )}
       </div>
