@@ -8,9 +8,11 @@ export type CategoryNode = {
   children: CategoryNode[]; // /category/top은 children 포함
 };
 
+export type TopCategoriesResponse = CategoryNode[] | CategoryNode;
+
 // 대분류
-export async function fetchTopCategories(): Promise<CategoryNode[]> {
-  const { data } = await api.get<CategoryNode[]>("/category/top");
+export async function fetchTopCategories(): Promise<TopCategoriesResponse> {
+  const { data } = await api.get<TopCategoriesResponse>("/category/top");
   return data;
 }
 
