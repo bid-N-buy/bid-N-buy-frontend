@@ -30,6 +30,7 @@ export interface AuctionDetail {
   title: string;
   description: string;
   currentPrice: number;
+  minBidPrice: number;
   endTime: string;
   mainImageUrl: string;
   sellingStatus: string; // 예) "진행 중"
