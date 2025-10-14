@@ -17,12 +17,14 @@ const ChatList = ({ chatRooms, onSelectRoom }: ChatListProps) => {
             <p className="mb-1">
               <span className="font-bold">{chat.nickname}</span>
               <span className="ml-1 text-xs text-gray-400">
-                {formatTime(chat.createdAt)}
+                {chat.createdAt ? formatTime(chat.createdAt) : null}
               </span>
             </p>
             <p>
-              {chat.message.substring(0, 27)}
-              {chat.message.length > 27 ? "..." : null}
+              {chat.lastMessagePreview
+                ? chat.lastMessagePreview.substring(0, 27)
+                : "메시지를 보내 보세요."}
+              {chat.message && chat.message.length > 27 ? "..." : null}
             </p>
           </div>
         </li>

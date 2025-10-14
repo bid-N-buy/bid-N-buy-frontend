@@ -1,5 +1,3 @@
-import type { UserProps, ImageProps } from "../../../shared/types/CommonType";
-
 export interface ModalProps {
   onClose: () => void;
   onDelete?: () => void;
@@ -7,26 +5,35 @@ export interface ModalProps {
 
 export interface ChatListProps {
   onSelectRoom: (chatroomId: string) => void;
-  chatRooms: ChatRoomProps[];
+  chatroomId: string;
+  auctionId: string;
+  counterpartId: string;
+  counterpartNickname: string;
+  counterpartProfileImageUrl: string | null;
+  auctionTitle: string;
+  auctionImageUrl: string | null;
+  lastMessageTime: string;
+  lastMessagePreview: string;
+  unreadCount: number;
 }
 
 export interface ChatRoomProps {
-  chatroomId: string;
-  buyerId: UserProps["userId"];
-  sellerId: UserProps["userId"];
-  auctionId: string;
-  nickname: UserProps["nickname"];
-  imageUrl: ImageProps["imageUrl"];
+  chatroomId: ChatListProps["chatroomId"];
+  auctionId: ChatListProps["auctionId"];
+  auctionTitle: ChatListProps["auctionTitle"];
+  counterpartId: ChatListProps["counterpartId"];
+  auctionImageUrl: ChatListProps["auctionImageUrl"];
+  counterpartNickname: ChatListProps["counterpartNickname"];
+  counterpartProfileImageUrl: ChatListProps["counterpartProfileImageUrl"];
   message?: ChatMessageProps["message"];
-  createdAt: Date;
 }
 
 export interface ChatMessageProps {
   chatmessageId: string;
   chatroomId: ChatRoomProps["chatroomId"];
-  senderId: UserProps["userId"];
+  senderId: number;
   paymentId?: string;
-  imageUrl: ChatRoomProps["imageUrl"];
+  imageUrl: string | null;
   message: string;
   messageType: string;
   createdAt: string;
@@ -35,9 +42,9 @@ export interface ChatMessageProps {
 
 export type ChatYouProps = Pick<
   ChatMessageProps,
-  "createdAt" | "imageUrl" | "message" | "isRead" | "messageType" | "paymentId"
+  "createdAt" | "message" | "isRead" | "messageType" | "paymentId"
 > &
-  Pick<ChatRoomProps, "nickname">;
+  Pick<ChatRoomProps, "counterpartNickname" | "counterpartProfileImageUrl">;
 
 export type ChatMeProps = Pick<
   ChatMessageProps,

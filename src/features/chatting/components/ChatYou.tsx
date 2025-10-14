@@ -3,18 +3,19 @@ import Avatar from "../../../shared/components/Avatar";
 import type { ChatYouProps } from "../types/ChatType";
 
 const ChatYou = ({
-  imageUrl,
-  nickname,
+  counterpartProfileImageUrl,
+  counterpartNickname,
   messageType,
   message,
   createdAt,
   isRead,
+  paymentId,
 }: ChatYouProps) => {
   return messageType === "chat" ? (
     <div className="mx-2 my-6 flex gap-2">
-      <Avatar imageUrl={imageUrl} />
+      <Avatar imageUrl={counterpartProfileImageUrl} />
       <div>
-        <p className="mb-2 font-bold">{nickname}</p>
+        <p className="mb-2 font-bold">{counterpartNickname}</p>
         <div className="flex items-end">
           <p className="bg-g400 mr-2 max-w-65 rounded-md p-3">{message}</p>
           <span className="text-g300 mr-1 text-xs">{createdAt}</span>
@@ -26,9 +27,9 @@ const ChatYou = ({
     </div>
   ) : messageType === "request" ? (
     <div className="mx-2 my-6 flex gap-2">
-      <Avatar imageUrl={imageUrl} />
-      <div>
-        <p className="mb-2 font-bold">{nickname}</p>
+      <Avatar imageUrl={counterpartProfileImageUrl} />
+      <div key={paymentId}>
+        <p className="mb-2 font-bold">{counterpartNickname}</p>
         <div className="flex items-end">
           <p className="bg-g400 mr-2 max-w-65 rounded-md p-3">{message}</p>
           <span className="text-g300 mr-1 text-xs">{createdAt}</span>
@@ -40,9 +41,9 @@ const ChatYou = ({
     </div>
   ) : (
     <div className="mx-2 my-6 flex gap-2">
-      <Avatar imageUrl={imageUrl} />
+      <Avatar imageUrl={counterpartProfileImageUrl} />
       <div>
-        <p className="mb-2 font-bold">{nickname}</p>
+        <p className="mb-2 font-bold">{counterpartNickname}</p>
         <div className="flex items-end">
           <p className="bg-g400 mr-2 max-w-65 rounded-md p-3">{message}</p>
           <span className="text-g300 mr-1 text-xs">{createdAt}</span>
