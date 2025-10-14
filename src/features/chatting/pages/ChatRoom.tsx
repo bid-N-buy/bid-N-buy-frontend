@@ -8,13 +8,17 @@ import ChatYou from "../components/ChatYou";
 import ChatInput from "../components/ChatInput";
 // import ChatDate from "../components/ChatDate"; 날짜 넘어갈 시에 사용
 import type { ChatRoomProps, ChatMessageProps } from "../types/ChatType";
+import type { UserProps } from "../../../shared/types/CommonType";
 
 const ChatRoom = ({
   chatroomId,
   buyerId,
+  sellerId,
   auctionId,
-  imageUrl,
-  nickname,
+  auctionImageUrl,
+  auctionTitle,
+  counterpartProfileImageUrl,
+  counterpartNickname,
 }: ChatRoomProps) => {
   // STOMP 클라이언트 인스턴스를 저장하기 위해 useRef 사용 (재렌더링 시에도 값이 유지됨)
   const clientRef = useRef<Client | null>(null);
@@ -106,7 +110,7 @@ const ChatRoom = ({
     const chatMessage = {
       chatroomId: parseInt(chatroomId), // 백엔드가 number를 요구할 수 있으므로 파싱
       message: inputMessage.trim(),
-      senderId: nickname, // HTML 클라이언트의 senderId 필드와 맞춤
+      senderId: counterpartNickname, // HTML 클라이언트의 senderId 필드와 맞춤
       type: "CHAT",
     };
 
@@ -123,7 +127,11 @@ const ChatRoom = ({
 
   return (
     <>
-      <ChatProductInfo auctionId={auctionId} />
+      <ChatProductInfo
+        auctionId={auctionId}
+        auctionImageUrl={auctionImageUrl}
+        auctionTitle={auctionTitle}
+      />
       <div
         key={chatroomId}
         className="h-[calc(100%-179px)] w-[100%] overflow-x-hidden overflow-y-scroll"
@@ -140,8 +148,8 @@ const ChatRoom = ({
           ) : (
             <ChatYou
               key={index}
-              imageUrl={imageUrl}
-              nickname={nickname}
+              counterpartProfileImageUrl={counterpartProfileImageUrl}
+              counterpartNickname={counterpartNickname}
               messageType={msg.messageType}
               message={msg.message}
               createdAt={new Date(msg.createdAt).toLocaleTimeString()}

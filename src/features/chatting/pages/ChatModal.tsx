@@ -5,7 +5,7 @@ import ChatList from "./ChatList";
 import ChatRoom from "./ChatRoom";
 // import { useAuthStore } from "../../auth/store/authStore";
 import { X, ChevronLeft, EllipsisVertical } from "lucide-react";
-import { useChatApi } from "../api/useChatApi";
+import { useChatListApi } from "../api/useChatListApi";
 
 const ChatModal = ({ onClose, onDelete }: ModalProps) => {
   const modalRef = useRef<HTMLDivElement>(null);
@@ -13,7 +13,7 @@ const ChatModal = ({ onClose, onDelete }: ModalProps) => {
   const { targetView } = useChatModalStore();
   const [currentView, setCurrentView] = useState<string>(targetView);
   // 채팅목록 불러오기
-  const { chatRooms, isLoading, error } = useChatApi();
+  const { chatList, isLoading, error } = useChatListApi();
   // 이동할 roomInfo
   const [selectedRoomInfo, setSelectedRoomInfo] =
     useState<ChatRoomProps | null>(null);
@@ -34,7 +34,7 @@ const ChatModal = ({ onClose, onDelete }: ModalProps) => {
 
   // 각 Chat 누를 시 채팅방으로 넘어가는 함수
   const handleSelectRoom = (chatroomId: string) => {
-    const roomInfo = chatRooms.find((chat) => chat.chatroomId === chatroomId);
+    const roomInfo = chatList.find((chat) => chat.chatroomId === chatroomId);
     if (roomInfo) {
       // 3. 찾은 정보를 상태로 저장 (이전 단계에서 논의된 ChatRoomProps 상태 사용)
       setSelectedRoomInfo(roomInfo);
@@ -72,8 +72,8 @@ const ChatModal = ({ onClose, onDelete }: ModalProps) => {
               <ChevronLeft />
             </button>
             <p>
-              {selectedRoomInfo?.nickname
-                ? selectedRoomInfo.nickname
+              {selectedRoomInfo?.counterpartNickname
+                ? selectedRoomInfo.counterpartNickname
                 : "사용자"}
             </p>
             <button
@@ -118,10 +118,13 @@ const ChatModal = ({ onClose, onDelete }: ModalProps) => {
             buyerId={selectedRoomInfo.buyerId}
             sellerId={selectedRoomInfo.sellerId}
             auctionId={selectedRoomInfo.auctionId}
-            nickname={selectedRoomInfo.nickname}
-            imageUrl={selectedRoomInfo.imageUrl}
+            auctionTitle={selectedRoomInfo.auctionTitle}
+            auctionImageUrl={selectedRoomInfo.auctionImageUrl}
+            counterpartNickname={selectedRoomInfo.counterpartNickname}
+            counterpartProfileImageUrl={
+              selectedRoomInfo.counterpartProfileImageUrl
+            }
             message={selectedRoomInfo.message}
-            createdAt={selectedRoomInfo.createdAt}
           />
         )}
       </div>

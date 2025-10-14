@@ -1,4 +1,5 @@
 import type { AuctionResponse } from "../../features/auction/types/product";
+import type { ChatRoomProps } from "../../features/chatting/types/ChatType";
 
 export interface UserProps {
   userId: number;
@@ -20,8 +21,8 @@ export interface ImageProps {
   imageType?: string;
 }
 export interface AvatarProps {
-  imageUrl: ImageProps["imageUrl"];
-  nickname?: UserProps["nickname"];
+  imageUrl: ChatRoomProps["counterpartProfileImageUrl"];
+  nickname?: ChatRoomProps["counterpartNickname"];
 }
 
 export const profile_default =

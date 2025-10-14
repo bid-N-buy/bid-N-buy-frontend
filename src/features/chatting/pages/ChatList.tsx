@@ -3,19 +3,7 @@ import type { ChatListProps } from "../types/ChatType";
 import Avatar from "../../../shared/components/Avatar";
 import { formatTime } from "../../../shared/hooks/useCommon";
 
-const ChatList = ({
-  chatRooms,
-  auctionId,
-  counterpartId,
-  counterpartNickname,
-  counterpartProfileImageUrl,
-  auctionTitle,
-  auctionImageUrl,
-  lastMessageTime,
-  lastMessagePreview,
-  unreadCount,
-  onSelectRoom,
-}: ChatListProps) => {
+const ChatList = ({ chatRooms, onSelectRoom }: ChatListProps) => {
   return (
     <ul>
       {chatRooms.map((chat) => (

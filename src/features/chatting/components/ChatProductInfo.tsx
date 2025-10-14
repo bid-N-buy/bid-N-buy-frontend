@@ -1,12 +1,25 @@
 import React, { useState } from "react";
 import type { ChatRoomProps } from "../types/ChatType";
+import type { AuctionResponse } from "../../auction/types/product";
 
-type ChatProductInfoProps = Pick<ChatRoomProps, "auctionId">;
+type ChatProductInfoProps = Pick<
+  ChatRoomProps,
+  "auctionId" | "auctionImageUrl" | "auctionTitle"
+> &
+  Pick<AuctionResponse, "currentPrice">;
 
-const ChatProductInfo = ({ auctionId }: ChatProductInfoProps) => {
+const ChatProductInfo = ({
+  auctionId,
+  auctionImageUrl,
+  auctionTitle,
+  currentPrice,
+}: ChatProductInfoProps) => {
   const [mode, setMode] = useState<string>("sell");
+  const [payModalOpen, setPayModalOpen] = useState(false);
 
-  // auction api 통해서 title currentprice mainimageurl 불러올 것
+  const handlePaymentModalOpen = () => {
+    setPayModalOpen(!payModalOpen);
+  };
 
   return (
     <div
@@ -14,21 +27,20 @@ const ChatProductInfo = ({ auctionId }: ChatProductInfoProps) => {
       className="bg-light-purple flex justify-between gap-2 p-4"
     >
       <div className="bg-g300 size-15">
-        <img className="w-100" src="" />
+        <img className="w-100" src={auctionImageUrl ? auctionImageUrl : ""} />
       </div>
       <div className="flex w-[72%] flex-col gap-1 text-sm md:w-[60%]">
-        {/* <p className="font-bold">{title}</p> */}
-        <p className="font-bold">제목</p>
+        <p className="font-bold">{auctionTitle}</p>
         <p className="text-xs">
           판매물품 설명~~판매물품 설명~~
           {/* 추후 substring(0, 30) 처리 */}
         </p>
-        {/* <p className="text-g300">{currentPrice}</p> */}
-        <p className="text-g300">20,000</p>
+        <p className="text-g300">{currentPrice}</p>
       </div>
       <div className="flex w-[15%] flex-col gap-2">
         <button
           type="button"
+          onClick={handlePaymentModalOpen}
           className="bg-purple w-full rounded-md px-2 py-1.5 text-xs text-white"
         >
           결제 요청
