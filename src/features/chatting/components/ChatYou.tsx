@@ -11,7 +11,7 @@ const ChatYou = ({
   isRead,
   paymentId,
 }: ChatYouProps) => {
-  return messageType === "chat" ? (
+  return messageType === "CHAT" ? (
     <div className="mx-2 my-6 flex gap-2">
       <Avatar imageUrl={counterpartProfileImageUrl} />
       <div>
@@ -25,7 +25,7 @@ const ChatYou = ({
         </div>
       </div>
     </div>
-  ) : messageType === "request" ? (
+  ) : messageType === "REQUEST" ? (
     <div className="mx-2 my-6 flex gap-2">
       <Avatar imageUrl={counterpartProfileImageUrl} />
       <div key={paymentId}>

@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
 import api from "../../../shared/api/axiosInstance";
 import { useAuthStore } from "../../auth/store/authStore";
-import type { ChatListProps } from "../types/ChatType";
+import type { ChatListItemProps } from "../types/ChatType";
 
 export const useChatListApi = () => {
-  // list에 더이 데이터 표시
-  const [chatList, setChatList] = useState<ChatListProps[]>([]);
+  const [chatList, setChatList] = useState<ChatListItemProps[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -23,7 +22,7 @@ export const useChatListApi = () => {
       try {
         setIsLoading(true);
         setError(null);
-        const response = await api.get<ChatListProps[]>("/chatrooms/list", {
+        const response = await api.get<ChatListItemProps[]>("/chatrooms/list", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
