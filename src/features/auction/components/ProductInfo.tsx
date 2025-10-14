@@ -9,7 +9,7 @@ import api from "../../../shared/api/axiosInstance";
 import { EllipsisVertical, Heart } from "lucide-react";
 import { formatDate } from "../../../shared/utils/datetime";
 
-interface ProductInfoProps {
+export interface ProductInfoProps {
   auctionId?: string /* 채팅방 생성 시 필요함 */;
   sellerId?: string /* 채팅방 생성 시 필요함 */;
   categoryMain?: string;
