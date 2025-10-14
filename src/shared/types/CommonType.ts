@@ -1,9 +1,12 @@
+import type { AuctionResponse } from "../../features/auction/types/product";
+
 export interface UserProps {
-  userId: string;
-  adminId?: string;
+  userId: number;
+  adminId?: number;
   email: string;
   password: string;
   nickname: string;
+  profile_image_url: string | null;
   authStatus?: string;
   userStatus?: string;
   userType?: string;
@@ -12,13 +15,13 @@ export interface UserProps {
 
 export interface ImageProps {
   imageId: string;
-  auctionId?: string;
+  auctionId?: AuctionResponse["auctionId"];
   userId?: UserProps["userId"];
   imageUrl: string;
   imageType?: string;
 }
 export interface AvatarProps {
-  imageUrl: ImageProps["imageUrl"];
+  imageUrl: UserProps["profile_image_url"];
   nickname?: UserProps["nickname"];
 }
 

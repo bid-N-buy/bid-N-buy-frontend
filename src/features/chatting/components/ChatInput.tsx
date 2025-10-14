@@ -23,8 +23,9 @@ const ChatInput = ({
           required
         />
         <button
-          type="submit"
+          type="button"
           className="bg-purple w-[20%] rounded-md py-2 text-white"
+          onClick={sendMessage}
         >
           전송
         </button>

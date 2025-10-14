@@ -1,32 +1,56 @@
-import type { UserProps, ImageProps } from "../../../shared/types/CommonType";
-
+import type { AuctionResponse } from "../../auction/types/product";
 export interface ModalProps {
   onClose: () => void;
   onDelete?: () => void;
 }
 
+export interface ChatListItemProps {
+  chatroomId: string;
+  auctionId: string;
+  counterpartId: string;
+  counterpartNickname: string;
+  counterpartProfileImageUrl: string | null;
+  auctionTitle: string;
+  auctionImageUrl: string | null;
+  lastMessageTime: string;
+  lastMessagePreview: string;
+  unreadCount: number;
+}
+
 export interface ChatListProps {
+  chatList: ChatListItemProps[];
   onSelectRoom: (chatroomId: string) => void;
-  chatRooms: ChatRoomProps[];
 }
 
 export interface ChatRoomProps {
   chatroomId: string;
-  buyerId: UserProps["userId"];
-  sellerId: UserProps["userId"];
+  chatroomInfo: Pick<
+    ChatListItemProps,
+    | "chatroomId"
+    | "auctionId"
+    | "auctionImageUrl"
+    | "auctionTitle"
+    | "counterpartId"
+    | "counterpartNickname"
+    | "counterpartProfileImageUrl"
+  >;
+  productInfo: Pick<AuctionResponse, "currentPrice" | "sellingStatus">;
+}
+
+export interface ChatProductInfoProps {
   auctionId: string;
-  nickname: UserProps["nickname"];
-  imageUrl: ImageProps["imageUrl"];
-  message?: ChatMessageProps["message"];
-  createdAt: Date;
+  auctionImageUrl: string;
+  auctionTitle: string;
+  currentPrice: number;
+  sellingStatus: string;
 }
 
 export interface ChatMessageProps {
   chatmessageId: string;
-  chatroomId: ChatRoomProps["chatroomId"];
-  senderId: UserProps["userId"];
+  chatroomId: ChatListItemProps["chatroomId"];
+  senderId: number;
   paymentId?: string;
-  imageUrl: ChatRoomProps["imageUrl"];
+  imageUrl: string | null;
   message: string;
   messageType: string;
   createdAt: string;
@@ -35,9 +59,9 @@ export interface ChatMessageProps {
 
 export type ChatYouProps = Pick<
   ChatMessageProps,
-  "createdAt" | "imageUrl" | "message" | "isRead" | "messageType" | "paymentId"
+  "createdAt" | "message" | "isRead" | "messageType" | "paymentId"
 > &
-  Pick<ChatRoomProps, "nickname">;
+  Pick<ChatListItemProps, "counterpartNickname" | "counterpartProfileImageUrl">;
 
 export type ChatMeProps = Pick<
   ChatMessageProps,

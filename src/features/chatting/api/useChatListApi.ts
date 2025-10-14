@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
 import api from "../../../shared/api/axiosInstance";
 import { useAuthStore } from "../../auth/store/authStore";
-import type { ChatRoomProps } from "../types/ChatType";
+import type { ChatListItemProps } from "../types/ChatType";
 
-export const useChatApi = () => {
-  // list에 더이 데이터 표시
-  const [chatRooms, setChatRooms] = useState<ChatRoomProps[]>([]);
+export const useChatListApi = () => {
+  const [chatList, setChatList] = useState<ChatListItemProps[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -23,13 +22,12 @@ export const useChatApi = () => {
       try {
         setIsLoading(true);
         setError(null);
-        const response = await api.get<ChatRoomProps[]>("/chatrooms/list", {
+        const response = await api.get<ChatListItemProps[]>("/chatrooms/list", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-
-        setChatRooms(response.data);
+        setChatList(response.data);
       } catch (error) {
         console.error("Failed to load chat rooms:", error);
         setError(`채팅 목록을 불러올 수 없습니다: ${error}`);
@@ -40,5 +38,5 @@ export const useChatApi = () => {
     loadChatList();
   }, [token]);
 
-  return { chatRooms, isLoading, error };
+  return { chatList, isLoading, error };
 };
