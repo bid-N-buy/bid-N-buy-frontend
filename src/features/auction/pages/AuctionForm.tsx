@@ -5,8 +5,6 @@ import { useAuctionFormStore } from "../store/auctionFormStore";
 import { createAuction } from "../api/auctions";
 import useToast from "../../../shared/hooks/useToast";
 import { validateCreateAuction } from "../utils/validation";
-// import { capToTen, ensureSingleMain } from "../utils/images";
-// import type { ImageType } from "../types/auctions";
 import Toast from "../../../shared/components/Toast";
 import { useNavigate } from "react-router-dom";
 import { useCategoryStore } from "../store/categoryStore";
@@ -58,6 +56,9 @@ const AuctionForm = () => {
   const loadTop = useCategoryStore((s) => s.loadTop);
   const loadSubs = useCategoryStore((s) => s.loadSubs);
 
+  // *****파일 원본 들고 있을 로컬 상태 추가
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+
   // UI 편의용 로컬 상태(텍스트 -> date/time 토글)
   const [dateStart, setDateStart] = useState("");
   const [timeStart, setTimeStart] = useState("");
@@ -79,6 +80,13 @@ const AuctionForm = () => {
     });
   }, [loadedTop]);
 
+  useEffect(() => {
+    return () => {
+      revokeAll();
+      setSelectedFiles([]);
+    };
+  }, []);
+
   const onChangeCategoryMain = async (val: string) => {
     set("categoryMain", val);
     set("categorySub", "");
@@ -99,9 +107,8 @@ const AuctionForm = () => {
     set("categoryId", val ? Number(val) : null);
   };
 
-  // 파일 선택 핸들러
+  // *****파일 선택 핸들러 - 수정
   const onFilesSelected = (files: File[]) => {
-    // 현재 이미지 갯수 기준으로 수용량 계산
     const room = Math.max(0, 10 - images.length);
     const taking = files.slice(0, room);
 
@@ -109,12 +116,26 @@ const AuctionForm = () => {
       showToast("이미지는 최대 10장까지 가능합니다.", "error");
     }
 
-    // ui는 순서만 관리, 대표/상세 삭제 (첫 번째가 대표로)
-    const newImages = taking.map((f) => ({
+    // 프리뷰용
+    const newPreviews = taking.map((f) => ({
       imageUrl: URL.createObjectURL(f),
     }));
+    set("images", [...images, ...newPreviews]);
 
-    set("images", [...images, ...newImages]);
+    // 원본 파일도 보관
+    setSelectedFiles((prev) => [...prev, ...taking]);
+  };
+
+  // *****추가) 인덱스 i 이미지를 첫 번째로 옮길 때, 파일 배열도 같이 이동
+  const moveFileToFront = (i: number) => {
+    setSelectedFiles((prev) => {
+      if (i < 0 || i >= prev.length) return prev;
+      const next = [...prev];
+      const [hit] = next.splice(i, 1);
+      next.unshift(hit);
+      return next;
+    });
+    moveImageToFront(i); // 스토어의 프리뷰 순서도 변경
   };
 
   // blob URL 메모리 누수 방지(삭제/리셋 시 revoke)
@@ -123,7 +144,9 @@ const AuctionForm = () => {
     if (target?.imageUrl.startsWith("blob:"))
       URL.revokeObjectURL(target.imageUrl);
     removeImage(idx);
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== idx));
   };
+
   const revokeAll = () => {
     images.forEach((img) => {
       if (img.imageUrl.startsWith("blob:")) URL.revokeObjectURL(img.imageUrl);
@@ -133,6 +156,7 @@ const AuctionForm = () => {
   const onClickCancel = () => {
     revokeAll();
     reset();
+    setSelectedFiles([]);
   };
 
   const onClickSubmit = async () => {
@@ -147,27 +171,36 @@ const AuctionForm = () => {
     try {
       setLoading(true);
 
-      // DTO 변환(스토어에서 필수 가드 ㅇㅇ 누락 시 throw)
       const payload = toRequest();
 
-      // 도메인 유효성 검사
-      const errs = validateCreateAuction(payload);
+      // 도메인 유효성
+      const errs = validateCreateAuction(payload, selectedFiles.length);
       if (errs.length) {
         showToast(errs[0], "error");
         return;
       }
 
-      // api 호출
-      const res = await createAuction(payload);
-      showToast(res.message || "등록되었습니다.", "success");
+      // 바로 폼데이터로 전송
+      const form = {
+        categoryId: payload.categoryId!,
+        title: payload.title!,
+        description: payload.description!,
+        startPrice: payload.startPrice!,
+        minBidPrice: payload.minBidPrice!,
+        startTime: payload.startTime!,
+        endTime: payload.endTime!,
+      };
 
-      // blob URL 정리 후 리셋
+      await createAuction(form, selectedFiles);
+
+      showToast("등록되었습니다.", "success");
+
       revokeAll();
       reset();
+      setSelectedFiles([]);
 
       navigate("/auctions", { replace: true }); // todo 추후 경로 수정
     } catch (err: any) {
-      // toRequest 에러 여기로
       const msg =
         err?.message ?? err?.response?.data?.message ?? "등록에 실패했습니다.";
       showToast(msg, "error");
@@ -209,7 +242,7 @@ const AuctionForm = () => {
               }
             />
 
-            {/* 썸네일 - todo 정렬 */}
+            {/* 썸네일 */}
             <div className="mt-4 flex flex-wrap gap-3">
               {images.map((img, i) => (
                 <div key={i} className="relative">
@@ -220,18 +253,13 @@ const AuctionForm = () => {
                   />
                   <div className="text-h8 mt-1 flex justify-center gap-2">
                     <button
-                      className=""
                       type="button"
-                      onClick={() => moveImageToFront(i)}
+                      onClick={() => moveFileToFront(i)}
                       title="이동"
                     >
                       이동
                     </button>
-                    <button
-                      className=""
-                      type="button"
-                      onClick={() => onRemoveImage(i)}
-                    >
+                    <button type="button" onClick={() => onRemoveImage(i)}>
                       삭제
                     </button>
                   </div>

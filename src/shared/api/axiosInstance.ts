@@ -47,10 +47,17 @@ api.interceptors.request.use((config) => {
 
   if (isSameOrigin && !isAuthEndpoint(url)) {
     const { accessToken } = useAuthStore.getState();
+    // if (accessToken) {
+    //   const h = (config.headers ?? {}) as AxiosRequestHeaders;
+    //   h.Authorization = `Bearer ${accessToken}`;
+    //   config.headers = h;
+    // }
     if (accessToken) {
-      const h = (config.headers ?? {}) as AxiosRequestHeaders;
-      h.Authorization = `Bearer ${accessToken}`;
-      config.headers = h;
+      // 수정) config.headers.set() 메서드 사용
+      config.headers.set("Authorization", `Bearer ${accessToken}`);
+      // const h = (config.headers ?? {}) as AxiosRequestHeaders;
+      // h.Authorization = `Bearer ${accessToken}`;
+      // config.headers = h;
     }
   }
   return config;
