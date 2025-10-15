@@ -1,17 +1,34 @@
 import api from "../../../shared/api/axiosInstance";
 import type {
-  CreateAuctionReq,
+  CreateAuctionForm,
   CreateAuctionRes,
   AuctionDetail,
   PageResponse,
 } from "../types/auctions";
 import axios from "axios";
 
-// 경매 상품 등록
-export const createAuction = async (payload: CreateAuctionReq) => {
-  const { data } = await api.post<CreateAuctionRes>("/auctions", payload);
+// 경매 상품 등록 (서버 업로드 + 한번에 multipart/form-data)
+export async function createAuction(form: CreateAuctionForm, files: File[]) {
+  const fd = new FormData();
+
+  // @ModelAttribute 로 매핑될 필드들
+  fd.append("categoryId", String(form.categoryId));
+  fd.append("title", form.title);
+  fd.append("description", form.description);
+  fd.append("startPrice", String(form.startPrice));
+  fd.append("minBidPrice", String(form.minBidPrice));
+  fd.append("startTime", form.startTime);
+  fd.append("endTime", form.endTime);
+
+  // @RequestPart("images") List<MultipartFile>
+  files.forEach((f) => fd.append("images", f)); // 키 이름 "images" 유지!
+
+  const { data } = await api.post<CreateAuctionRes>("/auctions", fd, {
+    headers: { "Content-Type": "multipart/form-data" },
+    withCredentials: true,
+  });
   return data;
-};
+}
 
 // 경매 상세
 export const getAuctionById = async (
@@ -41,14 +58,13 @@ export const getAuctionById = async (
       return body as AuctionDetail;
     }
 
-    // 배열만 오는 경우(비정상이나 방어)
+    // 배열만 오는 경우(방어)
     if (Array.isArray(body) && body.length > 0 && body[0]?.auctionId) {
       return body[0] as AuctionDetail;
     }
 
     throw new Error("NOT_FOUND_OR_INVALID_SHAPE");
   } catch (err) {
-    // 서버 메시지
     if (axios.isAxiosError(err)) {
       const status = err.response?.status;
       const msg =
