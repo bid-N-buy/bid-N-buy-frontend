@@ -141,7 +141,6 @@
     font-size: var(--text-base);
     line-height: var(--leading-base);
     letter-spacing: var(--tracking-base);
-    color: var(--color-g900);
     background: #fff;
   }
 
@@ -215,5 +214,34 @@
       padding-left: 0;
       padding-right: 0;
     }
+  }
+
+  /* 공통 인풋 박스 */
+  .field {
+    @apply border-g400 text-g100 focus-within:border-purple rounded-md border bg-white px-3 py-2.5 text-base leading-none transition-colors;
+  }
+
+  /* 내부 입력 영역 */
+  .field-input {
+    @apply w-full bg-transparent text-base focus:outline-none;
+  }
+
+  /* 브라우저 기본 화살표, 아이콘 제거 */
+  input[type="date"],
+  input[type="time"] {
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  /* 달력, 시계 아이콘 숨기고 클릭 유지 */
+  input[type="date"]::-webkit-calendar-picker-indicator,
+  input[type="time"]::-webkit-calendar-picker-indicator {
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  /* time 인풋 위/아래 화살표 제거 */
+  input[type="time"]::-webkit-inner-spin-button {
+    display: none;
   }
 }

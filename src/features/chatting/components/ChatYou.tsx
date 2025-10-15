@@ -1,0 +1,59 @@
+import React from "react";
+import Avatar from "../../../shared/components/Avatar";
+import type { ChatYouProps } from "../types/ChatType";
+
+const ChatYou = ({
+  counterpartProfileImageUrl,
+  counterpartNickname,
+  messageType,
+  message,
+  createdAt,
+  isRead,
+  paymentId,
+}: ChatYouProps) => {
+  return messageType === "CHAT" ? (
+    <div className="mx-2 my-6 flex gap-2">
+      <Avatar imageUrl={counterpartProfileImageUrl} />
+      <div>
+        <p className="mb-2 font-bold">{counterpartNickname}</p>
+        <div className="flex items-end">
+          <p className="bg-g400 mr-2 max-w-65 rounded-md p-3">{message}</p>
+          <span className="text-g300 mr-1 text-xs">{createdAt}</span>
+          <span className="text-g300 text-xs">
+            {isRead ? "읽음" : "전송됨"}
+          </span>
+        </div>
+      </div>
+    </div>
+  ) : messageType === "REQUEST" ? (
+    <div className="mx-2 my-6 flex gap-2">
+      <Avatar imageUrl={counterpartProfileImageUrl} />
+      <div key={paymentId}>
+        <p className="mb-2 font-bold">{counterpartNickname}</p>
+        <div className="flex items-end">
+          <p className="bg-g400 mr-2 max-w-65 rounded-md p-3">{message}</p>
+          <span className="text-g300 mr-1 text-xs">{createdAt}</span>
+          <span className="text-g300 text-xs">
+            {isRead ? "읽음" : "전송됨"}
+          </span>
+        </div>
+      </div>
+    </div>
+  ) : (
+    <div className="mx-2 my-6 flex gap-2">
+      <Avatar imageUrl={counterpartProfileImageUrl} />
+      <div>
+        <p className="mb-2 font-bold">{counterpartNickname}</p>
+        <div className="flex items-end">
+          <p className="bg-g400 mr-2 max-w-65 rounded-md p-3">{message}</p>
+          <span className="text-g300 mr-1 text-xs">{createdAt}</span>
+          <span className="text-g300 text-xs">
+            {isRead ? "읽음" : "전송됨"}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ChatYou;

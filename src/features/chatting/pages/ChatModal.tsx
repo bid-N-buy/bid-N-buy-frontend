@@ -1,12 +1,43 @@
-import React from "react";
-import { useRef, useEffect } from "react";
-import type { ChatModalProps } from "../types/ChatType";
-// import Chat from "../components/Chat";
-import { X } from "lucide-react";
+import { useRef, useEffect, useState } from "react";
+import type { ModalProps } from "../types/ChatType";
+import { useShallow } from "zustand/shallow";
+import { useChatModalStore } from "../../../shared/store/ChatModalStore";
 import ChatList from "./ChatList";
+import ChatRoom from "./ChatRoom";
+import { X, ChevronLeft, EllipsisVertical } from "lucide-react";
+import { useChatListApi } from "../api/useChatListApi";
+import { useChatRoomApi } from "../api/useChatRoomApi";
 
-const ChatModal = ({ onClose }: ChatModalProps) => {
+const ChatModal = ({ onClose, onDelete }: ModalProps) => {
   const modalRef = useRef<HTMLDivElement>(null);
+  // 채팅목록/채팅방 화면 상태관리
+  const { targetView, selectedChatroomId } = useChatModalStore(
+    useShallow((state) => ({
+      targetView: state.targetView,
+      selectedChatroomId: state.selectedChatroomId,
+    }))
+  );
+  const [currentView, setCurrentView] = useState<string>(targetView);
+
+  // chatlist
+  const listApi = useChatListApi();
+  // 불러와진 ChatListItemProps 중 원하는 요소만 사용할 수 있게 처리
+  type ChatListItem = (typeof listApi.chatList)[number];
+  // 이동할 roomInfo(list에서 접근 시)
+  const [selectedRoomInfo, setSelectedRoomInfo] = useState<ChatListItem | null>(
+    null
+  );
+
+  // header>modal || 경매 상세 페이지에서 챗방 바로 생성할 시
+  const targetChatroomId = selectedRoomInfo?.chatroomId || selectedChatroomId;
+
+  // chatroom 상세 데이터
+  const roomApi = useChatRoomApi(targetChatroomId!);
+
+  // chatroom에서 해당 채팅방 삭제 메뉴
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  // modal창 닫기: 여백 누를 시 꺼지도록
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
@@ -17,18 +48,100 @@ const ChatModal = ({ onClose }: ChatModalProps) => {
     return () => window.removeEventListener("mousedown", handleClick);
   }, [modalRef, onClose]);
 
+  // list에서 각 Chat 누를 시 채팅방으로 넘어가는 함수
+  const handleSelectRoom = (chatroomId: string) => {
+    const roomInfo = listApi.chatList.find(
+      (chat) => chat.chatroomId === chatroomId
+    );
+    if (roomInfo) {
+      setSelectedRoomInfo(roomInfo);
+      setCurrentView("room");
+    }
+  };
+
+  // 채팅방에서 목록으로 돌아갈 함수
+  const handleGoToList = () => {
+    setSelectedRoomInfo(null);
+    setCurrentView("list");
+  };
+
   return (
-    <div className="fixed inset-0 z-50" onClick={onClose} ref={modalRef}>
-      <div className="absolute inset-0 z-51 h-full w-full rounded-md bg-white shadow-md md:top-[50%] md:left-[50%] md:h-150 md:w-100 md:translate-[-50%]">
-        <div className="border-purple flex flex-shrink-0 items-center justify-between border-b p-4">
-          <p className="font-bold">채팅목록</p>
-          <button onClick={onClose} aria-label="모달 닫기">
-            <X />
-          </button>
-        </div>
-        <div className="h-[calc(100%-59px)] overflow-y-auto">
-          <ChatList />
-        </div>
+    <div
+      className="border-g500 fixed inset-0 z-51 h-full w-full rounded-md border-1 bg-white text-wrap shadow-lg md:absolute md:inset-auto md:top-[72px] md:right-8 md:h-150 md:w-100"
+      ref={modalRef}
+    >
+      <div className="border-purple flex flex-shrink-0 items-center justify-between border-b p-4">
+        {/* 5. 현재 뷰에 따라 제목 및 돌아가기 버튼 표시 */}
+        {currentView === "list" ? (
+          <>
+            <p className="font-bold">채팅목록</p>
+            <button onClick={onClose} aria-label="채팅 모달 닫기">
+              <X />
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              onClick={handleGoToList}
+              className="font-bold text-purple-600"
+              aria-label="채팅목록으로 가기"
+            >
+              <ChevronLeft />
+            </button>
+            <p>
+              {selectedRoomInfo?.counterpartNickname
+                ? selectedRoomInfo.counterpartNickname
+                : "사용자"}
+            </p>
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              aria-label="더보기"
+            >
+              <EllipsisVertical className="text-g200 relative" />
+            </button>
+            {isMenuOpen && (
+              <div className="border-g400 absolute top-10 right-3 mt-2 w-32 rounded-md border bg-white shadow-lg">
+                <button
+                  onClick={() => {
+                    onDelete?.();
+                    setIsMenuOpen(false);
+                  }}
+                  className="text-red hover:bg-g500 w-full px-4 py-2.5 text-left text-base transition-colors md:py-3"
+                >
+                  채팅방 삭제
+                </button>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+      <div className="h-[calc(100%-59px)] overflow-x-hidden overflow-y-auto">
+        {currentView === "list" && (
+          <ChatList
+            chatList={listApi.chatList}
+            onSelectRoom={handleSelectRoom}
+          />
+        )}
+        {listApi.isLoading && (
+          <p className="flex-column flex h-[100%] items-center justify-center p-4 text-center">
+            채팅 목록 로딩 중...
+          </p>
+        )}
+        {listApi.error && (
+          <p className="flex-column flex h-[100%] items-center justify-center p-4 text-red-500">
+            {listApi.error}
+          </p>
+        )}
+        {currentView === "room" &&
+          selectedRoomInfo &&
+          !roomApi.isLoading &&
+          roomApi.chatRoom && (
+            <ChatRoom
+              chatroomId={targetChatroomId!}
+              chatroomInfo={selectedRoomInfo || roomApi.chatRoom.chatroomInfo}
+              productInfo={roomApi.chatRoom.productInfo}
+            />
+          )}
       </div>
     </div>
   );

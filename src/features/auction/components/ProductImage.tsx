@@ -1,7 +1,12 @@
 import React from "react";
 
 const ProductImage = () => {
-  return <div>ProductImage</div>;
+  return (
+    <div
+      aria-label="이미지"
+      className="bg-g400 aspect-[645/500] w-full rounded-3xl"
+    />
+  );
 };
 
 export default ProductImage;
