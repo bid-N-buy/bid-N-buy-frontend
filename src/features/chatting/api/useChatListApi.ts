@@ -3,7 +3,7 @@ import api from "../../../shared/api/axiosInstance";
 import { useAuthStore } from "../../auth/store/authStore";
 import type { ChatListItemProps } from "../types/ChatType";
 
-export const useChatListApi = () => {
+export const useChatListApi = (isModalOpen: boolean) => {
   const [chatList, setChatList] = useState<ChatListItemProps[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -12,7 +12,7 @@ export const useChatListApi = () => {
 
   // 임시 데이터 로딩 로직
   useEffect(() => {
-    if (!token) {
+    if (!token || !isModalOpen) {
       setError("채팅목록을 불러올 수 없습니다.");
       setIsLoading(false);
       return;
@@ -36,7 +36,7 @@ export const useChatListApi = () => {
       }
     };
     loadChatList();
-  }, [token]);
+  }, [token, isModalOpen]);
 
   return { chatList, isLoading, error };
 };

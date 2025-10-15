@@ -8,48 +8,71 @@ const ChatYou = ({
   messageType,
   message,
   createdAt,
-  isRead,
+  read,
+  sellerId,
+  auctionId,
+  auctionImageUrl,
+  auctionTitle,
   paymentId,
 }: ChatYouProps) => {
-  return messageType === "CHAT" ? (
-    <div className="mx-2 my-6 flex gap-2">
+  const myId = 2;
+  return messageType === "CHAT" && sellerId !== myId ? (
+    <div className="mx-2 my-4 flex gap-2">
       <Avatar imageUrl={counterpartProfileImageUrl} />
       <div>
         <p className="mb-2 font-bold">{counterpartNickname}</p>
         <div className="flex items-end">
-          <p className="bg-g400 mr-2 max-w-65 rounded-md p-3">{message}</p>
-          <span className="text-g300 mr-1 text-xs">{createdAt}</span>
-          <span className="text-g300 text-xs">
-            {isRead ? "읽음" : "전송됨"}
-          </span>
+          <p className="bg-g400 mr-2 max-w-65 rounded-md p-3">
+            {message + " ㅇㅇㅇㅇㅇ"}
+          </p>
+          <div>
+            <p className="text-g300 text-xs">{read ? "읽음" : "전송됨"}</p>
+            <p className="text-g300 text-xs">{createdAt}</p>
+          </div>
         </div>
       </div>
     </div>
-  ) : messageType === "REQUEST" ? (
-    <div className="mx-2 my-6 flex gap-2">
+  ) : messageType === "CHAT" && sellerId === myId ? (
+    <div className="mx-2 my-4 flex gap-2">
+      <Avatar imageUrl={counterpartProfileImageUrl} />
+      <div key={paymentId}>
+        <p className="mb-2 font-bold">{counterpartNickname}</p>
+        <div className="flex items-end">
+          <p className="bg-g400 mr-2 max-w-65 rounded-md p-3">
+            {message + " ::::내가파는사람"}
+          </p>
+          <div>
+            <p className="text-g300 text-xs">{read ? "읽음" : "전송됨"}</p>
+            <p className="text-g300 text-xs">{createdAt}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  ) : messageType === "REQUEST" && sellerId !== myId ? (
+    <div className="mx-2 my-4 flex gap-2">
       <Avatar imageUrl={counterpartProfileImageUrl} />
       <div key={paymentId}>
         <p className="mb-2 font-bold">{counterpartNickname}</p>
         <div className="flex items-end">
           <p className="bg-g400 mr-2 max-w-65 rounded-md p-3">{message}</p>
-          <span className="text-g300 mr-1 text-xs">{createdAt}</span>
-          <span className="text-g300 text-xs">
-            {isRead ? "읽음" : "전송됨"}
-          </span>
+          <div>
+            <p className="text-g300 text-xs">{read ? "읽음" : "전송됨"}</p>
+            <p className="text-g300 text-xs">{createdAt}</p>
+          </div>
         </div>
       </div>
     </div>
   ) : (
-    <div className="mx-2 my-6 flex gap-2">
+    <div className="mx-2 my-4 flex gap-2">
       <Avatar imageUrl={counterpartProfileImageUrl} />
       <div>
         <p className="mb-2 font-bold">{counterpartNickname}</p>
         <div className="flex items-end">
           <p className="bg-g400 mr-2 max-w-65 rounded-md p-3">{message}</p>
-          <span className="text-g300 mr-1 text-xs">{createdAt}</span>
-          <span className="text-g300 text-xs">
-            {isRead ? "읽음" : "전송됨"}
-          </span>
+          <div>
+            <p className="text-g300 text-xs">{read ? "읽음" : "전송됨"}</p>
+            <p className="text-g300 text-xs">{createdAt}</p>
+          </div>
         </div>
       </div>
     </div>
