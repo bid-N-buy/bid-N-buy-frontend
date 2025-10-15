@@ -29,14 +29,34 @@ export default function CheckoutPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          merchantOrderId,
-          amount: amount.value,
+          sellerId: 2,               // 🔹 테스트용 sellerId (DB에 있는 유저 id)
+          buyerId: 1,                // 🔹 테스트용 buyerId (로그인 유저 id)
+          type: "ESCROW"             // 🔹 거래 타입
         }),
       });
 
       if (!orderResponse.ok) {
         throw new Error("Order 생성 실패");
       }
+
+      // 응답 JSON 파싱
+      const orderData = await orderResponse.json();
+      console.log(" orderData:", orderData);
+
+      // orderId 뽑기
+      const orderId = orderData.orderId;
+      console.log("주문 ID:", orderId);
+
+      // 3. 결제 금액 + merchantOrderId 저장
+      await fetch("http://localhost:8080/payments/saveAmount", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderId, // 주문 PK
+          merchantOrderId,
+          amount: amount.value,
+        }),
+      });
 
       // 3. Toss 결제창 실행
       await payment.requestPayment({

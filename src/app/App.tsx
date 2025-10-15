@@ -132,6 +132,12 @@ export default function App() {
               <Route path="new" element={<AuctionForm />} />
             </Route>
           </Route>
+          
+          {/* 결제 관련 */}
+          <Route path="/payment/checkout" element={<PaymentForm />} />
+          <Route path="/payment/success" element={<SuccessPage />} />
+          <Route path="/payment/fail" element={<FailPage />} />
+
           {/* 마이페이지 */}
           <Route element={<ProtectedRoute />}>
             <Route path="/mypage" element={<MypageLayout />}>
@@ -149,10 +155,6 @@ export default function App() {
             </Route>
             <Route path="profile" element={<ProfileDetails />} />
           </Route>
-          {/* 결제 관련 */}
-            <Route path="/payment/checkout" element={<PaymentForm />} />
-            <Route path="/payment/success" element={<SuccessPage />} />
-            <Route path="/payment/fail" element={<FailPage />} />
           {/* 기타 */}
           {/* <Route path="/error" element={<ErrorPage />} />
           <Route path="*" element={<NotFoundPage />} /> */}
