@@ -21,33 +21,37 @@ export default function CheckoutPage() {
 
   async function handlePayment() {
     try {
-    // 1. Toss & DB에 같이 쓸 안전한 merchantOrderId 생성
-    const merchantOrderId = "ORDER_" + Date.now(); // 예: ORDER_1739582392384
+      // 1. 안전한 merchantOrderId 생성
+      const merchantOrderId = "ORDER_" + Date.now();
 
-    // 2. Payment 저장 (금액 + merchantOrderId)
-    await fetch("http://localhost:8080/payments/saveAmount", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        merchantOrderId,
-        amount: amount.value,
-      }),
-    });
+      // 2. 백엔드에 주문 생성 요청 (→ DB 저장)
+      const orderResponse = await fetch("http://localhost:8080/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          merchantOrderId,
+          amount: amount.value,
+        }),
+      });
 
-    // 3. Toss 결제창 실행
-    await payment.requestPayment({
-      method: "CARD",
-      amount,
-      orderId: merchantOrderId, // Toss API에 전달
-      orderName: "테스트 상품",
-      successUrl: window.location.origin + "/payment/success",
-      failUrl: window.location.origin + "/payment/fail",
-      customerEmail: "customer123@gmail.com",
-      customerName: "홍길동",
-    });
-  } catch (err) {
-    console.error("결제 요청 실패:", err);
-  }
+      if (!orderResponse.ok) {
+        throw new Error("Order 생성 실패");
+      }
+
+      // 3. Toss 결제창 실행
+      await payment.requestPayment({
+        method: "CARD",
+        amount,
+        orderId: merchantOrderId, // Toss API에 전달
+        orderName: "테스트 상품",
+        successUrl: window.location.origin + "/payment/success",
+        failUrl: window.location.origin + "/payment/fail",
+        customerEmail: "customer123@gmail.com",
+        customerName: "홍길동",
+      });
+    } catch (err) {
+      console.error("결제 요청 실패:", err);
+    }
   }
 
   return (
