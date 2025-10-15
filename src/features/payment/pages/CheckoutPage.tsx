@@ -1,76 +1,61 @@
-import { loadTossPayments, ANONYMOUS } from "@tosspayments/tosspayments-sdk";
+import { loadTossPayments } from "@tosspayments/tosspayments-sdk";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import '../Toss.css';
 
-// TODO: clientKey / server secretKey 변경 필요
-const clientKey = "test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm";
-const customerKey = generateRandomString();
+const clientKey = "test_ck_DpexMgkW36PwLbonEpqwrGbR5ozO";
+const amount = { currency: "KRW", value: 1000 };
 
-export function WidgetCheckoutPage() {
-  const navigate = useNavigate();
-
-  const [amount, setAmount] = useState({ currency: "KRW", value: 1000 });
+export default function CheckoutPage() {
   const [ready, setReady] = useState(false);
-  const [widgets, setWidgets] = useState(null);
+  const [payment, setPayment] = useState<any>(null);
 
   useEffect(() => {
-    async function fetchPaymentWidgets() {
-      try {
-        const tossPayments = await loadTossPayments(clientKey);
-        const widgets = tossPayments.widgets({ customerKey });
-        setWidgets(widgets);
-      } catch (error) {
-        console.error("Error fetching payment widget:", error);
-      }
-    }
-    fetchPaymentWidgets();
-  }, [clientKey, customerKey]);
-
-  useEffect(() => {
-    async function renderPaymentWidgets() {
-      if (!widgets) return;
-
-      await widgets.setAmount(amount);
-
-      await Promise.all([
-        widgets.renderPaymentMethods({ selector: "#payment-method", variantKey: "DEFAULT" }),
-        widgets.renderAgreement({ selector: "#agreement", variantKey: "AGREEMENT" }),
-      ]);
-
+    async function init() {
+      const tossPayments = await loadTossPayments(clientKey);
+      const payment = tossPayments.payment({ customerKey: generateRandomString() });
+      setPayment(payment);
       setReady(true);
     }
+    init();
+  }, []);
 
-    renderPaymentWidgets();
-  }, [widgets]);
+  async function handlePayment() {
+    try {
+    // 1. Toss & DB에 같이 쓸 안전한 merchantOrderId 생성
+    const merchantOrderId = "ORDER_" + Date.now(); // 예: ORDER_1739582392384
+
+    // 2. Payment 저장 (금액 + merchantOrderId)
+    await fetch("http://localhost:8080/payments/saveAmount", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        merchantOrderId,
+        amount: amount.value,
+      }),
+    });
+
+    // 3. Toss 결제창 실행
+    await payment.requestPayment({
+      method: "CARD",
+      amount,
+      orderId: merchantOrderId, // Toss API에 전달
+      orderName: "테스트 상품",
+      successUrl: window.location.origin + "/payment/success",
+      failUrl: window.location.origin + "/payment/fail",
+      customerEmail: "customer123@gmail.com",
+      customerName: "홍길동",
+    });
+  } catch (err) {
+    console.error("결제 요청 실패:", err);
+  }
+  }
 
   return (
-    <div className="toss_wrapper">
-      <div className="toss_box_section">
-        <div id="payment-method" />
-        <div id="agreement" />
-
-        <button
-          className="toss_button"
-          style={{ marginTop: "30px" }}
-          disabled={!ready}
-          onClick={async () => {
-            try {
-              await widgets.requestPayment({
-                orderId: generateRandomString(),
-                orderName: "토스 티셔츠 외 2건",
-                successUrl: window.location.origin + "/payment/success",
-                failUrl: window.location.origin + "/payment/fail",
-                customerEmail: "customer123@gmail.com",
-                customerName: "김토스",
-              });
-            } catch (error) {
-              console.error(error);
-            }
-          }}
-        >
-          결제하기
-        </button>
-      </div>
+    <div className="toss_box_section">
+      <h2>테스트 결제</h2>
+      <button className="toss_button" disabled={!ready} onClick={handlePayment}>
+        결제하기
+      </button>
     </div>
   );
 }

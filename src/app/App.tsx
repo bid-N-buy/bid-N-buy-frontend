@@ -4,9 +4,9 @@ import Header from "../shared/components/Header";
 import AuctionDetail from "../features/auction/pages/AuctionDetail";
 import LoginPage from "../features/auth/pages/login/LoginPage";
 import SignUpPage from "../features/auth/pages/signUp/SignUpPage";
-import {WidgetCheckoutPage} from "../features/payment/pages/CheckoutPage";
-import {WidgetSuccessPage} from "../features/payment/pages/SuccessPage";
-import {FailPage} from "../features/payment/pages/FailPage";
+import PaymentForm from "../features/payment/pages/CheckoutPage";
+import SuccessPage from "../features/payment/pages/SuccessPage";
+import FailPage from "../features/payment/pages/FailPage";
 
 export default function App() {
   return (
@@ -21,8 +21,8 @@ export default function App() {
             <Route path="/signUp" element={<SignUpPage />} />
 
             {/* 결제 관련 */}
-            <Route path="/payment/checkout" element={<WidgetCheckoutPage />} />
-            <Route path="/payment/success" element={<WidgetSuccessPage />} />
+            <Route path="/payment/checkout" element={<PaymentForm />} />
+            <Route path="/payment/success" element={<SuccessPage />} />
             <Route path="/payment/fail" element={<FailPage />} />
 
             {/* 404 */}
