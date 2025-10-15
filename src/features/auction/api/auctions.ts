@@ -8,7 +8,7 @@ import type {
 import axios from "axios";
 
 // 경매 상품 등록 (서버 업로드 + 한번에 multipart/form-data)
-export async function createAuction(form: CreateAuctionForm, files: File[]) {
+export const createAuction = async (form: CreateAuctionForm, files: File[]) => {
   const fd = new FormData();
 
   // @ModelAttribute 로 매핑될 필드들
@@ -21,55 +21,49 @@ export async function createAuction(form: CreateAuctionForm, files: File[]) {
   fd.append("endTime", form.endTime);
 
   // @RequestPart("images") List<MultipartFile>
-  files.forEach((f) => fd.append("images", f)); // 키 이름 "images" 유지!
+  files.forEach((f) => fd.append("images", f));
 
   const { data } = await api.post<CreateAuctionRes>("/auctions", fd, {
     headers: { "Content-Type": "multipart/form-data" },
     withCredentials: true,
   });
   return data;
-}
+};
 
 // 경매 상세
 export const getAuctionById = async (
   auctionId: number
 ): Promise<AuctionDetail> => {
   try {
-    const res = await api.get(`/auctions/${auctionId}`);
-    const body = res.data;
+    const { data } = await api.get<AuctionDetail | { data: AuctionDetail }>(
+      `/auctions/${auctionId}`
+    );
 
-    // 현재 스키마
-    if (body && Array.isArray(body.data) && body.data.length > 0) {
-      return body.data[0] as AuctionDetail;
+    // { data: {...} } 형태도 허용
+    const detail: AuctionDetail = (data as any)?.data?.auctionId
+      ? (data as any).data
+      : (data as any);
+
+    // 필수 필드 최소 검증
+    if (!detail || typeof detail !== "object" || !detail.auctionId) {
+      throw new Error("INVALID_RESPONSE_SHAPE");
     }
 
-    // { data: { ... } } 로 오는 경우
-    if (
-      body &&
-      body.data &&
-      typeof body.data === "object" &&
-      body.data.auctionId
-    ) {
-      return body.data as AuctionDetail;
+    // images 없거나 배열 아닌 경우 예방적으로 보정
+    if (!Array.isArray(detail.images)) {
+      (detail as any).images = [];
     }
 
-    // 단일 객체로 오는 경우
-    if (body && typeof body === "object" && body.auctionId) {
-      return body as AuctionDetail;
-    }
-
-    // 배열만 오는 경우(방어)
-    if (Array.isArray(body) && body.length > 0 && body[0]?.auctionId) {
-      return body[0] as AuctionDetail;
-    }
-
-    throw new Error("NOT_FOUND_OR_INVALID_SHAPE");
+    return detail;
   } catch (err) {
     if (axios.isAxiosError(err)) {
       const status = err.response?.status;
-      const msg =
-        (err.response?.data as any)?.message ?? err.message ?? "요청 실패";
-      throw new Error(`${status ?? ""} ${msg}`.trim());
+      const serverMsg = (err.response?.data as any)?.message;
+
+      if (status === 401) throw new Error("401 인증이 필요합니다.");
+      if (status === 403) throw new Error("403 접근 권한이 없습니다.");
+      if (status === 404) throw new Error("404 존재하지 않는 경매입니다.");
+      throw new Error(`${status ?? ""} ${serverMsg ?? err.message}`.trim());
     }
     throw err;
   }
