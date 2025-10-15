@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useCallback, useEffect, useState } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import api, { API_BASE } from "../../../../shared/api/axiosInstance";
 import { useAuthStore, type AuthState } from "../../store/authStore";
@@ -8,14 +8,10 @@ import type {
   ErrorResponse,
 } from "../../../../shared/types/CommonType";
 
-import kakaoBg from "../../../../assets/img/kakao_login.png";
-import naverBg from "../../../../assets/img/naver_login.png";
-
 // 서버가 top-level 로 토큰을 주는 경우까지 커버
 type LegacyLoginResponse = {
   accessToken?: string | null;
   refreshToken?: string | null;
-  // 서버에 따라 expiresIn 등이 있을 수 있음
 };
 
 function hasTokenInfo(
@@ -36,10 +32,21 @@ const LoginForm: React.FC = () => {
   const setTokens = useAuthStore((s: AuthState) => s.setTokens);
   const setProfile = useAuthStore((s: AuthState) => s.setProfile);
   const navigate = useNavigate();
+  const location = useLocation();
 
-  // (?token=...) 소셜 콜백 대응 — 가능하면 서버가 쿠키만 심고 /auth/reissue로 통일 권장
+  // (?token=..., ?error=...) 소셜 콜백 대응
   useEffect(() => {
     const url = new URL(window.location.href);
+    const err = url.searchParams.get("error");
+    const errDesc = url.searchParams.get("error_description");
+    if (err) {
+      setError(errDesc || "소셜 로그인에 실패했습니다.");
+      url.searchParams.delete("error");
+      url.searchParams.delete("error_description");
+      window.history.replaceState({}, "", url.pathname + url.search);
+      return;
+    }
+
     const token = url.searchParams.get("token");
     if (token) {
       setTokens(token, null);
@@ -49,113 +56,110 @@ const LoginForm: React.FC = () => {
     }
   }, [navigate, setTokens]);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (loading) return;
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      if (loading) return;
 
-    setError(null);
+      setError(null);
 
-    const emailTrim = email.trim();
-    const pwTrim = password.trim();
+      const emailTrim = email.trim();
+      const pwTrim = password.trim();
 
-    if (!emailTrim || !pwTrim) {
-      setError("아이디와 비밀번호를 입력해 주세요.");
-      return;
-    }
-    if (!isEmail(emailTrim)) {
-      setError("올바른 이메일 형식이 아닙니다.");
-      return;
-    }
-    if (pwTrim.length < 4) {
-      setError("비밀번호가 너무 짧습니다.");
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      // 1) 로그인 호출
-      const { data } = await api.post<LoginResponse | LegacyLoginResponse>(
-        "/auth/login",
-        { email: emailTrim, password: pwTrim },
-        {
-          headers: { "Content-Type": "application/json" },
-          withCredentials: true, // 쿠키 전략이라면 필수
-        }
-      );
-
-      if (import.meta.env.DEV) {
-        // 개발 모드에서만 로그
-        // eslint-disable-next-line no-console
-        console.debug("[login] response", data);
+      if (!emailTrim || !pwTrim) {
+        setError("아이디와 비밀번호를 입력해 주세요.");
+        return;
+      }
+      if (!isEmail(emailTrim)) {
+        setError("올바른 이메일 형식이 아닙니다.");
+        return;
+      }
+      if (pwTrim.length < 4) {
+        setError("비밀번호가 너무 짧습니다.");
+        return;
       }
 
-      // 2) 응답에서 access/refresh 추출 (최신/레거시 모두 대응)
-      const access = hasTokenInfo(data)
-        ? data.tokenInfo.accessToken
-        : (data.accessToken ?? null);
+      try {
+        setLoading(true);
 
-      const refresh = hasTokenInfo(data)
-        ? (data.tokenInfo.refreshToken ?? null)
-        : (data.refreshToken ?? null);
-
-      if (!access) {
-        throw new Error(
-          "accessToken이 응답에 없습니다. 서버 응답 형식을 확인하세요."
+        const { data } = await api.post<LoginResponse | LegacyLoginResponse>(
+          "/auth/login",
+          { email: emailTrim, password: pwTrim },
+          {
+            headers: { "Content-Type": "application/json" },
+            withCredentials: true,
+          }
         );
-      }
 
-      // 최신 스펙이면 nickname/email이 올 수 있음 → 프로필 세팅
-      if (hasTokenInfo(data)) {
-        // 서버가 nickname/email을 내려주는 스펙이면 저장
-        const nickname = data.nickname as string | undefined;
-        const emailFromRes = data.email as string | undefined;
-        if (nickname) setProfile({ nickname, email: emailFromRes });
-      }
+        if (import.meta.env.DEV) console.debug("[login] response", data);
 
-      // refresh가 본문에 없더라도 '쿠키 기반'이면 정상 (zustand persist 권장)
-      setTokens(access, refresh ?? null);
+        const access = hasTokenInfo(data)
+          ? data.tokenInfo.accessToken
+          : (data.accessToken ?? null);
+        const refresh = hasTokenInfo(data)
+          ? (data.tokenInfo.refreshToken ?? null)
+          : (data.refreshToken ?? null);
 
-      navigate("/"); // 로그인 성공 → 홈
-    } catch (err) {
-      if (axios.isAxiosError<ErrorResponse>(err)) {
-        // 401/403 등 서버 메시지 우선
-        const msg =
-          err.response?.data?.message ??
-          (err.response?.status === 401
-            ? "아이디 또는 비밀번호가 올바르지 않습니다."
-            : "로그인에 실패했습니다.");
-        setError(msg);
+        if (!access)
+          throw new Error(
+            "accessToken이 응답에 없습니다. 서버 응답 형식을 확인하세요."
+          );
 
-        if (import.meta.env.DEV) {
-          // eslint-disable-next-line no-console
-          console.error("[login] failed", {
-            url: err.config?.url,
-            method: err.config?.method,
-            status: err.response?.status,
-            data: err.response?.data,
-          });
+        if (hasTokenInfo(data)) {
+          const nickname = data.nickname as string | undefined;
+          const emailFromRes = data.email as string | undefined;
+          if (nickname) setProfile({ nickname, email: emailFromRes });
         }
-      } else if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("알 수 없는 오류가 발생했습니다.");
+
+        setTokens(access, refresh ?? null);
+        navigate("/");
+      } catch (err) {
+        if (axios.isAxiosError<ErrorResponse>(err)) {
+          const msg =
+            err.response?.data?.message ??
+            (err.response?.status === 401
+              ? "아이디 또는 비밀번호가 올바르지 않습니다."
+              : "로그인에 실패했습니다.");
+          setError(msg);
+
+          if (import.meta.env.DEV) {
+            console.error("[login] failed", {
+              url: err.config?.url,
+              method: err.config?.method,
+              status: err.response?.status,
+              data: err.response?.data,
+            });
+          }
+        } else if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError("알 수 없는 오류가 발생했습니다.");
+        }
+      } finally {
+        setLoading(false);
       }
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    [email, password, loading, navigate, setProfile, setTokens]
+  );
 
-  const startKakao = () => {
+  // 현재 위치를 state로 싣고 시작(선택) → 로그인 후 복귀 시 유용
+  const startKakao = useCallback(() => {
     if (loading) return;
-    // 히스토리에 남는 게 괜찮다면 assign, 대체 이동은 replace
-    window.location.assign(`${API_BASE}/auth/kakao`);
-  };
+    const redirectParam = encodeURIComponent(
+      location.pathname + location.search || "/"
+    );
+    window.location.assign(`${API_BASE}/auth/kakao?redirect=${redirectParam}`);
+  }, [loading, location.pathname, location.search]);
 
-  const startNaver = () => {
+  const startNaver = useCallback(() => {
     if (loading) return;
-    window.location.assign(`${API_BASE}/auth/naver/loginstart`);
-  };
+    const redirectParam = encodeURIComponent(
+      location.pathname + location.search || "/"
+    );
+    window.location.assign(
+      `${API_BASE}/auth/naver/loginstart?redirect=${redirectParam}`
+    );
+  }, [loading, location.pathname, location.search]);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
@@ -170,6 +174,7 @@ const LoginForm: React.FC = () => {
         className="hover:border-purple w-full rounded-md border px-3 py-2"
         disabled={loading}
         autoComplete="email"
+        required
       />
 
       {/* 비밀번호 */}
@@ -183,6 +188,8 @@ const LoginForm: React.FC = () => {
         className="hover:border-purple w-full rounded-md border px-3 py-2"
         disabled={loading}
         autoComplete="current-password"
+        required
+        minLength={4}
       />
 
       {/* 로그인 버튼 */}
@@ -190,6 +197,7 @@ const LoginForm: React.FC = () => {
         type="submit"
         disabled={loading}
         className="bg-purple w-full rounded-md py-2 text-white disabled:opacity-60"
+        aria-busy={loading}
       >
         {loading ? "로그인 중..." : "로그인"}
       </button>
@@ -203,13 +211,12 @@ const LoginForm: React.FC = () => {
           비밀번호 찾기
         </Link>
         <span className="text-h9">|</span>
-        {/* 라우트 경로 케이스(대소문자)와 실제 라우트 일치 확인! */}
         <Link to="/signup" className="text-h9 hover:underline">
           회원가입
         </Link>
       </div>
 
-      {/* 소셜 로그인 (네이버/카카오 새 스타일) */}
+      {/* 소셜 로그인 */}
       <div className="mt-4 space-y-3">
         {/* 네이버 */}
         <button
@@ -219,7 +226,6 @@ const LoginForm: React.FC = () => {
           aria-label="네이버 로그인"
           className="flex h-[50px] w-full items-center justify-center gap-2 rounded-md bg-[#03C75A] text-white transition hover:brightness-105 focus:ring-2 focus:ring-[#03C75A]/40 focus:outline-none active:brightness-95 disabled:opacity-60"
         >
-          {/* 네이버 아이콘 (화이트 사각형 + N) */}
           <span className="grid h-6 w-6 place-items-center rounded-[4px] bg-white font-black text-[#03C75A]">
             N
           </span>
@@ -234,7 +240,6 @@ const LoginForm: React.FC = () => {
           aria-label="카카오 로그인"
           className="flex h-[50px] w-full items-center justify-center gap-2 rounded-md bg-[#FEE500] text-black transition hover:brightness-105 focus:ring-2 focus:ring-[#FEE500]/40 focus:outline-none active:brightness-95 disabled:opacity-60"
         >
-          {/* 카카오 아이콘 (검정 원형 + K) – 이미지 없이 심볼만 */}
           <span className="grid h-6 w-6 place-items-center rounded-full bg-black text-[13px] font-bold text-[#FEE500]">
             K
           </span>

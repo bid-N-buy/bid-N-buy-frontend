@@ -1,33 +1,60 @@
-// components/trade/TradeRow.tsx
 import React from "react";
 import type { TradeItem } from "../../types/trade";
 
 type Props = {
   item: TradeItem;
-  rightSlot?: React.ReactNode; // 우측 상태/버튼 등
+  rightText?: React.ReactNode; // 우측 상태 텍스트/버튼
   onClick?: (id: string) => void;
+  subtitleTop?: string; // "판매자 이름" / "경매 시작 시간" 등
+  subtitleBottom?: string; // "경매 마감 시간" 등
 };
-export default function TradeRow({ item, rightSlot, onClick }: Props) {
+
+export default function TradeRowCompact({
+  item,
+  rightText,
+  onClick,
+  subtitleTop,
+  subtitleBottom,
+}: Props) {
   return (
     <li
-      className="flex items-start gap-4 border-b border-neutral-200 py-5"
+      className="cursor-pointer select-none"
       onClick={() => onClick?.(item.id)}
+      role="button"
+      aria-label={item.title}
     >
-      <img
-        src={item.thumbUrl}
-        alt={item.title}
-        className="size-[80px] rounded bg-neutral-200 object-cover"
-      />
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-[18px] font-bold text-neutral-900">
-          {item.title}
-        </p>
-        <p className="mt-2 text-sm text-neutral-600">판매자 이름</p>
-        <p className="text-sm text-neutral-600">
-          경매 마감 시간{/* 필요시 포맷팅해서 노출 */}
-        </p>
+      <div className="flex items-start gap-4 py-4">
+        {/* 썸네일 */}
+        <div className="h-16 w-16 shrink-0 overflow-hidden rounded bg-neutral-200">
+          <img
+            src={item.thumbUrl}
+            alt={item.title}
+            className="h-full w-full object-cover"
+            loading="lazy"
+          />
+        </div>
+
+        {/* 본문 */}
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[16px] font-semibold text-neutral-900">
+            {item.title}
+          </p>
+          <p className="mt-1 text-sm text-neutral-600">
+            {subtitleTop ?? "판매자 이름"}
+          </p>
+          <p className="text-sm text-neutral-600">
+            {subtitleBottom ?? "경매 마감 시간"}
+          </p>
+        </div>
+
+        {/* 우측 상태 */}
+        <div className="shrink-0 pl-2 text-sm text-neutral-700">
+          {rightText ?? item.status}
+        </div>
       </div>
-      <div className="shrink-0 text-sm text-neutral-700">{rightSlot}</div>
+
+      {/* 구분선 */}
+      <div className="h-px w-full bg-neutral-200" />
     </li>
   );
 }

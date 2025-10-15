@@ -1,7 +1,12 @@
 // src/features/mypage/pages/AccountSettings.tsx
 import React, { useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../../../shared/api/axiosInstance";
 import { useAuthStore, type AuthState } from "../../auth/store/authStore";
+import AddressDetails from "../components/myAddress/AddressDetails";
+import AddressEditorModal from "../components/myAddress/AddressEditorModal";
+import { useAddresses } from "../hooks/useAddresses";
+import type { Address, AddressDraft } from "../types/address";
 
 type PasswordForm = {
   currentPassword: string;
@@ -12,8 +17,11 @@ type PasswordForm = {
 const MAX_IMG_MB = 5;
 
 const AccountSettings: React.FC = () => {
+  const navigate = useNavigate();
+
   const profile = useAuthStore((s: AuthState) => s.profile);
   const setProfile = useAuthStore((s: AuthState) => s.setProfile);
+  const clearAuth = useAuthStore((s: any) => s.clear);
   const userId = (useAuthStore.getState() as any)?.userId ?? null;
 
   // 닉네임 인라인 편집
@@ -34,6 +42,15 @@ const AccountSettings: React.FC = () => {
   const [imgFile, setImgFile] = useState<File | null>(null);
   const [imgLoading, setImgLoading] = useState(false);
   const fileRef = useRef<HTMLInputElement | null>(null);
+
+  // 🔥 사용자 탈퇴
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [delPw, setDelPw] = useState("");
+  const [delLoading, setDelLoading] = useState(false);
+
+  // 주소 모달
+  const [addrOpen, setAddrOpen] = useState(false);
+  const [editing, setEditing] = useState<Address | null>(null);
 
   // 메시지
   const [msg, setMsg] = useState<string | null>(null);
@@ -58,6 +75,16 @@ const AccountSettings: React.FC = () => {
     }, 2200);
   };
 
+  /* 주소 훅 */
+  const {
+    addresses,
+    loading: addrLoading,
+    error: addrError,
+    add,
+    update,
+    remove,
+  } = useAddresses();
+
   /* actions */
   const submitNickname = async () => {
     const v = nickname.trim();
@@ -81,6 +108,7 @@ const AccountSettings: React.FC = () => {
     }
   };
 
+  // 비밀번호 변경
   const submitPassword = async () => {
     const { currentPassword, newPassword, newPassword2 } = pw;
     if (!currentPassword || !newPassword || !newPassword2)
@@ -89,14 +117,17 @@ const AccountSettings: React.FC = () => {
       return toast(null, "새 비밀번호가 일치하지 않습니다.");
     if (newPassword.length < 8)
       return toast(null, "새 비밀번호는 8자 이상 권장합니다.");
+    if (newPassword === currentPassword)
+      return toast(null, "새 비밀번호가 현재 비밀번호와 동일합니다.");
+
     try {
       setPwLoading(true);
-      await api.post("/auth/user/password/change", {
+      const { data } = await api.post("/auth/user/password/change", {
         currentPassword,
         newPassword,
       });
+      toast(data?.message ?? "비밀번호가 변경되었습니다.", null);
       setPw({ currentPassword: "", newPassword: "", newPassword2: "" });
-      toast("비밀번호가 변경되었습니다.", null);
     } catch (e: any) {
       const m =
         e?.response?.data?.message ??
@@ -109,6 +140,7 @@ const AccountSettings: React.FC = () => {
   };
 
   const onPickImage = () => fileRef.current?.click();
+
   const onFileChange: React.ChangeEventHandler<HTMLInputElement> = (e) => {
     const f = e.target.files?.[0];
     if (!f) return;
@@ -117,6 +149,7 @@ const AccountSettings: React.FC = () => {
     setImgFile(f);
     setImgPreview(URL.createObjectURL(f));
   };
+
   const submitImage = async () => {
     if (!imgFile) return toast(null, "변경할 이미지를 먼저 선택하세요.");
     try {
@@ -144,6 +177,38 @@ const AccountSettings: React.FC = () => {
     }
   };
 
+  const openDelete = () => {
+    setDelPw("");
+    setDeleteOpen(true);
+  };
+
+  const submitDelete = async () => {
+    if (!userId) return toast(null, "userId를 확인할 수 없습니다.");
+    if (!delPw) return toast(null, "비밀번호를 입력하세요.");
+
+    try {
+      setDelLoading(true);
+      const { data } = await api.delete(`/auth/user/${userId}`, {
+        data: { password: delPw },
+        headers: { "Content-Type": "application/json" },
+      });
+      toast(data?.message ?? "사용자 삭제 완료", null);
+      clearAuth?.();
+      navigate("/login", { replace: true });
+    } catch (e: any) {
+      const m =
+        e?.response?.data?.message ??
+        e?.response?.data?.error ??
+        (e?.response?.status === 401
+          ? "세션이 만료되었거나 권한이 없습니다. 다시 로그인해 주세요."
+          : "탈퇴에 실패했습니다.");
+      toast(null, m);
+    } finally {
+      setDelLoading(false);
+      setDeleteOpen(false);
+    }
+  };
+
   /* design tokens */
   const lineInput =
     "w-full rounded-none border-0 border-b border-neutral-300 bg-transparent px-0 py-[10px] text-[15px] placeholder:text-neutral-400 focus:border-neutral-800 focus:ring-0";
@@ -151,6 +216,8 @@ const AccountSettings: React.FC = () => {
     "rounded-md border border-neutral-300 bg-white px-3 py-[6px] text-[13px] text-neutral-700 hover:bg-neutral-50 active:bg-neutral-100";
   const purpleBtn =
     "rounded-md bg-purple-600 px-3 py-[6px] text-[13px] text-white hover:opacity-90 disabled:opacity-60";
+  const dangerBtn =
+    "rounded-md bg-rose-600 px-3 py-[6px] text-[13px] text-white hover:opacity-90 disabled:opacity-60";
   const chipBtn =
     "rounded-full bg-purple-600 px-3 py-[6px] text-[13px] text-white hover:opacity-90";
 
@@ -158,7 +225,15 @@ const AccountSettings: React.FC = () => {
     <div className="mx-auto w-full max-w-[720px]">
       {/* 상단: 아바타 + 이름 + 이미지 변경 */}
       <div className="mb-8 flex items-center gap-4">
-        <div className="relative h-[96px] w-[96px] overflow-hidden rounded-full bg-neutral-200" />
+        <div className="relative h-[96px] w-[96px] overflow-hidden rounded-full bg-neutral-200">
+          {imgPreview ? (
+            <img
+              src={imgPreview}
+              alt="미리보기"
+              className="h-full w-full object-cover"
+            />
+          ) : null}
+        </div>
         <div className="flex flex-col">
           <div className="text-[20px] font-semibold text-neutral-900">
             {profile?.nickname ?? "NickName"}
@@ -204,7 +279,9 @@ const AccountSettings: React.FC = () => {
           </div>
           {!isEditName ? (
             <div className="flex items-center justify-between">
-              <span className="text-[15px] text-neutral-900">NickName</span>
+              <span className="text-[15px] text-neutral-900">
+                {profile?.nickname ?? "NickName"}
+              </span>
               <button
                 type="button"
                 onClick={() => setIsEditName(true)}
@@ -214,7 +291,7 @@ const AccountSettings: React.FC = () => {
               </button>
             </div>
           ) : (
-            <div className="flex items-end gap-2">
+            <div className="items end flex gap-2">
               <input
                 className={lineInput}
                 value={nickname}
@@ -223,7 +300,10 @@ const AccountSettings: React.FC = () => {
               />
               <button
                 type="button"
-                onClick={() => setIsEditName(false)}
+                onClick={() => {
+                  setNickname(profile?.nickname ?? "NickName");
+                  setIsEditName(false);
+                }}
                 className={ghostBtn}
               >
                 취소
@@ -240,11 +320,22 @@ const AccountSettings: React.FC = () => {
           )}
         </div>
 
+        {/* 이메일 (마스킹) */}
+        {emailMasked && (
+          <div className="mb-8">
+            <div className="mb-1 text-[13px] font-semibold text-neutral-800">
+              이메일
+            </div>
+            <div className="text-[15px] text-neutral-900">{emailMasked}</div>
+          </div>
+        )}
+
         {/* 비밀번호 변경 */}
-        <div className="">
+        <div>
           <div className="mb-3 text-[14px] font-bold text-neutral-900">
             비밀번호 변경
           </div>
+
           <label className="mb-1 block text-[12px] text-neutral-500">
             현재 비밀번호
           </label>
@@ -257,28 +348,57 @@ const AccountSettings: React.FC = () => {
               setPw((s) => ({ ...s, currentPassword: e.target.value }))
             }
             placeholder="현재 비밀번호"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") submitPassword();
+            }}
           />
+
+          <div className="mt-4">
+            <label className="mb-1 block text-[12px] text-neutral-500">
+              새 비밀번호
+            </label>
+            <input
+              type="password"
+              autoComplete="new-password"
+              className={lineInput}
+              value={pw.newPassword}
+              onChange={(e) =>
+                setPw((s) => ({ ...s, newPassword: e.target.value }))
+              }
+              placeholder="새 비밀번호 (8자 이상)"
+              minLength={8}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") submitPassword();
+              }}
+            />
+          </div>
+
           <div className="mt-4 flex items-end gap-2">
             <div className="flex-1">
               <label className="mb-1 block text-[12px] text-neutral-500">
-                비밀번호 확인
+                새 비밀번호 확인
               </label>
               <input
                 type="password"
                 autoComplete="new-password"
                 className={lineInput}
-                value={pw.newPassword}
+                value={pw.newPassword2}
                 onChange={(e) =>
-                  setPw((s) => ({ ...s, newPassword: e.target.value }))
+                  setPw((s) => ({ ...s, newPassword2: e.target.value }))
                 }
-                placeholder="비밀번호 확인"
+                placeholder="새 비밀번호 확인"
+                minLength={8}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") submitPassword();
+                }}
               />
             </div>
             <button
               type="button"
               onClick={submitPassword}
               disabled={pwLoading}
-              className={ghostBtn}
+              className={purpleBtn}
+              aria-busy={pwLoading}
             >
               {pwLoading ? "변경 중…" : "변경"}
             </button>
@@ -288,42 +408,40 @@ const AccountSettings: React.FC = () => {
 
       {/* 주소 */}
       <section className="mb-10">
-        <h5 className="mb-3 text-[16px] font-bold text-neutral-900">주소</h5>
-
-        {/* 하이라이트 카드 */}
-        <div className="bg-opacity-55 rounded-2xl border border-neutral-200 bg-[#EEC9DA] p-4">
-          <div className="mb-2 flex items-start justify-between">
-            <div>
-              <div className="text-[15px] font-semibold text-neutral-900">
-                홍길동
-              </div>
-              <div className="text-[13px] text-neutral-600">010XXXXXXXX</div>
-            </div>
-            <div className="flex items-center gap-2">
-              <button type="button" className={chipBtn}>
-                수정
-              </button>
-              <button
-                type="button"
-                className="rounded-md bg-neutral-200 px-3 py-[6px] text-[13px] text-neutral-700 hover:bg-neutral-300"
-              >
-                삭제
-              </button>
-            </div>
-          </div>
-
-          <p className="text-[12px] leading-relaxed text-neutral-500">
-            (우편번호) 도로명 주소 혹은 지번 주소 &gt; 기타 상세한 주소 를
-            보여드립니다.
-          </p>
+        <div className="mb-3 flex items-center justify-between">
+          <h5 className="text-[16px] font-bold text-neutral-900">주소</h5>
+          <button
+            type="button"
+            className="rounded-full bg-purple-600 px-3 py-[6px] text-[13px] text-white hover:opacity-90"
+            onClick={() => {
+              // 추가: editing을 null로 두고 모달에서 빈 폼으로 시작
+              setEditing(null);
+              setAddrOpen(true);
+            }}
+          >
+            새 주소 추가
+          </button>
         </div>
+
+        {addrError && <p className="mb-2 text-sm text-rose-600">{addrError}</p>}
+
+        <AddressDetails
+          addresses={addresses ?? []}
+          loading={addrLoading}
+          onEdit={(addr) => {
+            setEditing(addr);
+            setAddrOpen(true);
+          }}
+          onDelete={remove}
+        />
       </section>
 
-      {/* 하단: 탈퇴하기(오른쪽 정렬, 연한 톤) */}
+      {/* 하단: 탈퇴하기 */}
       <div className="mb-2 flex justify-end">
         <button
           type="button"
-          className="rounded-md px-2 py-1 text-[12px] text-neutral-400 hover:text-neutral-600"
+          onClick={openDelete}
+          className="rounded-md px-2 py-1 text-[12px] text-neutral-400 hover:text-rose-600"
         >
           탈퇴하기
         </button>
@@ -340,6 +458,87 @@ const AccountSettings: React.FC = () => {
           {err}
         </p>
       )}
+
+      {/* 🔒 탈퇴 모달 */}
+      {deleteOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4"
+          onClick={() => setDeleteOpen(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-xl bg-white p-5 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-[18px] font-semibold text-neutral-900">
+              정말 탈퇴하시겠어요?
+            </h3>
+            <p className="mt-1 text-sm text-neutral-600">
+              계정과 거래/기록이 삭제될 수 있어요. 확인을 위해 비밀번호를 입력해
+              주세요.
+            </p>
+
+            <label className="mt-4 mb-1 block text-[12px] text-neutral-500">
+              비밀번호
+            </label>
+            <input
+              type="password"
+              className={lineInput}
+              placeholder="비밀번호"
+              value={delPw}
+              onChange={(e) => setDelPw(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && submitDelete()}
+              autoFocus
+            />
+
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                className={ghostBtn}
+                onClick={() => setDeleteOpen(false)}
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                className={dangerBtn}
+                onClick={submitDelete}
+                disabled={delLoading}
+                aria-busy={delLoading}
+              >
+                {delLoading ? "탈퇴 중…" : "탈퇴하기"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 📦 주소 편집 모달 */}
+      <AddressEditorModal
+        open={addrOpen}
+        initial={editing} // Address | null
+        onClose={() => {
+          setAddrOpen(false);
+          setEditing(null);
+        }}
+        onSave={async (draft) => {
+          // draft.id 있으면 수정, 없으면 추가
+          const payload: AddressDraft = {
+            receiver: draft.receiver.trim(),
+            phone: draft.phone.trim(),
+            postcode: draft.postcode.trim(),
+            address1: draft.address1.trim(),
+            address2: (draft.address2 ?? "").trim(),
+            isDefault: !!draft.isDefault,
+          };
+          if (draft.id) {
+            await update(draft.id, payload);
+          } else {
+            await add(payload);
+          }
+        }}
+      />
     </div>
   );
 };

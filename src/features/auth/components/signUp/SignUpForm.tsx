@@ -203,6 +203,9 @@ const SignUpForm: React.FC = () => {
       if (data?.email) {
         // ✅ 가입 성공 → 로그인 페이지로 이동 (+ 배너 표시용 쿼리)
         navigate("/login?signedUp=1", { replace: true });
+        setMsg("회원가입이 완료되었습니다. (인증메일 발송됨)");
+        // 필요 시 이동:
+        // window.location.href = "/login";
       } else {
         setMsg("회원가입 처리에 실패했습니다.");
       }
