@@ -41,21 +41,26 @@ const AuctionDetail = () => {
         <div className="grid grid-cols-12 gap-4 sm:gap-6 md:gap-[30px]">
           {/* 좌측 - ProductImage */}
           <div className="col-span-12 lg:col-span-6">
-            <ProductImage mainImageUrl={auction.mainImageUrl} />
+            <ProductImage images={auction.images} />
           </div>
           {/* 우측 - ProductInfo */}
           <div className="col-span-12 lg:col-span-6">
             <ProductInfo
+              auctionId={auction.auctionId}
               title={auction.title}
-              categoryMain={auction.categoryName}
-              sellerNickname={auction.sellerNickname}
+              categoryMain={auction.categoryMain}
+              categorySub={auction.categorySub}
               currentPrice={auction.currentPrice}
               minBidPrice={auction.minBidPrice}
+              bidCount={auction.bidCount}
+              startTime={auction.startTime}
               endTime={auction.endTime}
-              wishCount={auction.wishCount}
+              sellerId={auction.sellerId}
+              sellerNickname={auction.sellerNickname}
+              sellerProfileImageUrl={auction.sellerProfileImageUrl}
+              sellerTemperature={auction.sellerTemperature}
               sellingStatus={auction.sellingStatus}
-              auctionId={0}
-              sellerId={""}
+              wishCount={auction.wishCount}
             />
           </div>
         </div>
