@@ -19,6 +19,13 @@ export default function SuccessPage() {
         return;
       }
 
+      // ✅ 중복 호출 방지 (한 번 실행된 orderId 저장)
+      if (sessionStorage.getItem(`confirmed_${orderId}`)) {
+        console.log("이미 confirm 요청이 처리됨:", orderId);
+        return;
+      }
+      sessionStorage.setItem(`confirmed_${orderId}`, "done");
+
       try {
         // ✅ 백엔드 confirm 호출
         const response = await fetch("http://localhost:8080/payments/confirm", {

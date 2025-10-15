@@ -41,11 +41,9 @@ export default function CheckoutPage() {
 
       // 응답 JSON 파싱
       const orderData = await orderResponse.json();
-      console.log(" orderData:", orderData);
 
       // orderId 뽑기
       const orderId = orderData.orderId;
-      console.log("주문 ID:", orderId);
 
       // 3. 결제 금액 + merchantOrderId 저장
       await fetch("http://localhost:8080/payments/saveAmount", {
