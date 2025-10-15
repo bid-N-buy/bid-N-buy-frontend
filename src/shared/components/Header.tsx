@@ -45,7 +45,9 @@ const Header: React.FC = () => {
   const handleSearch = (e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
-    navigate(`search?query=${encodeURIComponent(searchQuery)}`);
+    navigate(
+      `/auctions/search?searchKeyword=${encodeURIComponent(searchQuery)}`
+    );
   };
 
   // 로그아웃
@@ -116,7 +118,7 @@ const Header: React.FC = () => {
         <nav className="block md:hidden">
           <ul className="flex gap-4">
             <li>
-              <Link to="/search" title="검색 화면 이동">
+              <Link to="/auctions" title="검색 화면 이동">
                 <Search />
               </Link>
             </li>
@@ -165,7 +167,6 @@ const Header: React.FC = () => {
               </li>
               {isChatOpen &&
                 createPortal(<ChatModal onClose={onClose} />, modalRoot)}
-
               <li>
                 <button
                   className="relative"

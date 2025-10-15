@@ -1,9 +1,14 @@
 import { useState, useEffect } from "react";
 import api from "../../../shared/api/axiosInstance";
 import { useAuthStore } from "../../auth/store/authStore";
-import type { ChatRoomProps, ChatListItemProps } from "../types/ChatType";
+import type { ChatRoomProps } from "../types/ChatType";
+import type { AuctionResponse } from "../../auction/types/product";
 
-export const useChatRoomApi = (chatroomId: number) => {
+export const useChatRequestMessage = (
+  paymentId: number,
+  productId: number,
+  sellerId: number
+) => {
   const [chatRoom, setChatRoom] = useState<ChatRoomProps>();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -12,7 +17,7 @@ export const useChatRoomApi = (chatroomId: number) => {
 
   // 임시 데이터 로딩 로직
   useEffect(() => {
-    if (!token || !chatroomId) {
+    if (!token || !paymentId) {
       setError("채팅방을 불러올 수 없습니다.");
       setIsLoading(false);
       return;
@@ -22,30 +27,23 @@ export const useChatRoomApi = (chatroomId: number) => {
       try {
         setIsLoading(true);
         setError(null);
-        const response = await api.get<ChatListItemProps[]>("/chatrooms/list", {
+        const response = await api.post("/orders", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
+          productId,
+          sellerId,
         });
 
-        const listItem = response.data.find(
-          (item) => item.chatroomId === chatroomId
+        const auctionRes = await api.get<AuctionResponse>(
+          `/auctions/${listItem!.auctionId}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
         );
 
-        // listItem이 없을 경우
-        if (!listItem) {
-          setError("채팅 목록에서 해당 방을 찾을 수 없습니다.");
-          setIsLoading(false);
-          return;
-        }
-
-        const auctionRes = await api.get(`/auctions/${listItem!.auctionId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
         const fullRoomData = {
-          chatroomId: chatroomId,
-          sellerId: auctionRes.data.sellerId,
+          paymentId: paymentId,
           chatroomInfo: listItem!,
           productInfo: {
             currentPrice: auctionRes.data.currentPrice,
@@ -62,7 +60,7 @@ export const useChatRoomApi = (chatroomId: number) => {
       }
     };
     loadChatRoom();
-  }, [token, chatroomId]);
+  }, [token, paymentId]);
 
   return { chatRoom, isLoading, error };
 };

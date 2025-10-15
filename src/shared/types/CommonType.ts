@@ -14,7 +14,7 @@ export interface UserProps {
 }
 
 export interface ImageProps {
-  imageId: string;
+  imageId: number;
   auctionId?: AuctionResponse["auctionId"];
   userId?: UserProps["userId"];
   imageUrl: string;

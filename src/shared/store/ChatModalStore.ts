@@ -4,9 +4,9 @@ type ModalView = "list" | "room";
 type ChatModalState = {
   isChatOpen: boolean;
   targetView: ModalView;
-  selectedChatroomId: string | null;
+  selectedChatroomId: number | null;
   openChatList: () => void;
-  openChatRoom: (chatroomId: string) => void;
+  openChatRoom: (chatroomId: number) => void;
   onClose: () => void;
 };
 
