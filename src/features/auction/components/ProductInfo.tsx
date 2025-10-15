@@ -1,5 +1,5 @@
-// todo 컴포넌트 분리
-import React, { useState } from "react";
+// todo 컴포넌트 분리 등
+import React, { useState, useCallback } from "react";
 import BidModal from "./BidModal";
 import { useAuthStore } from "../../auth/store/authStore";
 import { useChatModalStore } from "../../../shared/store/ChatModalStore";
@@ -8,72 +8,80 @@ import useToast from "../../../shared/hooks/useToast";
 import api from "../../../shared/api/axiosInstance";
 import { EllipsisVertical, Heart } from "lucide-react";
 import { formatDate } from "../../../shared/utils/datetime";
+import { buildImageUrl } from "../../../shared/utils/imageUrl";
 
 export interface ProductInfoProps {
-  auctionId?: string /* 채팅방 생성 시 필요함 */;
-  sellerId?: string /* 채팅방 생성 시 필요함 */;
+  auctionId: number; // 채팅방 생성 시 필요 -> 필수로 수정, number로 수정
+  sellerId: number; // 채팅방 생성 시 필요 -> 필수로 수정, number로 수정
+  title?: string;
   categoryMain?: string;
   categorySub?: string;
-  title?: string;
-  sellerNickname?: string;
-  sellerTemperature?: number;
-  sellerProfileImage?: string;
   currentPrice?: number;
-  minBidUnit?: number;
-  liked?: boolean;
+  minBidPrice?: number;
+  bidCount?: number;
+  startTime?: string;
+  endTime?: string;
+  sellerNickname?: string;
+  sellerProfileImageUrl?: string | null;
+  sellerTemperature?: number;
+  sellingStatus?: string;
+  wishCount?: number;
+
   isSeller?: boolean;
+  liked?: boolean;
   onLikeToggle?: () => void;
   onShareClick?: () => void;
   onDeleteClick?: () => void;
-  startTime?: string;
-  endTime?: string;
-  bidCount?: number;
 }
 
 const ProductInfo = ({
-  auctionId = "1",
-  sellerId = "1",
-  categoryMain = "카테고리(대)",
-  categorySub = "카테고리(소)",
-  title = "제품명",
-  sellerNickname = "닉네임",
-  sellerTemperature = 0,
-  sellerProfileImage,
-  currentPrice = 32000,
-  minBidUnit = 1000,
-  liked = false,
+  auctionId,
+  sellerId,
+  title,
+  categoryMain,
+  categorySub,
+  currentPrice,
+  minBidPrice,
+  bidCount,
+  startTime,
+  endTime,
+  sellerNickname,
+  sellerProfileImageUrl,
+  sellerTemperature,
+  sellingStatus,
+  wishCount,
+
   isSeller = false,
+  liked = false,
   onLikeToggle,
   onShareClick,
   onDeleteClick,
-  startTime = "2025-09-12T10:00:00",
-  endTime = "2025-10-15T18:00:00",
-  bidCount = 0,
 }: ProductInfoProps) => {
   const [isLiked, setIsLiked] = useState(liked);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isBidModalOpen, setIsBidModalOpen] = useState(false);
   const { toast, showToast, hideToast } = useToast();
 
-  const handleLikeClick = () => {
+  const handleLikeClick = useCallback(() => {
     setIsLiked((prev) => !prev);
     onLikeToggle?.();
-  };
+  }, [onLikeToggle]);
 
-  const handleBidSubmit = (bidPrice: number) => {
-    if (bidPrice === 0) {
-      showToast("입찰 가능 금액 이상 입력해 주세요.", "error");
-      return;
-    }
-
-    // 여기서 API 호출 (추후 구현)
-    console.log("입찰가: ", bidPrice);
-    showToast("정상적으로 입찰되었습니다.", "success");
-    setIsBidModalOpen(false);
-  };
+  const handleBidSubmit = useCallback(
+    (bidPrice: number) => {
+      if (bidPrice === 0) {
+        showToast("입찰 가능 금액 이상 입력해 주세요.", "error");
+        return;
+      }
+      // todo 입찰 api 연동
+      showToast("정상적으로 입찰되었습니다.", "success");
+      setIsBidModalOpen(false);
+    },
+    [showToast]
+  );
 
   // 채팅방 생성
-  const handleChatAdd = async (auctionId: string, sellerId: string) => {
+  const handleChatAdd = async (auctionId: number, sellerId: number) => {
     const token = useAuthStore.getState().accessToken;
 
     if (!token) {
@@ -105,17 +113,20 @@ const ProductInfo = ({
       <div className="w-full lg:aspect-[645/500]">
         <div className="flex h-full flex-col justify-between gap-5 px-1.5 py-3 sm:gap-4 sm:px-2 sm:py-4 md:gap-4.5 md:px-2.5 md:py-5 lg:gap-5">
           {/* 1-2. 카테고리 ~ 제목 */}
-          <div className="flex flex-col gap-1 sm:gap-1.5 md:gap-2 lg:gap-3.5">
+          <div className="flex flex-col gap-1.5 sm:gap-1.5 md:gap-2 lg:gap-3.5">
             {/* 1. 카테고리 + 더보기 */}
             <div className="relative">
-              <div className="text-g300 text-h7 md:text-h6 sm:text-base">
-                {categoryMain} &gt; {categorySub}
-              </div>
+              {(categoryMain || categorySub) && (
+                <div className="text-g300 text-h7 md:text-h6 sm:text-base">
+                  {categoryMain ?? "카테고리"}
+                  {categorySub ? ` > ${categorySub}` : ""}
+                </div>
+              )}
 
               {/* 더보기? 아이콘 - todo 분리 */}
               <div className="absolute top-0 right-0">
                 <button
-                  onClick={() => setIsMenuOpen(!isMenuOpen)}
+                  onClick={() => setIsMenuOpen((v) => !v)}
                   className="hover:bg-g500/50 rounded-full p-1.5 transition-colors sm:p-2"
                   aria-label="더보기"
                 >
@@ -150,43 +161,58 @@ const ProductInfo = ({
             </div>
 
             {/* 2. 제목 */}
-            <div>
-              <span className="text-g100 text-h4 sm:text-h4 md:text-h3 lg:text-h2 max-w-full truncate pr-10 font-bold md:pr-12">
-                {title}
-              </span>
-            </div>
+            {title && (
+              <div>
+                <span className="text-g100 text-h4 sm:text-h4 md:text-h3 lg:text-h2 max-w-full truncate pr-10 font-bold md:pr-12">
+                  {title}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* 3. 판매자 정보 - todo 분리 */}
-          <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
-            <div className="bg-g500 h-11 w-11 flex-shrink-0 overflow-hidden rounded-full sm:h-12 sm:w-12 md:h-13 md:w-13 lg:h-17 lg:w-17">
-              {sellerProfileImage ? (
-                <img
-                  src={sellerProfileImage}
-                  alt={sellerNickname}
-                  className="h-full w-full object-cover"
-                />
-              ) : null}
+          {(sellerNickname || sellerProfileImageUrl) && (
+            <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
+              <div className="bg-g500 h-11 w-11 flex-shrink-0 overflow-hidden rounded-full sm:h-12 sm:w-12 md:h-13 md:w-13 lg:h-17 lg:w-17">
+                {sellerProfileImageUrl ? (
+                  <img
+                    src={buildImageUrl(sellerProfileImageUrl) ?? undefined}
+                    alt={sellerNickname ?? "판매자"}
+                    className="h-full w-full object-cover"
+                  />
+                ) : null}
+              </div>
+              <div className="flex min-w-0 items-center gap-1 sm:gap-2">
+                {sellerNickname && (
+                  <span className="text-g100 text-h7 md:text-h6 lg:text-h5 max-w-[50vw] truncate font-medium sm:text-base md:max-w-none">
+                    {sellerNickname}
+                  </span>
+                )}
+                {typeof sellerTemperature === "number" && (
+                  <span className="text-g300 text-h8 sm:text-h7 lg:text-h6 whitespace-nowrap md:text-base">
+                    {sellerTemperature}°C
+                  </span>
+                )}
+              </div>
             </div>
-            <div className="flex min-w-0 items-center gap-1 sm:gap-2">
-              <span className="text-g100 text-h7 md:text-h6 lg:text-h5 max-w-[50vw] truncate font-medium sm:text-base md:max-w-none">
-                {sellerNickname}
-              </span>
-              <span className="text-g300 text-h8 sm:text-h7 lg:text-h6 whitespace-nowrap md:text-base">
-                {sellerTemperature}°C
-              </span>
-            </div>
-          </div>
+          )}
 
           {/* 4. 가격 + 최소 입찰 단위 */}
-          <div className="flex flex-wrap items-baseline gap-1.5 sm:gap-2.5">
-            <span className="text-g100 text-h4 sm:text-h4 md:text-h3 lg:text-h2 font-bold">
-              현재 {currentPrice.toLocaleString()}원
-            </span>
-            <span className="text-g300 text-h7 md:text-h6 whitespace-nowrap sm:text-base">
-              (최소 입찰 단위 : {minBidUnit.toLocaleString()}원)
-            </span>
-          </div>
+          {(typeof currentPrice === "number" ||
+            typeof minBidPrice === "number") && (
+            <div className="flex flex-wrap items-baseline gap-1.5 sm:gap-2.5">
+              {typeof currentPrice === "number" && (
+                <span className="text-g100 text-h4 sm:text-h4 md:text-h3 lg:text-h2 font-bold">
+                  현재 {currentPrice.toLocaleString()}원
+                </span>
+              )}
+              {typeof minBidPrice === "number" && (
+                <span className="text-g300 text-h7 md:text-h6 whitespace-nowrap sm:text-base">
+                  (최소 입찰 단위 : {minBidPrice.toLocaleString()}원)
+                </span>
+              )}
+            </div>
+          )}
 
           {/* 5-6. 버튼들 ~ 기타 */}
           <div className="flex flex-col justify-end gap-1 sm:gap-1.5 md:gap-2 lg:gap-3.5">
@@ -202,6 +228,10 @@ const ProductInfo = ({
                 <button
                   onClick={() => setIsBidModalOpen(true)}
                   className="text-h7 md:text-h6 lg:text-h5 bg-purple hover:bg-deep-purple cursor-pointer rounded-md py-2 font-bold text-white transition-colors sm:py-3 sm:text-base md:py-4"
+                  disabled={
+                    typeof currentPrice !== "number" ||
+                    typeof minBidPrice !== "number"
+                  }
                 >
                   입찰
                 </button>
@@ -220,18 +250,28 @@ const ProductInfo = ({
             </div>
 
             {/* 6. 기간 + 입찰 횟수 */}
-            <div className="bg-g500/50 text-h7 md:text-h6 flex items-center gap-2 rounded-md px-2 py-1.5 sm:gap-3 sm:px-3 sm:py-2 sm:text-base">
-              <span className="text-g300">
-                기간{" "}
-                <span className="text-g200">
-                  {formatDate(startTime)} - {formatDate(endTime)}
-                </span>
-              </span>
-              <span className="text-g300">|</span>
-              <span className="text-g200">
-                입찰 <span className="text-purple font-bold">{bidCount}</span>회
-              </span>
-            </div>
+            {(startTime || endTime || typeof bidCount === "number") && (
+              <div className="bg-g500/50 text-h7 md:text-h6 flex items-center gap-2 rounded-md px-2 py-1.5 sm:gap-3 sm:px-3 sm:py-2 sm:text-base">
+                {(startTime || endTime) && (
+                  <span className="text-g300">
+                    기간{" "}
+                    <span className="text-g200">
+                      {startTime ? formatDate(startTime) : "?"} -{" "}
+                      {endTime ? formatDate(endTime) : "?"}
+                    </span>
+                  </span>
+                )}
+                {(startTime || endTime) && typeof bidCount === "number" && (
+                  <span className="text-g300">|</span>
+                )}
+                {typeof bidCount === "number" && (
+                  <span className="text-g200">
+                    입찰{" "}
+                    <span className="text-purple font-bold">{bidCount}</span>회
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -240,9 +280,9 @@ const ProductInfo = ({
       <BidModal
         isOpen={isBidModalOpen}
         onClose={() => setIsBidModalOpen(false)}
-        currentPrice={currentPrice}
-        minBidPrice={minBidUnit}
-        productTitle={title}
+        currentPrice={currentPrice ?? 0}
+        minBidPrice={minBidPrice ?? 0}
+        productTitle={title ?? ""}
         onBidSubmit={handleBidSubmit}
       />
 
