@@ -1,13 +1,14 @@
 import type { AuctionResponse } from "../../auction/types/product";
+
+export const WS_URL = import.meta.env.VITE_WEBSOCKET_URL;
 export interface ModalProps {
   onClose: () => void;
-  onDelete?: () => void;
 }
 
 export interface ChatListItemProps {
-  chatroomId: string;
-  auctionId: string;
-  counterpartId: string;
+  chatroomId: number;
+  auctionId: number;
+  counterpartId: number;
   counterpartNickname: string;
   counterpartProfileImageUrl: string | null;
   auctionTitle: string;
@@ -19,11 +20,12 @@ export interface ChatListItemProps {
 
 export interface ChatListProps {
   chatList: ChatListItemProps[];
-  onSelectRoom: (chatroomId: string) => void;
+  onSelectRoom: (chatroomId: number) => void;
 }
 
 export interface ChatRoomProps {
-  chatroomId: string;
+  chatroomId: number;
+  sellerId: number;
   chatroomInfo: Pick<
     ChatListItemProps,
     | "chatroomId"
@@ -38,7 +40,7 @@ export interface ChatRoomProps {
 }
 
 export interface ChatProductInfoProps {
-  auctionId: string;
+  auctionId: number;
   auctionImageUrl: string;
   auctionTitle: string;
   currentPrice: number;
@@ -46,7 +48,7 @@ export interface ChatProductInfoProps {
 }
 
 export interface ChatMessageProps {
-  chatmessageId: string;
+  chatmessageId: number;
   chatroomId: ChatListItemProps["chatroomId"];
   senderId: number;
   paymentId?: string;
@@ -54,19 +56,28 @@ export interface ChatMessageProps {
   message: string;
   messageType: string;
   createdAt: string;
-  isRead: boolean;
+  read: boolean;
 }
 
 export type ChatYouProps = Pick<
   ChatMessageProps,
-  "createdAt" | "message" | "isRead" | "messageType" | "paymentId"
+  "createdAt" | "message" | "read" | "messageType" | "paymentId"
 > &
-  Pick<ChatListItemProps, "counterpartNickname" | "counterpartProfileImageUrl">;
+  Pick<
+    ChatListItemProps,
+    "counterpartNickname" | "counterpartProfileImageUrl"
+  > &
+  Pick<ChatRoomProps, "sellerId"> &
+  Pick<AuctionResponse, "currentPrice"> &
+  Pick<ChatListItemProps, "auctionImageUrl" | "auctionTitle">;
 
 export type ChatMeProps = Pick<
   ChatMessageProps,
-  "createdAt" | "message" | "isRead" | "messageType" | "paymentId"
->;
+  "createdAt" | "message" | "read" | "messageType" | "paymentId"
+> &
+  Pick<ChatRoomProps, "sellerId"> &
+  Pick<AuctionResponse, "currentPrice"> &
+  Pick<ChatListItemProps, "auctionImageUrl" | "auctionTitle">;
 
 export interface ChatInputProps {
   isConnected: boolean;

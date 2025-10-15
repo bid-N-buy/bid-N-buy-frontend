@@ -1,15 +1,19 @@
 import { useRef, useEffect, useState } from "react";
-import type { ModalProps } from "../types/ChatType";
+import api from "../../../shared/api/axiosInstance";
 import { useShallow } from "zustand/shallow";
+import { useAuthStore } from "../../auth/store/authStore";
+import { useChatListApi } from "../api/useChatListApi";
+import { useChatRoomApi } from "../api/useChatRoomApi";
+import useToast from "../../../shared/hooks/useToast";
+import type { ModalProps } from "../types/ChatType";
 import { useChatModalStore } from "../../../shared/store/ChatModalStore";
 import ChatList from "./ChatList";
 import ChatRoom from "./ChatRoom";
 import { X, ChevronLeft, EllipsisVertical } from "lucide-react";
-import { useChatListApi } from "../api/useChatListApi";
-import { useChatRoomApi } from "../api/useChatRoomApi";
 
-const ChatModal = ({ onClose, onDelete }: ModalProps) => {
+const ChatModal = ({ onClose }: ModalProps) => {
   const modalRef = useRef<HTMLDivElement>(null);
+
   // 채팅목록/채팅방 화면 상태관리
   const { targetView, selectedChatroomId } = useChatModalStore(
     useShallow((state) => ({
@@ -20,7 +24,7 @@ const ChatModal = ({ onClose, onDelete }: ModalProps) => {
   const [currentView, setCurrentView] = useState<string>(targetView);
 
   // chatlist
-  const listApi = useChatListApi();
+  const listApi = useChatListApi(true);
   // 불러와진 ChatListItemProps 중 원하는 요소만 사용할 수 있게 처리
   type ChatListItem = (typeof listApi.chatList)[number];
   // 이동할 roomInfo(list에서 접근 시)
@@ -36,6 +40,8 @@ const ChatModal = ({ onClose, onDelete }: ModalProps) => {
 
   // chatroom에서 해당 채팅방 삭제 메뉴
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { toast, showToast, hideToast } = useToast();
+  const token = useAuthStore((state) => state.accessToken);
 
   // modal창 닫기: 여백 누를 시 꺼지도록
   useEffect(() => {
@@ -49,7 +55,7 @@ const ChatModal = ({ onClose, onDelete }: ModalProps) => {
   }, [modalRef, onClose]);
 
   // list에서 각 Chat 누를 시 채팅방으로 넘어가는 함수
-  const handleSelectRoom = (chatroomId: string) => {
+  const handleSelectRoom = (chatroomId: number) => {
     const roomInfo = listApi.chatList.find(
       (chat) => chat.chatroomId === chatroomId
     );
@@ -63,6 +69,19 @@ const ChatModal = ({ onClose, onDelete }: ModalProps) => {
   const handleGoToList = () => {
     setSelectedRoomInfo(null);
     setCurrentView("list");
+  };
+
+  // 채팅방 삭제 함수
+  const handleDeleteRoom = async (chatroomId: number) => {
+    try {
+      await api.delete(`/chatrooms/${chatroomId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setIsMenuOpen(false);
+      handleGoToList();
+    } catch {
+      showToast("채팅방 삭제에 실패했습니다.", "error");
+    }
   };
 
   return (
@@ -103,8 +122,7 @@ const ChatModal = ({ onClose, onDelete }: ModalProps) => {
               <div className="border-g400 absolute top-10 right-3 mt-2 w-32 rounded-md border bg-white shadow-lg">
                 <button
                   onClick={() => {
-                    onDelete?.();
-                    setIsMenuOpen(false);
+                    handleDeleteRoom(targetChatroomId!);
                   }}
                   className="text-red hover:bg-g500 w-full px-4 py-2.5 text-left text-base transition-colors md:py-3"
                 >
@@ -138,6 +156,7 @@ const ChatModal = ({ onClose, onDelete }: ModalProps) => {
           roomApi.chatRoom && (
             <ChatRoom
               chatroomId={targetChatroomId!}
+              sellerId={roomApi.chatRoom.sellerId}
               chatroomInfo={selectedRoomInfo || roomApi.chatRoom.chatroomInfo}
               productInfo={roomApi.chatRoom.productInfo}
             />
