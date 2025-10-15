@@ -8,7 +8,7 @@ const ChatMe = ({
   isRead,
   paymentId,
 }: ChatMeProps) => {
-  return messageType === "chat" ? (
+  return messageType === "CHAT" ? (
     <div className="mx-2 my-4 flex items-end justify-end gap-2 text-right">
       <div key={paymentId}>
         <span className="text-g300 mr-1 text-xs">
@@ -18,7 +18,7 @@ const ChatMe = ({
       </div>
       <div className="bg-light-purple max-w-80 rounded-md p-3">{message}</div>
     </div>
-  ) : messageType === "request" ? (
+  ) : messageType === "REQUEST" ? (
     <div className="mx-2 my-4 flex items-end justify-end gap-2 text-right">
       <div key={paymentId}>
         <span className="text-g300 mr-1 text-xs">

@@ -1,25 +1,41 @@
 import { useRef, useEffect, useState } from "react";
-import type { ModalProps, ChatRoomProps } from "../types/ChatType";
+import type { ModalProps } from "../types/ChatType";
+import { useShallow } from "zustand/shallow";
 import { useChatModalStore } from "../../../shared/store/ChatModalStore";
 import ChatList from "./ChatList";
 import ChatRoom from "./ChatRoom";
-// import { useAuthStore } from "../../auth/store/authStore";
 import { X, ChevronLeft, EllipsisVertical } from "lucide-react";
 import { useChatListApi } from "../api/useChatListApi";
+import { useChatRoomApi } from "../api/useChatRoomApi";
 
 const ChatModal = ({ onClose, onDelete }: ModalProps) => {
   const modalRef = useRef<HTMLDivElement>(null);
   // 채팅목록/채팅방 화면 상태관리
-  const { targetView } = useChatModalStore();
+  const { targetView, selectedChatroomId } = useChatModalStore(
+    useShallow((state) => ({
+      targetView: state.targetView,
+      selectedChatroomId: state.selectedChatroomId,
+    }))
+  );
   const [currentView, setCurrentView] = useState<string>(targetView);
-  // 채팅목록 불러오기
-  const { chatList, isLoading, error } = useChatListApi();
-  // 이동할 roomInfo
-  const [selectedRoomInfo, setSelectedRoomInfo] =
-    useState<ChatRoomProps | null>(null);
+
+  // chatlist
+  const listApi = useChatListApi();
+  // 불러와진 ChatListItemProps 중 원하는 요소만 사용할 수 있게 처리
+  type ChatListItem = (typeof listApi.chatList)[number];
+  // 이동할 roomInfo(list에서 접근 시)
+  const [selectedRoomInfo, setSelectedRoomInfo] = useState<ChatListItem | null>(
+    null
+  );
+
+  // header>modal || 경매 상세 페이지에서 챗방 바로 생성할 시
+  const targetChatroomId = selectedRoomInfo?.chatroomId || selectedChatroomId;
+
+  // chatroom 상세 데이터
+  const roomApi = useChatRoomApi(targetChatroomId!);
+
   // chatroom에서 해당 채팅방 삭제 메뉴
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  // const actualChatRoomId = 1;
 
   // modal창 닫기: 여백 누를 시 꺼지도록
   useEffect(() => {
@@ -32,11 +48,12 @@ const ChatModal = ({ onClose, onDelete }: ModalProps) => {
     return () => window.removeEventListener("mousedown", handleClick);
   }, [modalRef, onClose]);
 
-  // 각 Chat 누를 시 채팅방으로 넘어가는 함수
+  // list에서 각 Chat 누를 시 채팅방으로 넘어가는 함수
   const handleSelectRoom = (chatroomId: string) => {
-    const roomInfo = chatList.find((chat) => chat.chatroomId === chatroomId);
+    const roomInfo = listApi.chatList.find(
+      (chat) => chat.chatroomId === chatroomId
+    );
     if (roomInfo) {
-      // 3. 찾은 정보를 상태로 저장 (이전 단계에서 논의된 ChatRoomProps 상태 사용)
       setSelectedRoomInfo(roomInfo);
       setCurrentView("room");
     }
@@ -100,33 +117,31 @@ const ChatModal = ({ onClose, onDelete }: ModalProps) => {
       </div>
       <div className="h-[calc(100%-59px)] overflow-x-hidden overflow-y-auto">
         {currentView === "list" && (
-          <ChatList chatRooms={chatRooms} onSelectRoom={handleSelectRoom} />
+          <ChatList
+            chatList={listApi.chatList}
+            onSelectRoom={handleSelectRoom}
+          />
         )}
-        {isLoading && (
+        {listApi.isLoading && (
           <p className="flex-column flex h-[100%] items-center justify-center p-4 text-center">
             채팅 목록 로딩 중...
           </p>
         )}
-        {error && (
+        {listApi.error && (
           <p className="flex-column flex h-[100%] items-center justify-center p-4 text-red-500">
-            {error}
+            {listApi.error}
           </p>
         )}
-        {currentView === "room" && selectedRoomInfo && (
-          <ChatRoom
-            chatroomId={selectedRoomInfo.chatroomId}
-            buyerId={selectedRoomInfo.buyerId}
-            sellerId={selectedRoomInfo.sellerId}
-            auctionId={selectedRoomInfo.auctionId}
-            auctionTitle={selectedRoomInfo.auctionTitle}
-            auctionImageUrl={selectedRoomInfo.auctionImageUrl}
-            counterpartNickname={selectedRoomInfo.counterpartNickname}
-            counterpartProfileImageUrl={
-              selectedRoomInfo.counterpartProfileImageUrl
-            }
-            message={selectedRoomInfo.message}
-          />
-        )}
+        {currentView === "room" &&
+          selectedRoomInfo &&
+          !roomApi.isLoading &&
+          roomApi.chatRoom && (
+            <ChatRoom
+              chatroomId={targetChatroomId!}
+              chatroomInfo={selectedRoomInfo || roomApi.chatRoom.chatroomInfo}
+              productInfo={roomApi.chatRoom.productInfo}
+            />
+          )}
       </div>
     </div>
   );
