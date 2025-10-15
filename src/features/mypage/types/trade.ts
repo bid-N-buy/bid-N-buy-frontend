@@ -30,3 +30,16 @@ export type SaleResponseItem = {
   startAt?: string;
   endAt?: string;
 };
+
+export type AuctionHistoryItem = {
+  auctionId: number;
+  title: string;
+  itemImageUrl: string;     // 썸네일
+  startTime: string;        // ISO
+  endTime: string;          // ISO
+  finalPrice: number;       // 최종가(낙찰가)
+  winnerNickname: string;   // 낙찰자
+  statusText: string;       // "결제 대기 중 (진행 중)" 등 서버 가공 텍스트
+};
+
+export type TradeRole = "buyer" | "seller";
