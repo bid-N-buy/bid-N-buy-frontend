@@ -1,8 +1,7 @@
-// src/components/layout/Header.tsx
 import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { Link, useNavigate } from "react-router-dom";
-import { Search, Menu, MessageCircleMore, Bell } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Search, Menu, MessageCircleMore, Bell, X } from "lucide-react";
 
 import New from "./New";
 import ChatModal from "../../features/chatting/pages/ChatModal";
@@ -18,11 +17,12 @@ import { useChatModalStore } from "../store/ChatModalStore";
 
 const Header: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
 
-  // ✅ 리프레시 재발급 완료 여부
+  // 리프레시 재발급 완료 여부
   const { ready } = useAuthInit();
 
-  // ✅ 전역 인증 상태 (any 사용 없음)
+  // 전역 인증 상태
   const accessToken = useAuthStore((s: AuthState) => s.accessToken);
   const userNickname = useAuthStore(
     (s: AuthState) => s.profile?.nickname ?? "User"
@@ -31,23 +31,55 @@ const Header: React.FC = () => {
 
   const { isChatOpen, openChatList, onClose } = useChatModalStore();
 
-  // ✅ 로컬 상태
+  // 로컬 상태
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isNotiOpen, setIsNotiOpen] = useState<boolean>(false);
 
-  // ✅ 로그인 여부: 재발급 완료 && accessToken 존재
+  // 로그인 여부
   const isAuthed = useMemo<boolean>(
     () => ready && Boolean(accessToken),
     [ready, accessToken]
   );
 
-  // 검색 제출
+  // url -> 입력 동기화
+  useEffect(() => {
+    const sp = new URLSearchParams(location.search);
+    const urlKeyword = sp.get("searchKeyword") ?? "";
+    setSearchQuery(urlKeyword);
+  }, [location.search]);
+
+  // 검색
   const handleSearch = (e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault();
-    if (!searchQuery.trim()) return;
-    navigate(
-      `/auctions/search?searchKeyword=${encodeURIComponent(searchQuery)}`
-    );
+    const q = searchQuery.trim();
+    // 빈 검색어면 /auctions 로(전체 목록)
+    const next = ((): URLSearchParams => {
+      // 결과 목록 내 검색 시 기존 필터/정렬 유지
+      if (location.pathname.startsWith("/auctions")) {
+        const keep = new URLSearchParams(location.search);
+        // 페이지 초기화
+        keep.delete("page");
+        // searchKeyword 설정/삭제
+        if (q) keep.set("searchKeyword", q);
+        else keep.delete("searchKeyword");
+        return keep;
+      }
+      // 이외 경로에선 새 쿼리로
+      const sp = new URLSearchParams();
+      if (q) sp.set("searchKeyword", q);
+      return sp;
+    })();
+
+    navigate(`/auctions?${next.toString()}`);
+  };
+
+  // 검색어 지우기
+  const clearSearch = () => {
+    setSearchQuery("");
+    const sp = new URLSearchParams(location.search);
+    sp.delete("searchKeyword");
+    sp.delete("page");
+    navigate(`/auctions?${sp.toString()}`);
   };
 
   // 로그아웃
@@ -109,7 +141,19 @@ const Header: React.FC = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
-          <button type="submit" aria-label="검색">
+
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={clearSearch}
+              aria-label="검색어 지우기"
+              className="mr-2"
+              title="검색어 지우기"
+            >
+              <X />
+            </button>
+          )}
+          <button type="submit" aria-label="검색" title="검색">
             <Search color="#8322bf" />
           </button>
         </form>
@@ -118,7 +162,8 @@ const Header: React.FC = () => {
         <nav className="block md:hidden">
           <ul className="flex gap-4">
             <li>
-              <Link to="/auctions" title="검색 화면 이동">
+              {/* 모바일은 검색 페이지 이동 후 거기서 입력 */}
+              <Link to="/auctions" title="검색 화면 이동" aria-label="검색">
                 <Search />
               </Link>
             </li>
@@ -140,7 +185,7 @@ const Header: React.FC = () => {
               <li className="h-4 w-16 animate-pulse rounded bg-gray-200" />
             </ul>
           ) : isAuthed ? (
-            // ✅ 로그인 후
+            // 로그인 후
             <ul className="text-h7 flex items-center gap-4 text-nowrap">
               <li>
                 <Link to="/mypage">
@@ -160,6 +205,7 @@ const Header: React.FC = () => {
                   className="relative"
                   onClick={openChatList}
                   aria-label="채팅"
+                  title="채팅"
                 >
                   <MessageCircleMore />
                   <New />
@@ -172,6 +218,7 @@ const Header: React.FC = () => {
                   className="relative"
                   onClick={() => setIsNotiOpen(true)}
                   aria-label="알림"
+                  title="알림"
                 >
                   <Bell />
                 </button>
@@ -186,7 +233,7 @@ const Header: React.FC = () => {
                 )}
             </ul>
           ) : (
-            // ❌ 로그인 전
+            // 로그인 전
             <ul className="text-h7 flex gap-4 text-nowrap">
               <li>
                 <Link to="/login">로그인</Link>
