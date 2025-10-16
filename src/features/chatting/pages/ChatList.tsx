@@ -5,7 +5,12 @@ import { formatTime } from "../../../shared/hooks/useCommon";
 
 const ChatList = ({ chatList, onSelectRoom }: ChatListProps) => {
   return (
-    <ul>
+    <ul className="h-full">
+      {chatList.length === 0 && (
+        <div className="text-g300 flex h-full items-center justify-center text-sm">
+          개설된 채팅방이 없습니다.
+        </div>
+      )}
       {chatList.map((chat) => (
         <li
           key={chat.chatroomId}

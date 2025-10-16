@@ -1,19 +1,17 @@
-import React, { useState } from "react";
 import type { ChatProductInfoProps } from "../types/ChatType";
+import { useAuthStore } from "../../auth/store/authStore";
 
 const ChatProductInfo = ({
+  sellerId,
+  counterpartId,
   auctionId,
   auctionImageUrl,
   auctionTitle,
   currentPrice,
   sellingStatus,
+  handleSendPaymentRequest,
 }: ChatProductInfoProps) => {
-  const [mode, setMode] = useState<string>("sell");
-  const [payModalOpen, setPayModalOpen] = useState(false);
-
-  const handlePaymentModalOpen = () => {
-    setPayModalOpen(true);
-  };
+  const userId = useAuthStore.getState().userId;
 
   return (
     <div
@@ -29,14 +27,16 @@ const ChatProductInfo = ({
         <p className="text-g300">{currentPrice.toString()}</p>
       </div>
       <div className="flex w-[15%] flex-col gap-2">
-        <button
-          type="button"
-          onClick={handlePaymentModalOpen}
-          className="bg-purple w-full rounded-md px-2 py-1.5 text-xs text-white"
-        >
-          결제 요청
-        </button>
-        {mode === "sell" && (
+        {userId === sellerId && (
+          <button
+            type="button"
+            onClick={() => handleSendPaymentRequest()}
+            className="bg-purple w-full rounded-md px-2 py-1.5 text-xs text-white"
+          >
+            결제 요청
+          </button>
+        )}
+        {userId !== sellerId && (
           <>
             <button
               type="button"

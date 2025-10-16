@@ -2,8 +2,8 @@ import { useRef, useEffect, useState } from "react";
 import api from "../../../shared/api/axiosInstance";
 import { useShallow } from "zustand/shallow";
 import { useAuthStore } from "../../auth/store/authStore";
-import { useChatListApi } from "../api/useChatListApi";
-import { useChatRoomApi } from "../api/useChatRoomApi";
+import { useChatListApi } from "../api/useChatList";
+import { useChatRoomApi } from "../api/useChatRoom";
 import useToast from "../../../shared/hooks/useToast";
 import type { ModalProps } from "../types/ChatType";
 import { useChatModalStore } from "../../../shared/store/ChatModalStore";
@@ -11,7 +11,7 @@ import ChatList from "./ChatList";
 import ChatRoom from "./ChatRoom";
 import { X, ChevronLeft, EllipsisVertical } from "lucide-react";
 
-const ChatModal = ({ onClose }: ModalProps) => {
+const ChatModal = ({ isChatOpen, onClose }: ModalProps) => {
   const modalRef = useRef<HTMLDivElement>(null);
 
   // 채팅목록/채팅방 화면 상태관리
@@ -24,7 +24,7 @@ const ChatModal = ({ onClose }: ModalProps) => {
   const [currentView, setCurrentView] = useState<string>(targetView);
 
   // chatlist
-  const listApi = useChatListApi(true);
+  const listApi = useChatListApi(isChatOpen);
   // 불러와진 ChatListItemProps 중 원하는 요소만 사용할 수 있게 처리
   type ChatListItem = (typeof listApi.chatList)[number];
   // 이동할 roomInfo(list에서 접근 시)
@@ -36,11 +36,13 @@ const ChatModal = ({ onClose }: ModalProps) => {
   const targetChatroomId = selectedRoomInfo?.chatroomId || selectedChatroomId;
 
   // chatroom 상세 데이터
-  const roomApi = useChatRoomApi(targetChatroomId!);
+  const shouldEnableRoomApi =
+    currentView === "room" && listApi.chatList.length > 0;
+  const roomApi = useChatRoomApi(targetChatroomId!, shouldEnableRoomApi);
 
   // chatroom에서 해당 채팅방 삭제 메뉴
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { toast, showToast, hideToast } = useToast();
+  const { showToast } = useToast();
   const token = useAuthStore((state) => state.accessToken);
 
   // modal창 닫기: 여백 누를 시 꺼지도록
@@ -66,8 +68,9 @@ const ChatModal = ({ onClose }: ModalProps) => {
   };
 
   // 채팅방에서 목록으로 돌아갈 함수
-  const handleGoToList = () => {
+  const handleGoToList = async () => {
     setSelectedRoomInfo(null);
+    await listApi.refetchList();
     setCurrentView("list");
   };
 
@@ -78,6 +81,7 @@ const ChatModal = ({ onClose }: ModalProps) => {
         headers: { Authorization: `Bearer ${token}` },
       });
       setIsMenuOpen(false);
+      await listApi.refetchList();
       handleGoToList();
     } catch {
       showToast("채팅방 삭제에 실패했습니다.", "error");
@@ -108,9 +112,9 @@ const ChatModal = ({ onClose }: ModalProps) => {
               <ChevronLeft />
             </button>
             <p>
-              {selectedRoomInfo?.counterpartNickname
-                ? selectedRoomInfo.counterpartNickname
-                : "사용자"}
+              {selectedRoomInfo?.counterpartNickname ||
+                // chatRoom?.chatroomInfo.counterpartNickname ||
+                "사용자"}
             </p>
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -150,17 +154,17 @@ const ChatModal = ({ onClose }: ModalProps) => {
             {listApi.error}
           </p>
         )}
-        {currentView === "room" &&
-          selectedRoomInfo &&
-          !roomApi.isLoading &&
-          roomApi.chatRoom && (
-            <ChatRoom
-              chatroomId={targetChatroomId!}
-              sellerId={roomApi.chatRoom.sellerId}
-              chatroomInfo={selectedRoomInfo || roomApi.chatRoom.chatroomInfo}
-              productInfo={roomApi.chatRoom.productInfo}
-            />
-          )}
+        {currentView === "room" && roomApi.isLoading && (
+          <p>채팅방 정보 로딩 중...</p>
+        )}
+        {currentView === "room" && !roomApi.isLoading && roomApi.chatRoom && (
+          <ChatRoom
+            chatroomId={targetChatroomId!}
+            sellerId={roomApi.chatRoom.sellerId}
+            chatroomInfo={selectedRoomInfo || roomApi.chatRoom.chatroomInfo}
+            productInfo={roomApi.chatRoom.productInfo}
+          />
+        )}
       </div>
     </div>
   );

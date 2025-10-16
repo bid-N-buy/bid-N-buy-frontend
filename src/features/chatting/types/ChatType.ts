@@ -2,7 +2,9 @@ import type { AuctionResponse } from "../../auction/types/product";
 
 export const WS_URL = import.meta.env.VITE_WEBSOCKET_URL;
 export interface ModalProps {
+  isChatOpen?: boolean;
   onClose: () => void;
+  onDelete?: () => void;
 }
 
 export interface ChatListItemProps {
@@ -44,7 +46,10 @@ export interface ChatProductInfoProps {
   auctionImageUrl: string;
   auctionTitle: string;
   currentPrice: number;
+  counterpartId: number;
+  sellerId: number;
   sellingStatus: string;
+  handleSendPaymentRequest: () => void;
 }
 
 export interface ChatMessageProps {
