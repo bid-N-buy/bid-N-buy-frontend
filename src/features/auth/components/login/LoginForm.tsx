@@ -1,3 +1,4 @@
+// src/features/auth/components/LoginForm.tsx
 import React, { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
@@ -8,10 +9,13 @@ import type {
   ErrorResponse,
 } from "../../../../shared/types/CommonType";
 
-// 서버가 top-level 로 토큰을 주는 경우까지 커버
+/** 구형 응답 호환 (토큰이 top-level) */
 type LegacyLoginResponse = {
   accessToken?: string | null;
   refreshToken?: string | null;
+  email?: string;
+  nickname?: string;
+  userId?: number;
 };
 
 function hasTokenInfo(
@@ -20,7 +24,41 @@ function hasTokenInfo(
   return typeof (d as LoginResponse).tokenInfo !== "undefined";
 }
 
-// 간단 이메일 형식 체크(프론트 보조용)
+/** (디버그) 간단 JWT payload 디코더 — 검증 X(표시/라우팅 캐시용) */
+const decodeJwt = (jwt?: string | null) => {
+  if (!jwt) return null;
+  try {
+    const [, payload] = jwt.split(".");
+    return JSON.parse(atob(payload.replace(/-/g, "+").replace(/_/g, "/")));
+  } catch {
+    return null;
+  }
+};
+
+/** 응답/토큰에서 userId 추출: 1) 응답.userId 2) JWT(sub/uid) */
+const resolveUserIdFrom = (
+  data: any,
+  accessToken: string | null
+): number | null => {
+  if (typeof data?.userId === "number") return data.userId;
+  const claims = decodeJwt(accessToken);
+  // 서버가 sub를 숫자로 주거나, uid 클레임을 쓰는 경우 지원
+  const sub = claims?.sub;
+  const uid = claims?.uid ?? claims?.userId;
+  const parsed =
+    typeof sub === "number"
+      ? sub
+      : typeof sub === "string" && /^\d+$/.test(sub)
+        ? Number(sub)
+        : typeof uid === "number"
+          ? uid
+          : typeof uid === "string" && /^\d+$/.test(uid)
+            ? Number(uid)
+            : null;
+  return parsed ?? null;
+};
+
+/** 간단 이메일 형식 체크(프론트 보조용) */
 const isEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
 
 const LoginForm: React.FC = () => {
@@ -29,12 +67,28 @@ const LoginForm: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // zustand
   const setTokens = useAuthStore((s: AuthState) => s.setTokens);
-  const setProfile = useAuthStore((s: AuthState) => s.setProfile);
+
   const navigate = useNavigate();
   const location = useLocation();
 
-  // (?token=..., ?error=...) 소셜 콜백 대응
+  /** (DEV) 스토어 변경 구독 로그 */
+  useEffect(() => {
+    const unsub = useAuthStore.subscribe((state, prev) => {
+      if (import.meta.env.DEV) {
+        console.debug("[auth] changed", {
+          accessChanged: state.accessToken !== prev.accessToken,
+          refreshChanged: state.refreshToken !== prev.refreshToken,
+          profileChanged: state.profile !== prev.profile,
+          userId: state.userId,
+        });
+      }
+    });
+    return unsub;
+  }, []);
+
+  /** (?token=..., ?error=...) 소셜 콜백 대응 */
   useEffect(() => {
     const url = new URL(window.location.href);
     const err = url.searchParams.get("error");
@@ -49,7 +103,18 @@ const LoginForm: React.FC = () => {
 
     const token = url.searchParams.get("token");
     if (token) {
+      // accessToken만 전달되는 플로우
       setTokens(token, null);
+      if (import.meta.env.DEV) {
+        const snap = useAuthStore.getState();
+        console.debug("[auth] after social token", {
+          accessToken: !!snap.accessToken,
+          refreshToken: !!snap.refreshToken,
+          profile: snap.profile,
+          userId: snap.userId,
+          claims: decodeJwt(token),
+        });
+      }
       url.searchParams.delete("token");
       window.history.replaceState({}, "", url.pathname + url.search);
       navigate("/");
@@ -82,37 +147,76 @@ const LoginForm: React.FC = () => {
       try {
         setLoading(true);
 
-        const { data } = await api.post<LoginResponse | LegacyLoginResponse>(
+        const res = await api.post<LoginResponse | LegacyLoginResponse>(
           "/auth/login",
           { email: emailTrim, password: pwTrim },
           {
             headers: { "Content-Type": "application/json" },
-            withCredentials: true,
+            withCredentials: true, // 쿠키 기반이면 유지
           }
         );
 
-        if (import.meta.env.DEV) console.debug("[login] response", data);
+        if (import.meta.env.DEV) {
+          console.debug("[login] axios response", {
+            status: res.status,
+            headers: res.headers,
+            data: res.data,
+          });
+        }
 
+        const data = res.data;
+
+        // 1) 토큰 파싱 (신/구 응답 모두 지원)
         const access = hasTokenInfo(data)
-          ? data.tokenInfo.accessToken
+          ? (data.tokenInfo?.accessToken ?? null)
           : (data.accessToken ?? null);
+
         const refresh = hasTokenInfo(data)
-          ? (data.tokenInfo.refreshToken ?? null)
+          ? (data.tokenInfo?.refreshToken ?? null)
           : (data.refreshToken ?? null);
 
-        if (!access)
+        if (!access) {
           throw new Error(
             "accessToken이 응답에 없습니다. 서버 응답 형식을 확인하세요."
           );
-
-        if (hasTokenInfo(data)) {
-          const nickname = data.nickname as string | undefined;
-          const emailFromRes = data.email as string | undefined;
-          if (nickname) setProfile({ nickname, email: emailFromRes });
         }
 
-        setTokens(access, refresh ?? null);
-        navigate("/");
+        // 2) 프로필 + userId 파싱
+        const parsedProfile = {
+          nickname: (data as any).nickname ?? undefined,
+          email: (data as any).email ?? undefined,
+        };
+        const hasAnyProfile =
+          typeof parsedProfile.nickname !== "undefined" ||
+          typeof parsedProfile.email !== "undefined";
+
+        // ✅ /users/me가 없으므로, 응답에 없으면 JWT 클레임에서 보강
+        const userId = resolveUserIdFrom(data, access);
+
+        // 3) 저장 (프로필 없으면 기존 유지 위해 undefined 전달)
+        setTokens(
+          access,
+          refresh ?? null,
+          hasAnyProfile ? parsedProfile : undefined,
+          userId
+        );
+
+        if (import.meta.env.DEV) {
+          const snap = useAuthStore.getState();
+          console.debug("[auth] after login (store)", {
+            accessToken: !!snap.accessToken,
+            refreshToken: !!snap.refreshToken,
+            profile: snap.profile,
+            userId: snap.userId,
+          });
+        }
+
+        // 로그인 성공 후 이동 (원래 가려던 곳이 있으면 복귀)
+        const to =
+          (location.state as any)?.from?.pathname ??
+          (location.state as any)?.redirect ??
+          "/";
+        navigate(to, { replace: true });
       } catch (err) {
         if (axios.isAxiosError<ErrorResponse>(err)) {
           const msg =
@@ -139,17 +243,16 @@ const LoginForm: React.FC = () => {
         setLoading(false);
       }
     },
-    [email, password, loading, navigate, setProfile, setTokens]
+    [email, password, loading, location.state, navigate, setTokens]
   );
 
-  // 현재 위치를 state로 싣고 시작(선택) → 로그인 후 복귀 시 유용
+  /** 카카오/네이버 시작 */
   const startKakao = useCallback(() => {
     if (loading) return;
-    const redirectParam = encodeURIComponent(
-      location.pathname + location.search || "/"
+    window.location.assign(
+      "https://kauth.kakao.com/oauth/authorize?response_type=code&client_id=3ca9c59cb383f463525c62ffb4615195&redirect_uri=http://localhost:8080/auth/kakao"
     );
-    window.location.assign(`${API_BASE}/auth/kakao?redirect=${redirectParam}`);
-  }, [loading, location.pathname, location.search]);
+  }, [loading]);
 
   const startNaver = useCallback(() => {
     if (loading) return;
@@ -203,7 +306,19 @@ const LoginForm: React.FC = () => {
       </button>
 
       {/* 에러 메시지 */}
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && (
+        <p className="text-sm text-red-500" role="alert" aria-live="assertive">
+          {error}
+        </p>
+      )}
+
+      {/* (DEV) 상태 미니 표시 */}
+      {/* {import.meta.env.DEV && (
+        <p className="text-[11px] text-gray-500">
+          uid: {String(useAuthStore.getState().userId)} / nick:{" "}
+          {useAuthStore.getState().profile?.nickname ?? "-"}
+        </p>
+      )} */}
 
       {/* 링크 */}
       <div className="mt-[10px] flex justify-center gap-3 text-sm">

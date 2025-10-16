@@ -277,7 +277,7 @@ const SignUpForm: React.FC = () => {
               value={code}
               onChange={(e) => setCode(e.target.value)}
               className="focus:border-purple h-[50px] w-[190px] rounded-md border px-3 outline-none focus:border-2"
-              placeholder="인증번호(선택)"
+              placeholder="인증번호 입력"
               inputMode="numeric"
               disabled={!isCodeSent || isVerified}
             />
