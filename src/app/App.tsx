@@ -17,6 +17,7 @@ import MypageLayout from "../features/mypage/pages/MypageLayout";
 import PaymentForm from "../features/payment/pages/CheckoutPage";
 import SuccessPage from "../features/payment/pages/SuccessPage";
 import FailPage from "../features/payment/pages/FailPage";
+import OAuthCallback from "../features/auth/components/OAuthCallback";
 
 // 공통
 const Header = React.lazy(() => import("../shared/components/Header"));
@@ -124,6 +125,7 @@ export default function App() {
             <Route path="/signup" element={<SignUpPage />} />
             <Route path="/resetPassword" element={<ResetPassword />} />
           </Route>
+          <Route path="/oauth/callback" element={<OAuthCallback />} />
           {/* 경매 */}
           <Route path="/auctions">
             <Route index element={<AuctionList />} />

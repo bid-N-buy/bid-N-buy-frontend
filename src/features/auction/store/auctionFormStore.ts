@@ -1,8 +1,8 @@
 import { create } from "zustand";
-import type { CreateAuctionReq } from "../types/auctions";
+import type { CreateAuctionForm } from "../types/auctions";
 import { toLocalKst } from "../../../shared/utils/datetime";
 
-// 이미지 순서 관리
+// 이미지 순서 관리 (프리뷰용)
 type UiImg = { imageUrl: string };
 
 type FormState = {
@@ -11,13 +11,12 @@ type FormState = {
   categoryMain: string; // 화면용
   categorySub: string;
   categoryId: number | null; // 서버용 최종 ID (선택 완료 시 채움)
-
   startPrice: number | null;
   minBidPrice: number | null;
   startAt: Date | null;
   endAt: Date | null;
 
-  images: UiImg[];
+  images: UiImg[]; // 미리보기 blob url 목록 (전송용x)
 };
 
 type Actions = {
@@ -25,7 +24,7 @@ type Actions = {
   addImage(img: UiImg): void;
   removeImage(i: number): void;
   moveImageToFront(i: number): void; // 임의 이미지 맨 앞으로 (대표로)
-  toRequest(): CreateAuctionReq; // dto 변환
+  toRequest(): CreateAuctionForm; // dto 변환
   reset(): void;
 };
 
@@ -49,8 +48,10 @@ export const useAuctionFormStore = create<FormState & Actions>((set, get) => ({
     set((s) => ({ ...s, [k]: v })),
 
   addImage: (img) => set((s) => ({ images: [...s.images, img] })),
+
   removeImage: (idx) =>
     set((s) => ({ images: s.images.filter((_, i) => i !== idx) })),
+
   moveImageToFront: (idx) =>
     set((s) => {
       const next = [...s.images];
@@ -59,10 +60,13 @@ export const useAuctionFormStore = create<FormState & Actions>((set, get) => ({
       return { images: next };
     }),
 
-  toRequest: () => {
+  toRequest: (): CreateAuctionForm => {
     const s = get();
-    if (!s.images || s.images.length < 1)
+
+    // ui상 검증 (실제 전송은 컴포넌트에서)
+    if (!s.images || s.images.length < 1) {
       throw new Error("이미지를 등록해 주세요.");
+    }
     if (!s.title || !s.title.trim()) throw new Error("상품명을 입력해 주세요.");
     if (s.categoryId == null) throw new Error("카테고리를 선택해 주세요.");
     if (!s.description || !s.description.trim())
@@ -74,23 +78,24 @@ export const useAuctionFormStore = create<FormState & Actions>((set, get) => ({
     if (!s.startAt || !s.endAt)
       throw new Error("시작/마감 일시를 입력해 주세요.");
 
-    // 전송용 변환 imageType 모두 "PRODUCT"
-    const txImages = s.images.slice(0, 10).map((it) => ({
-      imageUrl: it.imageUrl,
-      imageType: "PRODUCT" as const,
-    }));
+    // 검증했으니까 not null 보장
+    const categoryId = s.categoryId as number;
+    const startPrice = s.startPrice as number;
+    const minBidPrice = s.minBidPrice as number;
+    const startAt = s.startAt as Date;
+    const endAt = s.endAt as Date;
 
+    // 서버 업로드 방식 - images는 dto에 포함x
     return {
-      categoryId: s.categoryId,
+      categoryId,
       title: s.title.trim(),
       description: s.description.trim(),
-      startPrice: s.startPrice,
-      minBidPrice: s.minBidPrice,
-      startTime: toLocalKst(s.startAt),
-      endTime: toLocalKst(s.endAt),
-      images: txImages,
+      startPrice,
+      minBidPrice,
+      startTime: toLocalKst(startAt),
+      endTime: toLocalKst(endAt),
     };
   },
 
-  reset: () => set(initial),
+  reset: () => set(() => ({ ...initial })),
 }));

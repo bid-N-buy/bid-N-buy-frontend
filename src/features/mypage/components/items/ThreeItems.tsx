@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import TradeRowCompact from "../items/ItemCard";
+import TradeRowCompact from "../items/TradeRowCompact";
 import type { TradeItem } from "../../types/trade";
 
 type Props = {

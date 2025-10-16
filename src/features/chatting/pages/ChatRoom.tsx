@@ -10,21 +10,30 @@ import ChatInput from "../components/ChatInput";
 // import ChatDate from "../components/ChatDate"; 날짜 넘어갈 시에 사용
 import type { ChatRoomProps, ChatMessageProps } from "../types/ChatType";
 
-const ChatRoom = ({ chatroomId, chatroomInfo, productInfo }: ChatRoomProps) => {
+const ChatRoom = ({
+  chatroomId,
+  sellerId,
+  chatroomInfo,
+  productInfo,
+}: ChatRoomProps) => {
   // STOMP 클라이언트 인스턴스를 저장하기 위해 useRef 사용 (재렌더링 시에도 값이 유지됨)
   const clientRef = useRef<Client | null>(null);
+  // 스크롤 하단 위치 위한 useRef
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+
   const [messages, setMessages] = useState<ChatMessageProps[]>([]);
   const [inputMessage, setInputMessage] = useState<string>("");
   const [isConnected, setIsConnected] = useState<boolean>(false);
+
   const [error, setError] = useState<string | null>(null);
 
   // 토큰 전역에서 들고 오기
   const token = useAuthStore((state) => state.accessToken);
 
   // 웹소켓 주소
-  const wsUrl = "http://localhost:8080/ws/bid";
+  const WS_URL = import.meta.env.VITE_WEBSOCKET_URL;
 
-  const fetchMessageHistory = async (chatroomId: string, token: string) => {
+  const fetchMessageHistory = async (chatroomId: number, token: string) => {
     try {
       const response = await api.get<ChatMessageProps[]>(
         `/chatrooms/${chatroomId}/message`,
@@ -50,7 +59,7 @@ const ChatRoom = ({ chatroomId, chatroomInfo, productInfo }: ChatRoomProps) => {
     const client = new Client({
       // SockJS 연결을 사용하기 위한 webSocketFactory 설정
       webSocketFactory: () => {
-        return new SockJS(wsUrl);
+        return new SockJS(WS_URL);
       },
 
       reconnectDelay: 5000,
@@ -92,7 +101,12 @@ const ChatRoom = ({ chatroomId, chatroomInfo, productInfo }: ChatRoomProps) => {
         clientRef.current.deactivate();
       }
     };
-  }, [wsUrl, chatroomId, token]);
+  }, [WS_URL, chatroomId, token]);
+
+  useEffect(() => {
+    chatContainerRef.current!.scrollTop =
+      chatContainerRef.current!.scrollHeight;
+  }, [messages]);
 
   // 메시지 수신 및 화면 업데이트 로직
   const handleMessageReceived = (message: IMessage) => {
@@ -101,10 +115,6 @@ const ChatRoom = ({ chatroomId, chatroomInfo, productInfo }: ChatRoomProps) => {
 
       // 메시지 배열 상태 업데이트
       setMessages((prevMessages) => {
-        console.log(
-          "메시지 배열 업데이트 성공:",
-          [...prevMessages, messageBody].length
-        );
         return [...prevMessages, messageBody];
       });
 
@@ -126,7 +136,7 @@ const ChatRoom = ({ chatroomId, chatroomInfo, productInfo }: ChatRoomProps) => {
 
     // 메시지 생성
     const chatMessage = {
-      chatroomId: parseInt(chatroomId), // 백엔드가 number를 요구할 수 있으므로 파싱
+      chatroomId: chatroomId,
       message: inputMessage.trim(),
       senderId: chatroomInfo.counterpartNickname, // HTML 클라이언트의 senderId 필드와 맞춤
       type: "CHAT",
@@ -155,29 +165,42 @@ const ChatRoom = ({ chatroomId, chatroomInfo, productInfo }: ChatRoomProps) => {
         sellingStatus={productInfo.sellingStatus}
       />
       <div
+        ref={chatContainerRef}
         key={chatroomId}
         className="h-[calc(100%-179px)] w-[100%] overflow-x-hidden overflow-y-scroll"
       >
         {messages.map((msg, index) =>
-          msg.senderId.toString() !== chatroomInfo.counterpartId ? (
+          msg.senderId !== chatroomInfo.counterpartId ? (
             <ChatMe
               key={index}
+              sellerId={sellerId}
               messageType={msg.messageType}
               message={msg.message}
+              auctionImageUrl={
+                chatroomInfo.auctionImageUrl ? chatroomInfo.auctionImageUrl : ""
+              }
+              auctionTitle={chatroomInfo.auctionTitle}
+              currentPrice={productInfo.currentPrice}
               createdAt={new Date(msg.createdAt).toLocaleTimeString()}
-              isRead={msg.isRead}
+              read={msg.read}
             />
           ) : (
             <ChatYou
               key={index}
+              sellerId={sellerId}
               counterpartProfileImageUrl={
                 chatroomInfo.counterpartProfileImageUrl
               }
               counterpartNickname={chatroomInfo.counterpartNickname}
               messageType={msg.messageType}
               message={msg.message}
+              auctionImageUrl={
+                chatroomInfo.auctionImageUrl ? chatroomInfo.auctionImageUrl : ""
+              }
+              auctionTitle={chatroomInfo.auctionTitle}
+              currentPrice={productInfo.currentPrice}
               createdAt={new Date(msg.createdAt).toLocaleTimeString()}
-              isRead={msg.isRead}
+              read={msg.read}
             />
           )
         )}
