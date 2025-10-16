@@ -4,6 +4,7 @@ import type {
   CreateAuctionRes,
   AuctionDetail,
   PageResponse,
+  AuctionsRes,
 } from "../types/auctions";
 import axios from "axios";
 
@@ -67,4 +68,26 @@ export const getAuctionById = async (
     }
     throw err;
   }
+};
+
+// 경매 목록 - 검색, 필터링
+export type SortBy = "latest" | "price_asc" | "price_desc";
+
+export type FetchAuctionsParams = {
+  searchKeyword?: string;
+  mainCategoryId?: number;
+  subCategoryId?: number;
+  minPrice?: number;
+  maxPrice?: number;
+  includeEnded?: boolean; // true 면 완료/종료 포함
+  sortBy?: SortBy;
+  page?: number;
+  size?: number;
+};
+
+export const fetchAuctions = async (
+  params: FetchAuctionsParams = {}
+): Promise<AuctionsRes> => {
+  const { data } = await api.get<AuctionsRes>("/auctions", { params });
+  return data;
 };
