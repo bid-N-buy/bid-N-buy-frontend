@@ -14,6 +14,7 @@ import ProfileDetails from "../features/mypage/components/profile/ProfileDetails
 import ProfileSetting from "../features/mypage/components/profile/ProfileSetting";
 import ResetPassword from "../features/auth/components/login/ResetPasswordForm";
 import MypageLayout from "../features/mypage/pages/MypageLayout";
+import OAuthCallback from "../features/auth/components/OAuthCallback";
 
 // 공통
 const Header = React.lazy(() => import("../shared/components/Header"));
@@ -121,6 +122,7 @@ export default function App() {
             <Route path="/signup" element={<SignUpPage />} />
             <Route path="/resetPassword" element={<ResetPassword />} />
           </Route>
+          <Route path="/oauth/callback" element={<OAuthCallback />} />
           {/* 경매 */}
           <Route path="/auctions">
             <Route index element={<AuctionList />} />
