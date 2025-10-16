@@ -35,6 +35,10 @@ export const useChatRequestMessage = (
           sellerId,
         });
 
+        const listItem = response.data.find(
+          (item) => item.chatroomId === chatroomId
+        );
+
         const auctionRes = await api.get<AuctionResponse>(
           `/auctions/${listItem!.auctionId}`,
           {

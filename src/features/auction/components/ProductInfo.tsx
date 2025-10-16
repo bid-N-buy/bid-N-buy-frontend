@@ -9,6 +9,7 @@ import api from "../../../shared/api/axiosInstance";
 import { EllipsisVertical, Heart } from "lucide-react";
 import { formatDate } from "../../../shared/utils/datetime";
 import { buildImageUrl } from "../../../shared/utils/imageUrl";
+import { useChatRoomAuc } from "../../chatting/api/useChatRoom";
 
 export interface ProductInfoProps {
   auctionId: number; // 채팅방 생성 시 필요 -> 필수로 수정, number로 수정
@@ -62,6 +63,9 @@ const ProductInfo = ({
   const [isBidModalOpen, setIsBidModalOpen] = useState(false);
   const { toast, showToast, hideToast } = useToast();
 
+  const userId = useAuthStore.getState().userId;
+  const { loadChatRoom } = useChatRoomAuc(sellerId, auctionId);
+
   const handleLikeClick = useCallback(() => {
     setIsLiked((prev) => !prev);
     onLikeToggle?.();
@@ -100,6 +104,7 @@ const ProductInfo = ({
         }
       );
       const chatroomId = response.data.chatroomId;
+      await loadChatRoom();
       // 채팅 모달이 헤더에 종속된 컴포넌트이므로 zustand로 상태 변경
       useChatModalStore.getState().openChatRoom(chatroomId);
     } catch (error) {
@@ -219,15 +224,19 @@ const ProductInfo = ({
             {/* 5. 버튼들 + 찜 */}
             <div className="flex items-stretch gap-2 md:gap-1.5">
               <div className="grid flex-1 grid-cols-1 gap-2 md:grid-cols-2 md:gap-2.5">
-                <button
-                  onClick={() => handleChatAdd(auctionId, sellerId)}
-                  className="text-h7 md:text-h6 lg:text-h5 border-purple text-purple hover:bg-light-purple cursor-pointer rounded-md border py-2 font-bold transition-colors sm:py-3 sm:text-base md:py-4"
-                >
-                  판매자와 대화
-                </button>
+                {sellerId !== userId && (
+                  <button
+                    onClick={() => handleChatAdd(auctionId, sellerId)}
+                    className="text-h7 md:text-h6 lg:text-h5 border-purple text-purple hover:bg-light-purple cursor-pointer rounded-md border py-2 font-bold transition-colors sm:py-3 sm:text-base md:py-4"
+                  >
+                    판매자와 대화
+                  </button>
+                )}
                 <button
                   onClick={() => setIsBidModalOpen(true)}
-                  className="text-h7 md:text-h6 lg:text-h5 bg-purple hover:bg-deep-purple cursor-pointer rounded-md py-2 font-bold text-white transition-colors sm:py-3 sm:text-base md:py-4"
+                  className={`text-h7 md:text-h6 lg:text-h5 bg-purple hover:bg-deep-purple cursor-pointer rounded-md py-2 font-bold text-white transition-colors sm:py-3 sm:text-base md:py-4 ${
+                    sellerId !== userId && `w-full`
+                  }`}
                   disabled={
                     typeof currentPrice !== "number" ||
                     typeof minBidPrice !== "number"

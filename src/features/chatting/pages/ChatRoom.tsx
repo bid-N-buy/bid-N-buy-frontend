@@ -27,8 +27,10 @@ const ChatRoom = ({
 
   const [error, setError] = useState<string | null>(null);
 
-  // 토큰 전역에서 들고 오기
+  // 토큰/유저아이디 전역에서 들고 오기
   const token = useAuthStore((state) => state.accessToken);
+  const userId = useAuthStore.getState().userId;
+  const buyerId = userId === sellerId ? chatroomInfo.counterpartId : userId;
 
   // 웹소켓 주소
   const WS_URL = import.meta.env.VITE_WEBSOCKET_URL;
@@ -103,10 +105,30 @@ const ChatRoom = ({
     };
   }, [WS_URL, chatroomId, token]);
 
-  useEffect(() => {
-    chatContainerRef.current!.scrollTop =
-      chatContainerRef.current!.scrollHeight;
-  }, [messages]);
+  const handleSendPaymentRequest = () => {
+    const client = clientRef.current;
+
+    // 유효성 검사
+    if (!client || !client.connected) {
+      console.warn("연결 상태가 좋지 않습니다.");
+      return;
+    }
+    const messagePayload = {
+      type: "REQUEST",
+      auctionId: chatroomInfo.auctionId,
+      buyerId: buyerId,
+      senderId: sellerId,
+      content: `${productInfo.currentPrice}원 결제를 요청합니다.`,
+      currentPrice: productInfo.currentPrice,
+    };
+
+    // 전송 실행
+    client.publish({
+      destination: `/app/chat/message`,
+      body: JSON.stringify(messagePayload),
+      headers: { "content-type": "application/json" },
+    });
+  };
 
   // 메시지 수신 및 화면 업데이트 로직
   const handleMessageReceived = (message: IMessage) => {
@@ -123,6 +145,11 @@ const ChatRoom = ({
       console.error("메시지 파싱 오류:", e, message.body);
     }
   };
+  // 스크롤
+  useEffect(() => {
+    chatContainerRef.current!.scrollTop =
+      chatContainerRef.current!.scrollHeight;
+  }, [messages]);
 
   // 메시지 전송 로직
   const sendMessage = () => {
@@ -163,14 +190,22 @@ const ChatRoom = ({
         auctionTitle={chatroomInfo.auctionTitle}
         currentPrice={productInfo.currentPrice}
         sellingStatus={productInfo.sellingStatus}
+        handleSendPaymentRequest={handleSendPaymentRequest}
+        counterpartId={chatroomInfo.counterpartId}
+        sellerId={sellerId}
       />
       <div
         ref={chatContainerRef}
         key={chatroomId}
-        className="h-[calc(100%-179px)] w-[100%] overflow-x-hidden overflow-y-scroll"
+        className="h-[calc(100%-232px)] w-[100%] overflow-x-hidden overflow-y-scroll"
       >
+        {messages.length === 0 && (
+          <div className="text-g300 flex h-[100%] items-center justify-center text-sm">
+            메시지를 보내 보세요.
+          </div>
+        )}
         {messages.map((msg, index) =>
-          msg.senderId !== chatroomInfo.counterpartId ? (
+          msg.senderId === userId ? (
             <ChatMe
               key={index}
               sellerId={sellerId}
