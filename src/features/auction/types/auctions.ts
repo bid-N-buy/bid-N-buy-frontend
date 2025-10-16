@@ -7,17 +7,6 @@ export interface AuctionImage {
 }
 
 // 요청 dto
-// export interface CreateAuctionReq {
-//   categoryId: number;
-//   title: string;
-//   description: string;
-//   startPrice: number;
-//   minBidPrice: number;
-//   startTime: string; // "YYYY-MM-DDTHH:mm:ss"
-//   endTime: string;
-//   images: AuctionImage[];
-// }
-
 // 서버 업로드 방식 폼 타입 (images 제외)
 export interface CreateAuctionForm {
   categoryId: number;
@@ -62,6 +51,27 @@ export interface AuctionDetail {
 // 페이지 래퍼(백 응답 예시 형태)
 export interface PageResponse<T> {
   data: T[];
+  totalPages: number;
+  totalElements: number;
+  currentPage: number;
+  pageSize: number;
+  first: boolean;
+  last: boolean;
+}
+
+export interface AuctionItem {
+  auctionId: number;
+  title: string;
+  currentPrice: number;
+  endTime: string;
+  mainImageUrl: string | null;
+  sellingStatus: "시작전" | "진행중" | "완료" | "종료";
+  sellerNickname: string;
+  wishCount: number;
+}
+
+export interface AuctionsRes {
+  data: AuctionItem[];
   totalPages: number;
   totalElements: number;
   currentPage: number;
