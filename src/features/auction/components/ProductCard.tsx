@@ -1,111 +1,121 @@
-import React from "react";
+// todo 찜..
+import React, { useMemo, useState, type KeyboardEvent } from "react";
 import { Heart } from "lucide-react";
-import type { ProductCardProps } from "../types/product";
+import type { AuctionItem } from "../types/auctions";
+import { buildImageUrl } from "../../../shared/utils/imageUrl";
 
-const ProductCard = ({
-  auctionId,
-  title,
-  currentPrice,
-  mainImageUrl,
-  sellingStatus,
-  nickname,
+interface ProductCardProps {
+  item: AuctionItem;
+  liked?: boolean;
+  onCardClick?: (id: number) => void;
+  onLikeToggle?: (id: number, liked: boolean) => void;
+}
+
+const STATUS_STYLE: Record<AuctionItem["sellingStatus"], string> = {
+  시작전: "bg-purple text-white",
+  진행중: "bg-purple text-white",
+  완료: "bg-g300 text-white",
+  종료: "bg-g300 text-white",
+};
+
+const ProductCard = React.memo(function ProductCard({
+  item,
   liked = false,
-  likeCount = 0,
-  chatCount = 0,
   onCardClick,
   onLikeToggle,
-}: ProductCardProps) => {
-  // 판매상태별..
-  const getStatusColor = (status: string): string => {
-    switch (status) {
-      case "진행 중":
-      case "진행중":
-        return "bg-purple";
-      case "종료":
-        return "bg-g300";
-      case "판매완료":
-        return "bg-red";
-      default:
-        return "bg-purple";
+}: ProductCardProps) {
+  const {
+    auctionId,
+    title,
+    currentPrice,
+    mainImageUrl,
+    sellingStatus,
+    sellerNickname,
+    wishCount,
+  } = item;
+
+  const [imgError, setImgError] = useState(false);
+  const src = useMemo(
+    () =>
+      mainImageUrl ? (buildImageUrl(mainImageUrl) ?? undefined) : undefined,
+    [mainImageUrl]
+  );
+
+  const status = sellingStatus;
+  const badgeClass = STATUS_STYLE[status] ?? "bg-purple text-white";
+
+  const onKey = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onCardClick?.(auctionId);
     }
   };
 
   return (
     <div
-      className="flex cursor-pointer flex-col"
+      className="cursor-pointer outline-none"
+      role="button"
+      tabIndex={0}
       onClick={() => onCardClick?.(auctionId)}
+      onKeyDown={onKey}
+      aria-label={`${title} 카드`}
     >
       {/* 이미지 */}
-      <div className="relative mb-3">
-        {mainImageUrl ? (
+      <div className="relative">
+        {src && !imgError ? (
           <img
-            src={mainImageUrl}
+            src={src}
             alt={title}
-            className="bg-g500 aspect-square w-full object-cover"
-            onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
-              const target = e.target as HTMLImageElement;
-              target.style.display = "none";
-              if (target.nextSibling) {
-                (target.nextSibling as HTMLElement).style.display = "flex";
-              }
-            }}
+            className="aspect-square w-full rounded-2xl object-cover"
+            loading="lazy"
+            decoding="async"
+            onError={() => setImgError(true)}
           />
-        ) : null}
-        <div
-          className="bg-g500 flex aspect-square items-center justify-center"
-          style={{ display: mainImageUrl ? "none" : "flex" }}
-        >
-          <span className="text-g300 text-[15px]">이미지</span>
-        </div>
+        ) : (
+          <div className="bg-g400 text-g300 flex aspect-square w-full items-center justify-center rounded-2xl">
+            이미지 없음
+          </div>
+        )}
 
-        {/* 상태 */}
+        {/* 상태 배지 */}
         <div
-          className={`${getStatusColor(sellingStatus)} absolute top-2 left-2 rounded-full px-3 py-1`}
+          className={`absolute top-2 right-2 rounded px-2 py-1 text-xs ${badgeClass}`}
+          aria-label={`판매 상태: ${status}`}
         >
-          <span className="text-[11px] font-medium text-white">
-            {sellingStatus}
-          </span>
+          {status}
         </div>
       </div>
 
       {/* 정보 */}
-      <div className="flex flex-col gap-1">
-        {/* 상품명 */}
-        <h6 className="text-g100 truncate font-medium">{title}</h6>
-
-        {/* 현재가 */}
-        <div className="text-g100 text-[15px] font-bold">
+      <div className="mt-2">
+        <h3 className="text-g100 mb-1 line-clamp-2 text-sm font-medium">
+          {title}
+        </h3>
+        <p className="text-g100 mb-2 text-base font-bold">
           현재 {currentPrice.toLocaleString()}원
+        </p>
+        <div className="flex items-center justify-between">
+          <span className="text-g300 text-xs">{sellerNickname}</span>
+
+          <button
+            type="button"
+            className="hover:bg-g500/40 flex items-center gap-1 rounded-full p-1 transition-colors"
+            aria-pressed={liked}
+            aria-label={liked ? "찜 취소" : "찜"}
+            onClick={(e) => {
+              e.stopPropagation();
+              onLikeToggle?.(auctionId, !liked);
+            }}
+          >
+            <Heart
+              className={`h-4 w-4 ${liked ? "fill-red text-red" : "text-g300"}`}
+            />
+            <span className="text-g300 text-xs">{wishCount}</span>
+          </button>
         </div>
-
-        {/* 판매자, 하트 */}
-        {nickname && (
-          <div className="mt-1 flex items-center justify-between">
-            <span className="text-g100 text-[13px]">{nickname}</span>
-            <button
-              className="p-0.5 transition-transform hover:scale-110"
-              onClick={(e: React.MouseEvent) => {
-                e.stopPropagation();
-                onLikeToggle?.(auctionId, !liked);
-              }}
-            >
-              <Heart
-                className={`h-4 w-4 ${liked ? "fill-purple text-purple" : "text-g300"}`}
-              />
-            </button>
-          </div>
-        )}
-
-        {/* 찜/채팅 count */}
-        {(nickname || likeCount > 0 || chatCount > 0) && (
-          <div className="text-g300 flex items-center gap-3 text-[11px]">
-            <span>찜 {likeCount}</span>
-            <span>채팅 {chatCount}</span>
-          </div>
-        )}
       </div>
     </div>
   );
-};
+});
 
 export default ProductCard;
