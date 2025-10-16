@@ -11,6 +11,8 @@ import {
   Watch,
   Gift,
 } from "lucide-react";
+import Banner from "../components/Banner";
+import MainSvg from "../../assets/main.svg";
 
 const Main = () => {
   // 카테고리 더미 데이터
@@ -32,11 +34,12 @@ const Main = () => {
       {/* 배너 */}
       <section className="pt-[60px]">
         <div className="container">
-          <div className="bg-g500 flex h-[500px] w-full items-center justify-center">
+          {/* <div className="bg-g500 flex h-[500px] w-full items-center justify-center">
             <span className="text-g300 text-[20px]">
               배너 영역 (1320 x 500)
             </span>
-          </div>
+          </div> */}
+          <Banner src={MainSvg} to="" alt="배너" />
         </div>
       </section>
 
