@@ -1,0 +1,99 @@
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css");
+
+/* ===== 기본 변수 ===== */
+:root {
+  --toss-blue: #0064ff;
+  --toss-blue-dark: #004dcc;
+  --toss-grey100: #f9fafb;
+  --toss-grey200: #f1f3f5;
+  --toss-grey300: #dee2e6;
+  --toss-grey600: #868e96;
+  --toss-grey900: #212529;
+  --toss-white: #ffffff;
+
+  --toss-radius: 16px;
+  --toss-spacing: 20px;
+  --toss-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* ===== 공통 박스 섹션 ===== */
+.toss_box_section {
+  background: var(--toss-white);
+  border-radius: var(--toss-radius);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  padding: 32px 28px;
+  margin: 24px auto;
+  max-width: 600px;
+  text-align: center;
+  font-family: var(--toss-font-family);
+}
+
+/* ===== 버튼 ===== */
+.toss_button {
+  display: inline-block;
+  width: 100%;
+  max-width: 280px;
+  background: var(--toss-blue);
+  color: var(--toss-white);
+  border-radius: 12px;
+  padding: 14px 20px;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.toss_button:disabled {
+  background: var(--toss-grey300);
+  cursor: not-allowed;
+}
+
+.toss_button:hover:enabled {
+  background: var(--toss-blue-dark);
+}
+
+/* ===== 그리드 (label-value 쌍) ===== */
+.toss_p_grid {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 12px 0;
+}
+
+.toss_p_grid_col {
+  flex: 1;
+}
+
+.toss_text_left {
+  text-align: left;
+  font-weight: 500;
+  color: var(--toss-grey900);
+}
+
+.toss_text_right {
+  text-align: right;
+  color: var(--toss-grey600);
+}
+
+/* ===== 제목 ===== */
+.toss_box_section h2 {
+  margin-top: 16px;
+  margin-bottom: 24px;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--toss-grey900);
+}
+
+/* ===== JSON 데이터 출력 영역 ===== */
+.toss_response {
+  background: var(--toss-grey100);
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 16px;
+  text-align: left;
+  font-size: 14px;
+  color: var(--toss-grey900);
+  white-space: pre-wrap;
+  overflow-x: auto;
+}

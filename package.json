@@ -12,6 +12,10 @@
   "dependencies": {
     "@stomp/stompjs": "^7.2.0",
     "@tailwindcss/vite": "^4.1.13",
+    "@tosspayments/payment-widget-sdk": "^0.12.0",
+    "@tosspayments/tosspayments-sdk": "^2.4.0",
+    "@tosspayments/widget-sdk-react-native": "^1.5.1",
+    "nanoid": "^5.1.6",
     "axios": "^1.12.2",
     "lucide-react": "^0.544.0",
     "react": "^19.1.1",

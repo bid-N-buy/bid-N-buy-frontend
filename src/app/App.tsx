@@ -14,6 +14,9 @@ import ProfileDetails from "../features/mypage/components/profile/ProfileDetails
 import ProfileSetting from "../features/mypage/components/profile/ProfileSetting";
 import ResetPassword from "../features/auth/components/login/ResetPasswordForm";
 import MypageLayout from "../features/mypage/pages/MypageLayout";
+import PaymentForm from "../features/payment/pages/CheckoutPage";
+import SuccessPage from "../features/payment/pages/SuccessPage";
+import FailPage from "../features/payment/pages/FailPage";
 import OAuthCallback from "../features/auth/components/OAuthCallback";
 
 // 공통
@@ -131,6 +134,12 @@ export default function App() {
               <Route path="new" element={<AuctionForm />} />
             </Route>
           </Route>
+          
+          {/* 결제 관련 */}
+          <Route path="/payment/checkout" element={<PaymentForm />} />
+          <Route path="/payment/success" element={<SuccessPage />} />
+          <Route path="/payment/fail" element={<FailPage />} />
+
           {/* 마이페이지 */}
           <Route element={<ProtectedRoute />}>
             <Route path="/mypage" element={<MypageLayout />}>
