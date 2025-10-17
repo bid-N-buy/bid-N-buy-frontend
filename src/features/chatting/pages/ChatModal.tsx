@@ -11,7 +11,7 @@ import ChatList from "./ChatList";
 import ChatRoom from "./ChatRoom";
 import { X, ChevronLeft, EllipsisVertical } from "lucide-react";
 
-const ChatModal = ({ isChatOpen, onClose }: ModalProps) => {
+const ChatModal = ({ onClose }: ModalProps) => {
   const modalRef = useRef<HTMLDivElement>(null);
 
   // 채팅목록/채팅방 화면 상태관리
@@ -24,7 +24,7 @@ const ChatModal = ({ isChatOpen, onClose }: ModalProps) => {
   const [currentView, setCurrentView] = useState<string>(targetView);
 
   // chatlist
-  const listApi = useChatListApi(isChatOpen);
+  const listApi = useChatListApi(true);
   // 불러와진 ChatListItemProps 중 원하는 요소만 사용할 수 있게 처리
   type ChatListItem = (typeof listApi.chatList)[number];
   // 이동할 roomInfo(list에서 접근 시)
