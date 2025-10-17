@@ -9,12 +9,6 @@ const ChatInput = ({
   sendMessage,
   isConnected,
 }: ChatInputProps) => {
-  const handleKeyDown = (e) => {
-    if (e.isComposing) return; // 한글 조합 중이면 무시
-    if (e.key === "Enter") {
-      sendMessage();
-    }
-  };
   return (
     <div className="bg-white px-3 py-2">
       <form className="w-full" onSubmit={sendMessage}>
@@ -27,7 +21,9 @@ const ChatInput = ({
           disabled={!isConnected}
           value={inputMessage}
           onChange={(e) => setInputMessage(e.target.value)}
-          onKeyDown={(e) => handleKeyDown() && sendMessage()}
+          onKeyDown={(e) =>
+            e.key === "Enter" && !e.nativeEvent.isComposing && sendMessage()
+          }
           required
         />
         <div className="mt-2 flex items-center justify-between">

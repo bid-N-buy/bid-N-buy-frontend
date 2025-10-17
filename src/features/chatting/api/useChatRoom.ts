@@ -10,8 +10,6 @@ export const useChatRoomApi = (chatroomId: number, isEnable: boolean) => {
 
   const token = useAuthStore((state) => state.accessToken);
 
-  console.log("chatRoomApi 실행 중");
-
   // 데이터 로딩 로직
   const loadChatRoom = useCallback(async () => {
     if (!token || !chatroomId) {
@@ -40,14 +38,21 @@ export const useChatRoomApi = (chatroomId: number, isEnable: boolean) => {
         return;
       }
 
-      const auctionRes = await api.get(`/auctions/${listItem!.auctionId}`, {
+      const auctionRes = await api.get(`/auctions/${listItem.auctionId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
       const fullRoomData = {
         chatroomId: chatroomId,
         sellerId: auctionRes.data.sellerId,
-        chatroomInfo: listItem!,
+        chatroomInfo: {
+          auctionId: listItem.auctionId,
+          auctionMainImg: listItem.auctionImageUrl,
+          auctionTitle: listItem.auctionTitle,
+          counterpartId: listItem.counterpartId,
+          counterpartNick: listItem.counterpartNickname,
+          counterpartProfile: listItem.counterpartProfileImageUrl,
+        },
         productInfo: {
           currentPrice: auctionRes.data.currentPrice,
           sellingStatus: auctionRes.data.sellingStatus,
@@ -112,7 +117,14 @@ export const useChatRoomAuc = (sellerId: number, auctionId: number) => {
       const fullRoomData = {
         chatroomId: listItem.chatroomId,
         sellerId: auctionRes.data.sellerId,
-        chatroomInfo: listItem!,
+        chatroomInfo: {
+          auctionId: listItem.auctionId,
+          auctionMainImg: listItem.auctionImageUrl,
+          auctionTitle: listItem.auctionTitle,
+          counterpartId: listItem.counterpartId,
+          counterpartNick: listItem.counterpartNickname,
+          counterpartProfile: listItem.counterpartProfileImageUrl,
+        },
         productInfo: {
           currentPrice: auctionRes.data.currentPrice,
           sellingStatus: auctionRes.data.sellingStatus,

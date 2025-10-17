@@ -3,15 +3,15 @@ import { useAuthStore } from "../../auth/store/authStore";
 
 const ChatProductInfo = ({
   sellerId,
-  counterpartId,
-  auctionId,
-  auctionImageUrl,
-  auctionTitle,
+  auctionInfo,
   currentPrice,
   sellingStatus,
   handleSendPaymentRequest,
 }: ChatProductInfoProps) => {
+  const { auctionId, auctionImageUrl, auctionTitle, counterpartId } =
+    auctionInfo;
   const userId = useAuthStore.getState().userId;
+  const buyerId = userId === sellerId ? counterpartId : userId;
 
   return (
     <div
@@ -30,8 +30,15 @@ const ChatProductInfo = ({
         {userId === sellerId && (
           <button
             type="button"
-            onClick={() => handleSendPaymentRequest()}
-            className="bg-purple w-full rounded-md px-2 py-1.5 text-xs text-white"
+            onClick={() =>
+              handleSendPaymentRequest(
+                auctionId,
+                buyerId!,
+                sellerId,
+                currentPrice
+              )
+            }
+            className="bg-purple w-full cursor-pointer rounded-md px-2 py-1.5 text-xs text-white"
           >
             결제 요청
           </button>
