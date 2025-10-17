@@ -224,19 +224,19 @@ const ProductInfo = ({
             {/* 5. 버튼들 + 찜 */}
             <div className="flex items-stretch gap-2 md:gap-1.5">
               <div className="grid flex-1 grid-cols-1 gap-2 md:grid-cols-2 md:gap-2.5">
-                {sellerId !== userId && (
-                  <button
-                    onClick={() => handleChatAdd(auctionId, sellerId)}
-                    className="text-h7 md:text-h6 lg:text-h5 border-purple text-purple hover:bg-light-purple cursor-pointer rounded-md border py-2 font-bold transition-colors sm:py-3 sm:text-base md:py-4"
-                  >
-                    판매자와 대화
-                  </button>
-                )}
+                <button
+                  onClick={
+                    sellerId !== userId
+                      ? () => handleChatAdd(auctionId, sellerId)
+                      : () => showToast("본인이 판매 중인 상품입니다", "error")
+                  }
+                  className="text-h7 md:text-h6 lg:text-h5 border-purple text-purple hover:bg-light-purple cursor-pointer rounded-md border py-2 font-bold transition-colors sm:py-3 sm:text-base md:py-4"
+                >
+                  판매자와 대화
+                </button>
                 <button
                   onClick={() => setIsBidModalOpen(true)}
-                  className={`text-h7 md:text-h6 lg:text-h5 bg-purple hover:bg-deep-purple cursor-pointer rounded-md py-2 font-bold text-white transition-colors sm:py-3 sm:text-base md:py-4 ${
-                    sellerId !== userId && `w-full`
-                  }`}
+                  className="text-h7 md:text-h6 lg:text-h5 bg-purple hover:bg-deep-purple cursor-pointer rounded-md py-2 font-bold text-white transition-colors sm:py-3 sm:text-base md:py-4"
                   disabled={
                     typeof currentPrice !== "number" ||
                     typeof minBidPrice !== "number"
