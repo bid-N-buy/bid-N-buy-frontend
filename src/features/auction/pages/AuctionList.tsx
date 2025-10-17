@@ -7,8 +7,8 @@ import { useCategoryStore } from "../store/categoryStore";
 import type { CategoryNode } from "../api/categories";
 import type { AuctionItem } from "../types/auctions";
 
-// todo 이거 어떻게 하지..
-const MAX_PRICE = 50000;
+// todo 이거 처리할 것..
+const MAX_PRICE = 500000;
 const PAGE_SIZE = 20;
 
 const AuctionList = () => {
@@ -204,7 +204,7 @@ const AuctionList = () => {
           <div className="flex flex-col gap-8">
             {/* 카테고리 */}
             <div className="flex flex-col gap-4">
-              <div className="text-g100 text-[17px] leading-tight font-bold">
+              <div className="text-g100 text-h5 leading-tight font-bold">
                 카테고리
               </div>
 
@@ -221,7 +221,7 @@ const AuctionList = () => {
                         {/* 대분류 */}
                         <button
                           onClick={() => onExpand(m)}
-                          className={`text-g100 hover:text-purple flex items-center justify-between py-1 text-left text-[15px] transition-colors ${
+                          className={`text-g100 hover:text-purple flex items-center justify-between py-1 text-left text-base transition-colors ${
                             !subCategoryId && mainCategoryId === m.categoryId
                               ? "text-purple font-semibold"
                               : ""
@@ -263,17 +263,17 @@ const AuctionList = () => {
                                     sub: s.categoryName,
                                   });
                                 }}
-                                className={`py-1 text-left text-[14px] transition-colors ${
+                                className={`py-1 text-left transition-colors ${
                                   subCategoryId === s.categoryId
                                     ? "text-purple font-medium"
                                     : "text-g200 hover:text-purple"
-                                }`}
+                                } text-h7`}
                               >
                                 {s.categoryName}
                               </button>
                             ))}
                             {subs.length === 0 && (
-                              <div className="text-g300 py-1 text-[13px]">
+                              <div className="text-g300 text-h7 py-1">
                                 소분류 없음
                               </div>
                             )}
@@ -288,7 +288,7 @@ const AuctionList = () => {
 
             {/* 가격 필터 */}
             <div className="flex flex-col gap-4">
-              <div className="text-g100 text-[17px] leading-tight font-bold">
+              <div className="text-g100 text-h5 leading-tight font-bold">
                 가격
               </div>
               <div className="flex flex-col gap-4">
@@ -325,14 +325,14 @@ const AuctionList = () => {
                     className="[&::-webkit-slider-thumb]:bg-purple pointer-events-none absolute h-1 w-full cursor-pointer appearance-none bg-transparent [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:shadow"
                   />
                 </div>
-                <div className="text-purple text-center text-[13px] font-medium">
+                <div className="text-purple text-h7 text-center font-medium">
                   현재가 : {tempMinPrice.toLocaleString()}원 ~{" "}
                   {tempMaxPrice.toLocaleString()}원
                 </div>
               </div>
               <button
                 onClick={applyPriceFilter}
-                className="bg-purple hover:bg-purple/90 rounded-md py-2 text-[14px] font-medium text-white transition-colors"
+                className="bg-purple hover:bg-purple/90 rounded-md py-2 text-base font-medium text-white transition-colors"
               >
                 적용
               </button>
@@ -342,7 +342,7 @@ const AuctionList = () => {
             <div className="flex flex-col gap-4">
               <button
                 onClick={toggleIncludeEnded}
-                className={`rounded-md px-4 py-2.5 text-[14px] font-medium transition-colors ${
+                className={`rounded-md px-4 py-2.5 text-base font-medium transition-colors ${
                   includeEnded
                     ? "bg-purple text-white"
                     : "border-purple text-purple hover:bg-light-purple cursor-pointer border"
@@ -359,7 +359,7 @@ const AuctionList = () => {
           {/* 상단 */}
           <div className="mb-8">
             <div className="flex items-start justify-between">
-              <div className="text-g100 text-[17px] leading-tight">
+              <div className="text-g100 text-base leading-tight">
                 <span className="font-bold">{resultTitle}</span>
               </div>
               <div className="relative">
@@ -370,7 +370,7 @@ const AuctionList = () => {
                       e.target.value as "latest" | "price_asc" | "price_desc"
                     )
                   }
-                  className="border-g400 text-g100 focus:border-purple cursor-pointer appearance-none border bg-white py-2 pr-10 pl-4 text-[15px] focus:outline-none"
+                  className="border-g400 text-g100 focus:border-purple cursor-pointer appearance-none border bg-white py-2 pr-10 pl-4 text-base focus:outline-none"
                 >
                   <option value="latest">최신순</option>
                   <option value="price_asc">가격낮은순</option>
@@ -380,12 +380,12 @@ const AuctionList = () => {
               </div>
             </div>
 
-            {selectedCategory && (
+            {/* {selectedCategory && (
               <div className="text-g300 mt-3 text-[15px]">
                 {selectedCategory.main}
                 {selectedCategory.sub ? ` > ${selectedCategory.sub}` : null}
               </div>
-            )}
+            )} */}
           </div>
 
           {/* 상품 */}
