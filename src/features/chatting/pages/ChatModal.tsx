@@ -113,7 +113,7 @@ const ChatModal = ({ onClose }: ModalProps) => {
             </button>
             <p>
               {selectedRoomInfo?.counterpartNickname ||
-                // chatRoom?.chatroomInfo.counterpartNickname ||
+                roomApi!.chatRoom?.chatroomInfo.counterpartNickname ||
                 "사용자"}
             </p>
             <button
