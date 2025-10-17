@@ -30,7 +30,6 @@ const ChatRoom = ({
   // 토큰/유저아이디 전역에서 들고 오기
   const token = useAuthStore((state) => state.accessToken);
   const userId = useAuthStore.getState().userId;
-  const buyerId = userId === sellerId ? chatroomInfo.counterpartId : userId;
 
   // 웹소켓 주소
   const WS_URL = import.meta.env.VITE_WEBSOCKET_URL;
@@ -105,7 +104,12 @@ const ChatRoom = ({
     };
   }, [WS_URL, chatroomId, token]);
 
-  const handleSendPaymentRequest = () => {
+  const handleSendPaymentRequest = (
+    auctionId: number,
+    buyerId: number,
+    sellerId: number,
+    currentPrice: number
+  ) => {
     const client = clientRef.current;
 
     // 유효성 검사
@@ -114,12 +118,13 @@ const ChatRoom = ({
       return;
     }
     const messagePayload = {
-      type: "REQUEST",
-      auctionId: chatroomInfo.auctionId,
+      chatroomId: chatroomId,
+      auctionId: auctionId,
       buyerId: buyerId,
       senderId: sellerId,
-      content: `${productInfo.currentPrice}원 결제를 요청합니다.`,
-      currentPrice: productInfo.currentPrice,
+      message: `${currentPrice}원 결제를 요청합니다.`,
+      currentPrice: currentPrice,
+      type: "REQUEST",
     };
 
     // 전송 실행
@@ -139,8 +144,6 @@ const ChatRoom = ({
       setMessages((prevMessages) => {
         return [...prevMessages, messageBody];
       });
-
-      // TODO: 메시지 스크롤을 맨 아래로 이동시키는 로직 추가
     } catch (e) {
       console.error("메시지 파싱 오류:", e, message.body);
     }
@@ -183,15 +186,10 @@ const ChatRoom = ({
   return (
     <>
       <ChatProductInfo
-        auctionId={chatroomInfo.auctionId}
-        auctionImageUrl={
-          chatroomInfo.auctionImageUrl ? chatroomInfo.auctionImageUrl : ""
-        }
-        auctionTitle={chatroomInfo.auctionTitle}
+        auctionInfo={chatroomInfo}
         currentPrice={productInfo.currentPrice}
         sellingStatus={productInfo.sellingStatus}
         handleSendPaymentRequest={handleSendPaymentRequest}
-        counterpartId={chatroomInfo.counterpartId}
         sellerId={sellerId}
       />
       <div
@@ -209,33 +207,20 @@ const ChatRoom = ({
             <ChatMe
               key={index}
               sellerId={sellerId}
-              messageType={msg.messageType}
-              message={msg.message}
-              auctionImageUrl={
-                chatroomInfo.auctionImageUrl ? chatroomInfo.auctionImageUrl : ""
-              }
-              auctionTitle={chatroomInfo.auctionTitle}
+              msgInfo={msg}
+              auctionInfo={chatroomInfo}
               currentPrice={productInfo.currentPrice}
-              createdAt={new Date(msg.createdAt).toLocaleTimeString()}
-              read={msg.read}
+              handleSendPaymentRequest={handleSendPaymentRequest}
             />
           ) : (
             <ChatYou
               key={index}
               sellerId={sellerId}
-              counterpartProfileImageUrl={
-                chatroomInfo.counterpartProfileImageUrl
-              }
-              counterpartNickname={chatroomInfo.counterpartNickname}
-              messageType={msg.messageType}
-              message={msg.message}
-              auctionImageUrl={
-                chatroomInfo.auctionImageUrl ? chatroomInfo.auctionImageUrl : ""
-              }
-              auctionTitle={chatroomInfo.auctionTitle}
+              msgInfo={msg}
+              counterpartInfo={chatroomInfo}
+              auctionInfo={chatroomInfo}
               currentPrice={productInfo.currentPrice}
-              createdAt={new Date(msg.createdAt).toLocaleTimeString()}
-              read={msg.read}
+              handleSendPaymentRequest={handleSendPaymentRequest}
             />
           )
         )}

@@ -10,8 +10,6 @@ export const useChatListApi = (isChatOpen: boolean) => {
 
   const token = useAuthStore((state) => state.accessToken);
 
-  console.log("chatListApi 실행 중");
-
   const loadChatList = async () => {
     try {
       setIsLoading(true);

@@ -1,4 +1,4 @@
-import type { AuctionResponse } from "../../auction/types/product";
+import type { AuctionDetail } from "../../auction/types/auctions";
 
 export const WS_URL = import.meta.env.VITE_WEBSOCKET_URL;
 export interface ModalProps {
@@ -10,11 +10,11 @@ export interface ModalProps {
 export interface ChatListItemProps {
   chatroomId: number;
   auctionId: number;
+  auctionTitle: string;
+  auctionImageUrl: string | null;
   counterpartId: number;
   counterpartNickname: string;
   counterpartProfileImageUrl: string | null;
-  auctionTitle: string;
-  auctionImageUrl: string | null;
   lastMessageTime: string;
   lastMessagePreview: string;
   unreadCount: number;
@@ -38,25 +38,29 @@ export interface ChatRoomProps {
     | "counterpartNickname"
     | "counterpartProfileImageUrl"
   >;
-  productInfo: Pick<AuctionResponse, "currentPrice" | "sellingStatus">;
+  productInfo: Pick<AuctionDetail, "currentPrice" | "sellingStatus">;
 }
 
 export interface ChatProductInfoProps {
-  auctionId: number;
-  auctionImageUrl: string;
-  auctionTitle: string;
+  auctionInfo: Pick<
+    ChatListItemProps,
+    "auctionId" | "auctionImageUrl" | "auctionTitle" | "counterpartId"
+  >;
   currentPrice: number;
-  counterpartId: number;
   sellerId: number;
   sellingStatus: string;
-  handleSendPaymentRequest: () => void;
+  handleSendPaymentRequest: (
+    auctionId: number,
+    buyerId: number,
+    sellerId: number,
+    currentPrice: number
+  ) => void;
 }
 
 export interface ChatMessageProps {
   chatmessageId: number;
   chatroomId: ChatListItemProps["chatroomId"];
   senderId: number;
-  paymentId?: string;
   imageUrl: string | null;
   message: string;
   messageType: string;
@@ -64,25 +68,41 @@ export interface ChatMessageProps {
   read: boolean;
 }
 
-export type ChatYouProps = Pick<
-  ChatMessageProps,
-  "createdAt" | "message" | "read" | "messageType" | "paymentId"
-> &
-  Pick<
+export type ChatMeProps = {
+  msgInfo: Pick<
+    ChatMessageProps,
+    "createdAt" | "message" | "read" | "messageType"
+  >;
+  sellerId: number;
+  currentPrice: number;
+  auctionInfo: Pick<ChatListItemProps, "auctionImageUrl" | "auctionTitle">;
+  handleSendPaymentRequest: (
+    auctionId: number,
+    buyerId: number,
+    sellerId: number,
+    currentPrice: number
+  ) => void;
+};
+
+export type ChatYouProps = {
+  msgInfo: Pick<
+    ChatMessageProps,
+    "createdAt" | "message" | "read" | "messageType"
+  >;
+  counterpartInfo: Pick<
     ChatListItemProps,
     "counterpartNickname" | "counterpartProfileImageUrl"
-  > &
-  Pick<ChatRoomProps, "sellerId"> &
-  Pick<AuctionResponse, "currentPrice"> &
-  Pick<ChatListItemProps, "auctionImageUrl" | "auctionTitle">;
-
-export type ChatMeProps = Pick<
-  ChatMessageProps,
-  "createdAt" | "message" | "read" | "messageType" | "paymentId"
-> &
-  Pick<ChatRoomProps, "sellerId"> &
-  Pick<AuctionResponse, "currentPrice"> &
-  Pick<ChatListItemProps, "auctionImageUrl" | "auctionTitle">;
+  >;
+  sellerId: number;
+  currentPrice: number;
+  auctionInfo: Pick<ChatListItemProps, "auctionImageUrl" | "auctionTitle">;
+  handleSendPaymentRequest: (
+    auctionId: number,
+    buyerId: number,
+    sellerId: number,
+    currentPrice: number
+  ) => void;
+};
 
 export interface ChatInputProps {
   isConnected: boolean;
