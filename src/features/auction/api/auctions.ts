@@ -5,6 +5,8 @@ import type {
   AuctionDetail,
   PageResponse,
   AuctionsRes,
+  BidRequest,
+  PostBidResponse,
 } from "../types/auctions";
 import axios from "axios";
 
@@ -91,3 +93,13 @@ export const fetchAuctions = async (
   const { data } = await api.get<AuctionsRes>("/auctions", { params });
   return data;
 };
+
+export async function postBid(
+  auctionId: number,
+  userId: number,
+  body: BidRequest
+): Promise<PostBidResponse> {
+  const url = `/bids/${auctionId}/${userId}`;
+  const { data } = await api.post<PostBidResponse>(url, body);
+  return data;
+}
