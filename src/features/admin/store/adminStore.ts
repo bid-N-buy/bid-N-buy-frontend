@@ -2,10 +2,22 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
+export type AdminId = number;
+
+export interface AdminProfile {
+  nickname: string;
+  email?: string;
+}
+
 type AdminState = {
   token: string | null; // 관리자 액세스 토큰(임시)
   nickname: string | null;
-  setToken: (token: string) => void;
+  setToken: (
+    access: string | null | undefined,
+    refresh: string | null | undefined,
+    profile?: Profile | null,
+    adminId?: AdminId | null
+  ) => void;
   clear: () => void;
   isAuthed: () => boolean;
 };
