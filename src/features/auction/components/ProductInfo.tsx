@@ -10,6 +10,7 @@ import { EllipsisVertical, Heart } from "lucide-react";
 import { formatDate } from "../../../shared/utils/datetime";
 import { buildImageUrl } from "../../../shared/utils/imageUrl";
 import { useChatRoomAuc } from "../../chatting/api/useChatRoom";
+import { useBid } from "../hooks/useBid";
 
 export interface ProductInfoProps {
   auctionId: number; // 채팅방 생성 시 필요 -> 필수로 수정, number로 수정
@@ -33,6 +34,8 @@ export interface ProductInfoProps {
   onLikeToggle?: () => void;
   onShareClick?: () => void;
   onDeleteClick?: () => void;
+
+  onAfterBid?: (next: { currentPrice?: number }) => void;
 }
 
 const ProductInfo = ({
@@ -57,13 +60,18 @@ const ProductInfo = ({
   onLikeToggle,
   onShareClick,
   onDeleteClick,
+  onAfterBid,
 }: ProductInfoProps) => {
   const [isLiked, setIsLiked] = useState(liked);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isBidModalOpen, setIsBidModalOpen] = useState(false);
   const { toast, showToast, hideToast } = useToast();
 
-  const userId = useAuthStore.getState().userId;
+  // const userId = useAuthStore.getState().userId; // 이럼 리렌더링 안됨
+  // 이렇게 써야 상태 변경 시 반영
+  const userId = useAuthStore((s) => s.userId);
+  const token = useAuthStore((s) => s.accessToken);
+
   const { loadChatRoom } = useChatRoomAuc(sellerId, auctionId);
 
   const handleLikeClick = useCallback(() => {
@@ -71,22 +79,77 @@ const ProductInfo = ({
     onLikeToggle?.();
   }, [onLikeToggle]);
 
+  // 입찰
+  const { submitBid, loading } = useBid({
+    onSuccess: (res) => {
+      showToast(res.message ?? "입찰이 완료되었습니다.", "success");
+      // 상위 페이지에 현재가 전달
+      const nextPrice = res.item?.bidPrice;
+      if (typeof nextPrice === "number")
+        onAfterBid?.({ currentPrice: nextPrice });
+      setIsBidModalOpen(false);
+    },
+    onError: (msg) => {
+      showToast(msg, "error");
+    },
+  });
+
+  // 모달 가드
+  const handleOpenBidModal = React.useCallback(() => {
+    // 로그인 체크
+    if (!userId) {
+      showToast("로그인이 필요합니다.", "error");
+      return;
+    }
+    // 본인 상품 체크
+    if (sellerId === userId) {
+      showToast("본인 상품에는 입찰할 수 없습니다.", "error");
+      return;
+    }
+    // 판매 상태 가드 - todo 한번더확인
+    if (sellingStatus && sellingStatus !== "진행중") {
+      showToast("현재 입찰할 수 없는 상태입니다.", "error");
+      return;
+    }
+    setIsBidModalOpen(true);
+  }, [userId, sellerId, sellingStatus, showToast]);
+
   const handleBidSubmit = useCallback(
-    (bidPrice: number) => {
+    async (bidPrice: number) => {
+      // 이중 가드
+      if (!userId) {
+        showToast("로그인이 필요합니다.", "error");
+        return;
+      }
+
+      // 최솟값 체크
       if (bidPrice === 0) {
         showToast("입찰 가능 금액 이상 입력해 주세요.", "error");
         return;
       }
-      // todo 입찰 api 연동
-      showToast("정상적으로 입찰되었습니다.", "success");
-      setIsBidModalOpen(false);
+
+      // 기본 전제 값 체크
+      if (
+        !Number.isFinite(auctionId) ||
+        !Number.isFinite(currentPrice) ||
+        !Number.isFinite(minBidPrice)
+      ) {
+        showToast("입찰 정보를 확인할 수 없습니다.", "error");
+        return;
+      }
+
+      try {
+        await submitBid({ auctionId, userId, bidPrice });
+      } catch {
+        // 토스트 처리
+      }
     },
-    [showToast]
+    [auctionId, currentPrice, minBidPrice, userId, submitBid, showToast]
   );
 
   // 채팅방 생성
   const handleChatAdd = async (auctionId: number, sellerId: number) => {
-    const token = useAuthStore.getState().accessToken;
+    // const token = useAuthStore.getState().accessToken; // 상단으로 옮겼어요 리렌더 반영되게 처리했습니다
 
     if (!token) {
       showToast("로그인이 필요합니다.", "error");
@@ -235,14 +298,15 @@ const ProductInfo = ({
                   판매자와 대화
                 </button>
                 <button
-                  onClick={() => setIsBidModalOpen(true)}
+                  onClick={handleOpenBidModal}
                   className="text-h7 md:text-h6 lg:text-h5 bg-purple hover:bg-deep-purple cursor-pointer rounded-md py-2 font-bold text-white transition-colors sm:py-3 sm:text-base md:py-4"
                   disabled={
+                    loading ||
                     typeof currentPrice !== "number" ||
                     typeof minBidPrice !== "number"
                   }
                 >
-                  입찰
+                  {loading ? "입찰 중…" : "입찰"}
                 </button>
               </div>
 
