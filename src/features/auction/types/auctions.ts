@@ -79,3 +79,24 @@ export interface AuctionsRes {
   first: boolean;
   last: boolean;
 }
+
+// 입찰
+export interface BidItem {
+  bidId: number;
+  userId: number;
+  auctionId: number;
+  bidPrice: number;
+  bidTime: string;
+}
+
+export interface ApiEnvelope<T> {
+  error: string | null;
+  message: string | null;
+  item: T | null;
+  data: unknown | null;
+}
+
+export type PostBidResponse = ApiEnvelope<BidItem>;
+export interface BidRequest {
+  bidPrice: number;
+}
