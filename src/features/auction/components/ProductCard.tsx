@@ -1,14 +1,12 @@
-// todo 찜..
+// todo 백 작업 완료 시 liked 다시 확인
 import React, { useMemo, useState, type KeyboardEvent } from "react";
-import { Heart } from "lucide-react";
 import type { AuctionItem } from "../types/auctions";
 import { buildImageUrl } from "../../../shared/utils/imageUrl";
+import WishButton from "../../wish/components/WishButton";
 
 interface ProductCardProps {
   item: AuctionItem;
-  liked?: boolean;
   onCardClick?: (id: number) => void;
-  onLikeToggle?: (id: number, liked: boolean) => void;
 }
 
 const STATUS_STYLE: Record<AuctionItem["sellingStatus"], string> = {
@@ -20,9 +18,7 @@ const STATUS_STYLE: Record<AuctionItem["sellingStatus"], string> = {
 
 const ProductCard = React.memo(function ProductCard({
   item,
-  liked = false,
   onCardClick,
-  onLikeToggle,
 }: ProductCardProps) {
   const {
     auctionId,
@@ -32,6 +28,7 @@ const ProductCard = React.memo(function ProductCard({
     sellingStatus,
     sellerNickname,
     wishCount,
+    liked = false,
   } = item;
 
   const [imgError, setImgError] = useState(false);
@@ -91,27 +88,22 @@ const ProductCard = React.memo(function ProductCard({
         <h3 className="text-g100 mb-1 line-clamp-2 text-sm font-medium">
           {title}
         </h3>
-        <p className="text-g100 mb-2 text-base font-bold">
+        <p className="text-g100 text-base font-bold">
           현재 {currentPrice.toLocaleString()}원
         </p>
-        <div className="flex items-center justify-between">
-          <span className="text-g300 text-xs">{sellerNickname}</span>
-
-          <button
-            type="button"
-            className="hover:bg-g500/40 flex items-center gap-1 rounded-full p-1 transition-colors"
-            aria-pressed={liked}
-            aria-label={liked ? "찜 취소" : "찜"}
-            onClick={(e) => {
-              e.stopPropagation();
-              onLikeToggle?.(auctionId, !liked);
-            }}
-          >
-            <Heart
-              className={`h-4 w-4 ${liked ? "fill-red text-red" : "text-g300"}`}
+        <div className="flex items-end justify-between">
+          <span className="text-g300 text-base">{sellerNickname}</span>
+          {/* 찜 버튼 - 카드 클릭과 이벤트 충돌 방지 stopPropagation */}
+          <div onClick={(e) => e.stopPropagation()}>
+            <WishButton
+              auctionId={auctionId}
+              initial={{
+                liked,
+                wishCount: wishCount ?? 0,
+              }}
+              size="sm"
             />
-            <span className="text-g300 text-xs">{wishCount}</span>
-          </button>
+          </div>
         </div>
       </div>
     </div>

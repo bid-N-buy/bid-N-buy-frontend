@@ -46,6 +46,7 @@ export interface AuctionDetail {
   sellerTemperature: number;
   sellingStatus: string;
   wishCount: number;
+  liked?: boolean; // 추가 예정이라 optional
 }
 
 // 페이지 래퍼(백 응답 예시 형태)
@@ -68,6 +69,7 @@ export interface AuctionItem {
   sellingStatus: "시작전" | "진행중" | "완료" | "종료";
   sellerNickname: string;
   wishCount: number;
+  liked?: boolean; // 추가 예정이라 optional
 }
 
 export interface AuctionsRes {

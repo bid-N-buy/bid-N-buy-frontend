@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { fetchAuctions, type FetchAuctionsParams } from "../api/auctions";
 import type { AuctionItem } from "../types/auctions";
+import { useAuthStore } from "../../auth/store/authStore";
 
 type UseAuctionSearchParams = Omit<FetchAuctionsParams, "page" | "size"> & {
   size?: number;
@@ -24,6 +25,9 @@ export const useAuctionSearch = ({
 
   const abortRef = useRef<AbortController | null>(null);
 
+  // 로그인 상태 키
+  const authKey = useAuthStore((s) => s.userId ?? null);
+
   // 파라미터 바뀌면 초기화
   const sourceKey = useMemo(
     () =>
@@ -36,6 +40,7 @@ export const useAuctionSearch = ({
         includeEnded,
         sortBy,
         size,
+        authKey,
       }),
     [
       searchKeyword,
@@ -46,6 +51,7 @@ export const useAuctionSearch = ({
       includeEnded,
       sortBy,
       size,
+      authKey,
     ]
   );
 
@@ -101,6 +107,7 @@ export const useAuctionSearch = ({
     size,
     last,
     loading,
+    authKey,
   ]);
 
   const loadMore = useCallback(() => {

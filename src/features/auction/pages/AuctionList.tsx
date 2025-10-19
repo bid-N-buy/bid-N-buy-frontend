@@ -105,23 +105,7 @@ const AuctionList = () => {
     })();
   }, [mainCategoryId, subCategoryId, mains, subsByParent, loadSubs]);
 
-  const { items, loading, error, last, loadMore, setPage, setItems } =
-    useAuctionSearch({
-      searchKeyword,
-      mainCategoryId,
-      subCategoryId,
-      minPrice,
-      maxPrice,
-      includeEnded,
-      sortBy,
-      size: PAGE_SIZE,
-    });
-
-  // URL 파라미터 변경 시 리스트 초기화(보조)
-  useEffect(() => {
-    setItems([]);
-    setPage(0);
-  }, [
+  const { items, loading, error, last, loadMore } = useAuctionSearch({
     searchKeyword,
     mainCategoryId,
     subCategoryId,
@@ -129,9 +113,8 @@ const AuctionList = () => {
     maxPrice,
     includeEnded,
     sortBy,
-    setItems,
-    setPage,
-  ]);
+    size: PAGE_SIZE,
+  });
 
   // 무한스크롤
   const sentinelRef = useRef<HTMLDivElement | null>(null);
@@ -163,10 +146,6 @@ const AuctionList = () => {
 
   const handleCardClick = (auctionId: number) =>
     navigate(`/auctions/${auctionId}`);
-
-  const handleLikeToggle = (_auctionId: number, _liked: boolean) => {
-    // todo 위시 토글 api 붙일 때 optimistic 업데이트
-  };
 
   // 상단에 오는 거.. todo 고민해보고..
   const resultTitle = useMemo(() => {
@@ -292,9 +271,9 @@ const AuctionList = () => {
                 가격
               </div>
               <div className="flex flex-col gap-4">
-                <div className="bg-g400 relative h-1 rounded">
+                <div className="bg-g400 relative h-1 rounded-md">
                   <div
-                    className="bg-purple absolute h-1 rounded"
+                    className="bg-purple absolute h-1 rounded-md"
                     style={{
                       left: `${(tempMinPrice / MAX_PRICE) * 100}%`,
                       right: `${100 - (tempMaxPrice / MAX_PRICE) * 100}%`,
@@ -370,22 +349,15 @@ const AuctionList = () => {
                       e.target.value as "latest" | "price_asc" | "price_desc"
                     )
                   }
-                  className="border-g400 text-g100 focus:border-purple cursor-pointer appearance-none border bg-white py-2 pr-10 pl-4 text-base focus:outline-none"
+                  className="border-g400 text-g100 focus:border-purple text-h7 cursor-pointer appearance-none border bg-white py-1.5 pr-7 pl-2.5 focus:outline-none"
                 >
                   <option value="latest">최신순</option>
-                  <option value="price_asc">가격낮은순</option>
-                  <option value="price_desc">가격높은순</option>
+                  <option value="price_asc">가격낮은순&nbsp;</option>
+                  <option value="price_desc">가격높은순&nbsp;</option>
                 </select>
-                <ChevronDown className="text-g300 pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2" />
+                <ChevronDown className="text-g300 pointer-events-none absolute top-1/2 right-2.5 h-3 w-3 -translate-y-1/2" />
               </div>
             </div>
-
-            {/* {selectedCategory && (
-              <div className="text-g300 mt-3 text-[15px]">
-                {selectedCategory.main}
-                {selectedCategory.sub ? ` > ${selectedCategory.sub}` : null}
-              </div>
-            )} */}
           </div>
 
           {/* 상품 */}
@@ -398,9 +370,7 @@ const AuctionList = () => {
                   <ProductCard
                     key={product.auctionId}
                     item={product}
-                    liked={false}
                     onCardClick={handleCardClick}
-                    onLikeToggle={handleLikeToggle}
                   />
                 ))}
 
@@ -408,8 +378,8 @@ const AuctionList = () => {
                 {loading &&
                   Array.from({ length: 8 }).map((_, i) => (
                     <div key={`sk-${i}`} className="animate-pulse">
-                      <div className="bg-g400 mb-3 aspect-[4/3] w-full rounded-2xl" />
-                      <div className="bg-g400 h-4 w-3/4 rounded" />
+                      <div className="bg-g400 mb-3 aspect-[4/3] w-full" />
+                      <div className="bg-g400 h-4 w-3/4" />
                     </div>
                   ))}
               </div>

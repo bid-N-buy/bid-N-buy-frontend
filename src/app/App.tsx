@@ -6,7 +6,7 @@ import {
   Navigate,
   Outlet,
 } from "react-router-dom";
-import { useAdminStore } from "../features/admin/store/adminStore";
+import { useAdminAuthStore } from "../features/admin/store/adminStore";
 import ProtectedRoute from "../shared/routes/ProtectedRoute";
 import GuestOnlyRoute from "../shared/routes/GuestOnlyRoute";
 import { useAuthInit } from "../features/auth/hooks/UseAuthInit";
@@ -81,14 +81,14 @@ const AdminAuctionList = React.lazy(
   () => import("../features/admin/pages/AdminAuctionList")
 );
 
-// 관리자 가드(임의)
+// 관리자 가드(임의) - 에러로 약간 수정
 function AdminProtectedRoute() {
-  const adminToken = useAdminStore.getState().token;
+  const adminToken = useAdminAuthStore.getState().accessToken;
   if (!adminToken) return <Navigate to="/admin/login" replace />;
   return <Outlet />;
 }
 function AdminGuestOnlyRoute() {
-  const adminToken = useAdminStore.getState().token;
+  const adminToken = useAdminAuthStore.getState().accessToken;
   if (adminToken) return <Navigate to="/admin" replace />;
   return <Outlet />;
 }
@@ -118,14 +118,15 @@ export default function App() {
         {/* 기본 레이아웃 */}
         <Route element={<AppLayout />}>
           <Route index element={<Main />} />
+
           {/* 로그인/회원가입 */}
           <Route element={<GuestOnlyRoute />}>
             <Route path="/login" element={<LoginPage />} />
-
             <Route path="/signup" element={<SignUpPage />} />
             <Route path="/resetPassword" element={<ResetPassword />} />
           </Route>
           <Route path="/oauth/callback" element={<OAuthCallback />} />
+
           {/* 경매 */}
           <Route path="/auctions">
             <Route index element={<AuctionList />} />
@@ -134,7 +135,7 @@ export default function App() {
               <Route path="new" element={<AuctionForm />} />
             </Route>
           </Route>
-          
+
           {/* 결제 관련 */}
           <Route path="/payment/checkout" element={<PaymentForm />} />
           <Route path="/payment/success" element={<SuccessPage />} />
@@ -157,6 +158,7 @@ export default function App() {
             </Route>
             <Route path="profile" element={<ProfileDetails />} />
           </Route>
+
           {/* 기타 */}
           {/* <Route path="/error" element={<ErrorPage />} />
           <Route path="*" element={<NotFoundPage />} /> */}
