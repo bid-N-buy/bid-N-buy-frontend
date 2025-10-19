@@ -1,26 +1,14 @@
-// src/features/auth/components/AdminLoginForm.tsx
-import React, { useCallback, useEffect, useState } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import React, { useState, useCallback, useEffect } from "react";
 import axios from "axios";
 import api, { API_BASE } from "../../../shared/api/axiosInstance";
-// import { useAuthStore, type AuthState } from "../store/adminStore";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useAdminAuthStore, type AdminState } from "../store/adminStore";
 import type {
   LoginResponse,
   ErrorResponse,
 } from "../../../shared/types/CommonType";
 
-/** 구형 응답 호환 (토큰이 top-level) */
-type LegacyLoginResponse = {
-  accessToken?: string | null;
-  refreshToken?: string | null;
-  email?: string;
-  nickname?: string;
-  userId?: number;
-};
-
-function hasTokenInfo(
-  d: LoginResponse | LegacyLoginResponse
-): d is LoginResponse {
+function hasTokenInfo(d: LoginResponse): d is LoginResponse {
   return typeof (d as LoginResponse).tokenInfo !== "undefined";
 }
 
@@ -35,15 +23,15 @@ const decodeJwt = (jwt?: string | null) => {
   }
 };
 
-/** 응답/토큰에서 userId 추출 */
-const resolveUserIdFrom = (
+/** 응답/토큰에서 adminId 추출 */
+const resolveAdminIdFrom = (
   data: any,
   accessToken: string | null
 ): number | null => {
-  if (typeof data?.userId === "number") return data.userId;
+  if (typeof data?.adminId === "number") return data.adminId;
   const claims = decodeJwt(accessToken);
   const sub = claims?.sub;
-  const uid = claims?.uid ?? claims?.userId;
+  const uid = claims?.uid ?? claims?.adminId;
   const parsed =
     typeof sub === "number"
       ? sub
@@ -59,33 +47,18 @@ const resolveUserIdFrom = (
 
 const isEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
 
-const AdminLoginForm: React.FC = () => {
+const AdminLoginForm = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const setTokens = useAuthStore((s: AuthState) => s.setTokens);
-  const navigate = useNavigate();
-  const location = useLocation();
+  const setTokens = useAdminAuthStore((s: AdminState) => s.setTokens);
 
-  /** (DEV) 스토어 변경 로그 */
-  useEffect(() => {
-    const unsub = useAuthStore.subscribe((state, prev) => {
-      if (import.meta.env.DEV) {
-        console.debug("[auth] changed", {
-          accessChanged: state.accessToken !== prev.accessToken,
-          refreshChanged: state.refreshToken !== prev.refreshToken,
-          profileChanged: state.profile !== prev.profile,
-          userId: state.userId,
-        });
-      }
-    });
-    return unsub;
-  }, []);
-
-  // ❌ (삭제) 예전 소셜 콜백 ?token= 처리 useEffect — 이제 /oauth/callback에서 처리하므로 불필요
-
+  // 4) 회원가입 제출
   const handleSubmit = useCallback(
     async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
@@ -112,7 +85,7 @@ const AdminLoginForm: React.FC = () => {
       try {
         setLoading(true);
 
-        const res = await api.post<LoginResponse | LegacyLoginResponse>(
+        const res = await api.post<LoginResponse>(
           "/auth/login",
           { email: emailTrim, password: pwTrim },
           {
@@ -133,11 +106,11 @@ const AdminLoginForm: React.FC = () => {
 
         const access = hasTokenInfo(data)
           ? (data.tokenInfo?.accessToken ?? null)
-          : ((data as LegacyLoginResponse).accessToken ?? null);
+          : (data.accessToken ?? null);
 
         const refresh = hasTokenInfo(data)
           ? (data.tokenInfo?.refreshToken ?? null)
-          : ((data as LegacyLoginResponse).refreshToken ?? null);
+          : (data.refreshToken ?? null);
 
         if (!access) {
           throw new Error(
@@ -153,22 +126,22 @@ const AdminLoginForm: React.FC = () => {
           typeof parsedProfile.nickname !== "undefined" ||
           typeof parsedProfile.email !== "undefined";
 
-        const userId = resolveUserIdFrom(data, access);
+        const adminId = resolveAdminIdFrom(data, access);
 
         setTokens(
           access,
           refresh ?? null,
           hasAnyProfile ? parsedProfile : undefined,
-          userId
+          adminId
         );
 
         if (import.meta.env.DEV) {
-          const snap = useAuthStore.getState();
+          const snap = useAdminAuthStore.getState();
           console.debug("[auth] after login (store)", {
             accessToken: !!snap.accessToken,
             refreshToken: !!snap.refreshToken,
             profile: snap.profile,
-            userId: snap.userId,
+            adminId: snap.adminId,
           });
         }
 
