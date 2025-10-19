@@ -1,44 +1,27 @@
-import React from "react";
-import {
-  Package,
-  Shirt,
-  Monitor,
-  Book,
-  Home as HomeIcon,
-  Coffee,
-  Car,
-  Gamepad2,
-  Watch,
-  Gift,
-} from "lucide-react";
+import React, { useEffect } from "react";
 import Banner from "../components/Banner";
-import MainSvg from "../../assets/main.svg";
+import MainSvg from "../../assets/banner1.svg";
+import { useNavigate } from "react-router-dom";
+import { useCategoryStore } from "../../features/auction/store/categoryStore";
+import { getCategoryIcon } from "../utils/iconMap";
 
 const Main = () => {
-  // 카테고리 더미 데이터
-  const categories = [
-    { id: 1, name: "패션", icon: Shirt },
-    { id: 2, name: "디지털", icon: Monitor },
-    { id: 3, name: "가구", icon: HomeIcon },
-    { id: 4, name: "도서", icon: Book },
-    { id: 5, name: "식품", icon: Coffee },
-    { id: 6, name: "자동차", icon: Car },
-    { id: 7, name: "게임", icon: Gamepad2 },
-    { id: 8, name: "시계", icon: Watch },
-    { id: 9, name: "선물", icon: Gift },
-    { id: 10, name: "기타", icon: Package },
-  ];
+  const navigate = useNavigate();
+  const { mains, loadingTop, loadTop } = useCategoryStore();
+
+  useEffect(() => {
+    loadTop().catch(console.error);
+  }, [loadTop]);
+
+  const handleCategoryClick = (mainId: number) => {
+    navigate(`/auctions?mainCategoryId=${mainId}`);
+  };
 
   return (
     <div className="w-full">
-      {/* 배너 */}
+      {/* 배너 (1320 x 500) */}
       <section className="pt-[60px]">
         <div className="container">
-          {/* <div className="bg-g500 flex h-[500px] w-full items-center justify-center">
-            <span className="text-g300 text-[20px]">
-              배너 영역 (1320 x 500)
-            </span>
-          </div> */}
           <Banner src={MainSvg} to="" alt="배너" />
         </div>
       </section>
@@ -46,23 +29,33 @@ const Main = () => {
       {/* 카테고리 */}
       <section className="py-[60px]">
         <div className="container">
-          <div className="flex items-center justify-between gap-4">
-            {categories.map((category) => {
-              const Icon = category.icon;
-              return (
-                <button
-                  key={category.id}
-                  className="flex flex-col items-center gap-3 transition-opacity hover:opacity-80"
-                >
-                  <div className="bg-g500 hover:bg-purple/10 flex h-[90px] w-[90px] items-center justify-center rounded-full transition-colors">
-                    <Icon className="text-g300 h-10 w-10" />
+          <div className="flex items-center justify-between gap-4 overflow-x-auto md:overflow-visible">
+            {/* 로딩 중 스켈레톤 */}
+            {loadingTop
+              ? Array.from({ length: 10 }).map((_, i) => (
+                  <div key={i} className="flex flex-col items-center gap-3">
+                    <div className="bg-g500/60 h-[90px] w-[90px] animate-pulse rounded-full" />
+                    <div className="bg-g500/60 h-[16px] w-[48px] animate-pulse rounded" />
                   </div>
-                  <span className="text-g100 text-[15px] font-medium">
-                    {category.name}
-                  </span>
-                </button>
-              );
-            })}
+                ))
+              : mains.map((c) => {
+                  const Icon = getCategoryIcon(c.categoryId);
+                  return (
+                    <button
+                      key={c.categoryId}
+                      onClick={() => handleCategoryClick(c.categoryId)}
+                      className="flex min-w-[96px] flex-col items-center gap-3 transition-opacity hover:opacity-80"
+                      aria-label={`${c.categoryName} 카테고리로 이동`}
+                    >
+                      <div className="bg-g500 hover:bg-purple/10 flex h-[90px] w-[90px] items-center justify-center rounded-full transition-colors">
+                        <Icon className="text-g300 h-10 w-10" />
+                      </div>
+                      <span className="text-g100 text-[15px] font-medium">
+                        {c.categoryName}
+                      </span>
+                    </button>
+                  );
+                })}
           </div>
         </div>
       </section>
@@ -72,12 +65,15 @@ const Main = () => {
         <div className="container">
           <div className="mb-8 flex items-center justify-between">
             <h4 className="text-g100 font-bold">경매 중인 상품</h4>
-            <button className="text-g300 hover:text-purple text-[15px] transition-colors">
+            <button
+              onClick={() => navigate("/auctions")}
+              className="text-g300 hover:text-purple text-[15px] transition-colors"
+            >
               전체보기
             </button>
           </div>
 
-          {/* 그리드 */}
+          {/* todo 여기 ProductCard 불러올 것 */}
           <div className="bg-g500 flex min-h-[500px] w-full items-center justify-center">
             <span className="text-g300 text-[20px]">
               경매 중인 상품 영역 (1320 x 500+)
@@ -86,7 +82,7 @@ const Main = () => {
         </div>
       </section>
 
-      {/* 보류 */}
+      {/* (보류) 인기 경매 */}
       <section className="pb-[60px]">
         <div className="container">
           <div className="mb-8 flex items-center justify-between">
