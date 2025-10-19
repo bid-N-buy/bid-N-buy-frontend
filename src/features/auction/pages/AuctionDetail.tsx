@@ -1,64 +1,57 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import type { AuctionDetail } from "../types/auctions";
-import { getAuctionById } from "../api/auctions";
 import ProductImage from "../components/ProductImage";
 import ProductInfo from "../components/ProductInfo";
 import ProductDetail from "../components/ProductDetail";
 import AuctionGuide from "../components/AuctionGuide";
 import RelatedItem from "../components/RelatedItem";
+import { useAuctionDetailStore } from "../store/auctionDetailStore";
+import { useAuthStore } from "../../auth/store/authStore";
 
 const AuctionDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const [auction, setAuction] = useState<AuctionDetail | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+
+  const {
+    detail: auction,
+    loading,
+    error,
+    load,
+    reset,
+    patch,
+  } = useAuctionDetailStore();
+  const authKey = useAuthStore((s) => s.userId ?? null);
 
   useEffect(() => {
     if (!id) return;
-    const fetchDetail = async () => {
-      try {
-        setLoading(true);
-        const data = await getAuctionById(Number(id));
-        setAuction(data);
-      } catch (err) {
-        setError("데이터를 불러오지 못했습니다.");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchDetail();
-  }, [id]);
+    reset();
+    load(Number(id));
+  }, [id, reset, load]);
+
+  // 로그인/로그아웃 시 재조회(liked 반영)
+  useEffect(() => {
+    if (!id) return;
+    load(Number(id));
+  }, [id, authKey, load]);
 
   const handleCardClick = (auctionId: number) => {
-    console.log("상품 카드 클릭", auctionId);
-    navigate(`/auction/${auctionId}`);
-  };
-
-  const handleLikeToggle = (auctionId: number, liked: boolean) => {
-    console.log("좋아요 토글:", auctionId, liked);
-    // api 호출
+    navigate(`/auctions/${auctionId}`);
   };
 
   const handleAfterBid = React.useCallback(
     async (next: { currentPrice?: number }) => {
-      // 일단 화면에 새 현재가 반영
-      setAuction((prev) =>
-        prev
-          ? { ...prev, currentPrice: next.currentPrice ?? prev.currentPrice }
-          : prev
-      );
+      // 일단 화면 낙관적 업데이트 (현재가, 입찰횟수 +1)
+      patch((prev) => ({
+        currentPrice: next.currentPrice ?? prev.currentPrice,
+        bidCount: (prev.bidCount ?? 0) + 1,
+      }));
 
-      // 서버 최신 데이터 재조회.. 새고 안 하고도 화면 반영되게
-      try {
-        const refreshed = await getAuctionById(Number(id));
-        setAuction(refreshed);
-      } catch {
-        console.error("재조회 실패");
+      // 서버 최신값으로 교정
+      if (id) {
+        await load(Number(id));
       }
     },
-    [id]
+    [id, load, patch]
   );
 
   if (loading) return <div className="text-g300 p-6">로딩 중...</div>;
@@ -92,6 +85,7 @@ const AuctionDetail = () => {
               sellerTemperature={auction.sellerTemperature}
               sellingStatus={auction.sellingStatus}
               wishCount={auction.wishCount}
+              liked={auction.liked}
               onAfterBid={handleAfterBid}
             />
           </div>
@@ -113,7 +107,6 @@ const AuctionDetail = () => {
         <RelatedItem
           items={[]} // todo 실제 데이터 전달
           onCardClick={handleCardClick}
-          onLikeToggle={handleLikeToggle}
         />
       </section>
     </div>
