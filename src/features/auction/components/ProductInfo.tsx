@@ -1,4 +1,4 @@
-// todo 컴포넌트 분리 등
+// todo 백 수정 후 liked 다시 확인
 import React, { useState, useCallback } from "react";
 import BidModal from "./BidModal";
 import { useAuthStore } from "../../auth/store/authStore";
@@ -6,11 +6,12 @@ import { useChatModalStore } from "../../../shared/store/ChatModalStore";
 import Toast from "../../../shared/components/Toast";
 import useToast from "../../../shared/hooks/useToast";
 import api from "../../../shared/api/axiosInstance";
-import { EllipsisVertical, Heart } from "lucide-react";
+import { EllipsisVertical } from "lucide-react";
 import { formatDate } from "../../../shared/utils/datetime";
 import { buildImageUrl } from "../../../shared/utils/imageUrl";
 import { useChatRoomAuc } from "../../chatting/api/useChatRoom";
 import { useBid } from "../hooks/useBid";
+import WishButton from "../../wish/components/WishButton";
 
 export interface ProductInfoProps {
   auctionId: number; // 채팅방 생성 시 필요 -> 필수로 수정, number로 수정
@@ -28,10 +29,9 @@ export interface ProductInfoProps {
   sellerTemperature?: number;
   sellingStatus?: string;
   wishCount?: number;
+  liked?: boolean;
 
   isSeller?: boolean;
-  liked?: boolean;
-  onLikeToggle?: () => void;
   onShareClick?: () => void;
   onDeleteClick?: () => void;
 
@@ -54,15 +54,12 @@ const ProductInfo = ({
   sellerTemperature,
   sellingStatus,
   wishCount,
-
-  isSeller = false,
   liked = false,
-  onLikeToggle,
+  isSeller = false,
   onShareClick,
   onDeleteClick,
   onAfterBid,
 }: ProductInfoProps) => {
-  const [isLiked, setIsLiked] = useState(liked);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isBidModalOpen, setIsBidModalOpen] = useState(false);
   const { toast, showToast, hideToast } = useToast();
@@ -74,19 +71,17 @@ const ProductInfo = ({
 
   const { loadChatRoom } = useChatRoomAuc(sellerId, auctionId);
 
-  const handleLikeClick = useCallback(() => {
-    setIsLiked((prev) => !prev);
-    onLikeToggle?.();
-  }, [onLikeToggle]);
-
   // 입찰
   const { submitBid, loading } = useBid({
     onSuccess: (res) => {
       showToast(res.message ?? "입찰이 완료되었습니다.", "success");
       // 상위 페이지에 현재가 전달
       const nextPrice = res.item?.bidPrice;
-      if (typeof nextPrice === "number")
-        onAfterBid?.({ currentPrice: nextPrice });
+      onAfterBid?.({
+        currentPrice: Number.isFinite(nextPrice)
+          ? (nextPrice as number)
+          : undefined,
+      });
       setIsBidModalOpen(false);
     },
     onError: (msg) => {
@@ -311,15 +306,13 @@ const ProductInfo = ({
               </div>
 
               {/* 찜 */}
-              <button
-                onClick={handleLikeClick}
-                className="group flex-shrink-0 rounded-full p-1.5 transition-colors focus:outline-none sm:p-2"
-                aria-label="찜"
-              >
-                <Heart
-                  className={`h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 ${isLiked ? "fill-purple text-purple" : "text-g300 group-hover:text-purple"}`}
-                />
-              </button>
+              {/* <div className="flex-shrink-0"> */}
+              <WishButton
+                auctionId={auctionId}
+                initial={{ liked, wishCount: wishCount ?? 0 }}
+                size="lg"
+              />
+              {/* </div> */}
             </div>
 
             {/* 6. 기간 + 입찰 횟수 */}
