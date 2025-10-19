@@ -4,6 +4,6 @@ export type AdminDto = {
   password: string;
   nickname: string;
   ipAddress: string;
-  createdAt: string;
+  createdAt: string | null;
   updatedAt: string | null;
 };
