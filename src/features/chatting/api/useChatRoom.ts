@@ -47,11 +47,11 @@ export const useChatRoomApi = (chatroomId: number, isEnable: boolean) => {
         sellerId: auctionRes.data.sellerId,
         chatroomInfo: {
           auctionId: listItem.auctionId,
-          auctionMainImg: listItem.auctionImageUrl,
+          auctionImageUrl: listItem.auctionImageUrl,
           auctionTitle: listItem.auctionTitle,
           counterpartId: listItem.counterpartId,
-          counterpartNick: listItem.counterpartNickname,
-          counterpartProfile: listItem.counterpartProfileImageUrl,
+          counterpartNickname: listItem.counterpartNickname,
+          counterpartProfileImageUrl: listItem.counterpartProfileImageUrl,
         },
         productInfo: {
           currentPrice: auctionRes.data.currentPrice,
@@ -119,11 +119,11 @@ export const useChatRoomAuc = (sellerId: number, auctionId: number) => {
         sellerId: auctionRes.data.sellerId,
         chatroomInfo: {
           auctionId: listItem.auctionId,
-          auctionMainImg: listItem.auctionImageUrl,
+          auctionImageUrl: listItem.auctionImageUrl,
           auctionTitle: listItem.auctionTitle,
           counterpartId: listItem.counterpartId,
-          counterpartNick: listItem.counterpartNickname,
-          counterpartProfile: listItem.counterpartProfileImageUrl,
+          counterpartNickname: listItem.counterpartNickname,
+          counterpartProfileImageUrl: listItem.counterpartProfileImageUrl,
         },
         productInfo: {
           currentPrice: auctionRes.data.currentPrice,
