@@ -105,23 +105,7 @@ const AuctionList = () => {
     })();
   }, [mainCategoryId, subCategoryId, mains, subsByParent, loadSubs]);
 
-  const { items, loading, error, last, loadMore, setPage, setItems } =
-    useAuctionSearch({
-      searchKeyword,
-      mainCategoryId,
-      subCategoryId,
-      minPrice,
-      maxPrice,
-      includeEnded,
-      sortBy,
-      size: PAGE_SIZE,
-    });
-
-  // URL 파라미터 변경 시 리스트 초기화(보조)
-  useEffect(() => {
-    setItems([]);
-    setPage(0);
-  }, [
+  const { items, loading, error, last, loadMore } = useAuctionSearch({
     searchKeyword,
     mainCategoryId,
     subCategoryId,
@@ -129,9 +113,8 @@ const AuctionList = () => {
     maxPrice,
     includeEnded,
     sortBy,
-    setItems,
-    setPage,
-  ]);
+    size: PAGE_SIZE,
+  });
 
   // 무한스크롤
   const sentinelRef = useRef<HTMLDivElement | null>(null);
@@ -163,10 +146,6 @@ const AuctionList = () => {
 
   const handleCardClick = (auctionId: number) =>
     navigate(`/auctions/${auctionId}`);
-
-  const handleLikeToggle = (_auctionId: number, _liked: boolean) => {
-    // todo 위시 토글 api 붙일 때 optimistic 업데이트
-  };
 
   // 상단에 오는 거.. todo 고민해보고..
   const resultTitle = useMemo(() => {
@@ -391,9 +370,7 @@ const AuctionList = () => {
                   <ProductCard
                     key={product.auctionId}
                     item={product}
-                    liked={false}
                     onCardClick={handleCardClick}
-                    onLikeToggle={handleLikeToggle}
                   />
                 ))}
 
