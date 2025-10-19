@@ -1,9 +1,17 @@
 import React, { useEffect } from "react";
-import Banner from "../components/Banner";
-import MainSvg from "../../assets/banner1.svg";
+import Banner1 from "../../assets/banner1.svg";
+import Banner2 from "../../assets/banner2.svg";
+import Banner3 from "../../assets/banner3.svg";
+import BannerSlider from "../components/BannerSlider";
 import { useNavigate } from "react-router-dom";
 import { useCategoryStore } from "../../features/auction/store/categoryStore";
 import { getCategoryIcon } from "../utils/iconMap";
+
+const banners = [
+  { src: Banner1, to: "/auctions", alt: "Banner 1" },
+  { src: Banner2, to: "/auctions?mainCategoryId=2", alt: "Banner 2" },
+  { src: Banner3, to: "/signup", alt: "Banner 3" }, // 회원가입 페이지 이동, 로그인 유저면 메인(이동x)
+];
 
 const Main = () => {
   const navigate = useNavigate();
@@ -22,7 +30,7 @@ const Main = () => {
       {/* 배너 (1320 x 500) */}
       <section className="pt-[60px]">
         <div className="container">
-          <Banner src={MainSvg} to="" alt="배너" />
+          <BannerSlider items={banners} />
         </div>
       </section>
 
