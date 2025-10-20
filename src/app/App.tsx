@@ -10,7 +10,7 @@ import { useAdminAuthStore } from "../features/admin/store/adminStore";
 import ProtectedRoute from "../shared/routes/ProtectedRoute";
 import GuestOnlyRoute from "../shared/routes/GuestOnlyRoute";
 import { useAuthInit } from "../features/auth/hooks/UseAuthInit";
-import ProfileDetails from "../features/mypage/components/profile/ProfileDetails";
+
 import ProfileSetting from "../features/mypage/components/profile/ProfileSetting";
 import ResetPassword from "../features/auth/components/login/ResetPasswordForm";
 import MypageLayout from "../features/mypage/pages/MypageLayout";
@@ -18,6 +18,8 @@ import PaymentForm from "../features/payment/pages/CheckoutPage";
 import SuccessPage from "../features/payment/pages/SuccessPage";
 import FailPage from "../features/payment/pages/FailPage";
 import OAuthCallback from "../features/auth/components/OAuthCallback";
+import ProfileDetailsContainer from "../features/mypage/pages/ProfileDetailsContainer";
+import InquiryReportForm from "../features/mypage/components/support/InquiryReportForm";
 
 // 공통
 const Header = React.lazy(() => import("../shared/components/Header"));
@@ -154,9 +156,21 @@ export default function App() {
 
               {/* 문의/신고 */}
               <Route path="inquiries" element={<InquiryList />} />
+
+              {/* ✅ 문의/신고 작성 (상대 경로로 묶기) */}
+              <Route path="support">
+                {/* /mypage/support -> /mypage/support/inquiries/new 로 리디렉트 */}
+                <Route
+                  index
+                  element={<Navigate to="inquiries/new" replace />}
+                />
+                <Route path="inquiries/new" element={<InquiryReportForm />} />
+                <Route path="reports/new" element={<InquiryReportForm />} />
+              </Route>
+
               {/* <Route path="inquiries/:id" element={<InquiryDetail />} /> */}
             </Route>
-            <Route path="profile" element={<ProfileDetails />} />
+            <Route path="/profile" element={<ProfileDetailsContainer />} />
           </Route>
 
           {/* 기타 */}

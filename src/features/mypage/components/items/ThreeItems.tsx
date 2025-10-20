@@ -55,11 +55,7 @@ export default function ThreeCompactSection({
             <TradeRowCompact
               key={it.id}
               item={it}
-              onClick={(id) =>
-                role === "seller"
-                  ? navigate(`/seller/auctions/${id}`)
-                  : navigate(`/auctions/${id}`)
-              }
+              onClick={(id) => navigate(`/auctions/${id}`)}
               subtitleTop={role === "seller" ? "경매 시작 시간" : "판매자 이름"}
               subtitleBottom="경매 마감 시간"
               rightText={<span className="text-neutral-700">{it.status}</span>}
