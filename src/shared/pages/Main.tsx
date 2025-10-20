@@ -6,11 +6,12 @@ import BannerSlider from "../components/BannerSlider";
 import { useNavigate } from "react-router-dom";
 import { useCategoryStore } from "../../features/auction/store/categoryStore";
 import { getCategoryIcon } from "../utils/iconMap";
+import AuctionSection from "../components/AuctionSection";
 
 const banners = [
-  { src: Banner1, to: "/auctions", alt: "Banner 1" },
+  { src: Banner1, to: "/auctions/new", alt: "Banner 1" }, // 로그인 -> 경매 등록, 비로그인 -> 로그인 페이지
   { src: Banner2, to: "/auctions?mainCategoryId=2", alt: "Banner 2" },
-  { src: Banner3, to: "/signup", alt: "Banner 3" }, // 회원가입 페이지 이동, 로그인 유저면 메인(이동x)
+  { src: Banner3, to: "/signup", alt: "Banner 3" }, // 로그인 -> 메인(이동x), 비로그인 -> 회원가입
 ];
 
 const Main = () => {
@@ -68,8 +69,8 @@ const Main = () => {
         </div>
       </section>
 
-      {/* 판매 중인 상품 영역 */}
-      <section className="pb-[60px]">
+      {/* 경매 중인 상품 영역 */}
+      {/* <section className="pb-[60px]">
         <div className="container">
           <div className="mb-8 flex items-center justify-between">
             <h4 className="text-g100 font-bold">경매 중인 상품</h4>
@@ -80,15 +81,15 @@ const Main = () => {
               전체보기
             </button>
           </div>
-
-          {/* todo 여기 ProductCard 불러올 것 */}
           <div className="bg-g500 flex min-h-[500px] w-full items-center justify-center">
             <span className="text-g300 text-[20px]">
               경매 중인 상품 영역 (1320 x 500+)
             </span>
           </div>
         </div>
-      </section>
+      </section> */}
+
+      <AuctionSection title="경매 중인 상품" size={10} moreLink="/auctions" />
 
       {/* (보류) 인기 경매 */}
       <section className="pb-[60px]">
