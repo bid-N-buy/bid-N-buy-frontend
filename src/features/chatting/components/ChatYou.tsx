@@ -2,6 +2,11 @@ import React from "react";
 import Avatar from "../../../shared/components/Avatar";
 import type { ChatYouProps } from "../types/ChatType";
 import { useAuthStore } from "../../auth/store/authStore";
+//토스페이먼츠
+import { loadTossPayments } from "@tosspayments/tosspayments-sdk";
+
+// TODO: 추후 배포단계에서 .env로 옮길 예정
+const clientKey = "test_ck_DpexMgkW36PwLbonEpqwrGbR5ozO";
 
 const ChatYou = ({
   msgInfo,
@@ -13,7 +18,56 @@ const ChatYou = ({
   const { message, messageType, read, createdAt } = msgInfo;
   const { counterpartNickname, counterpartProfileImageUrl } = counterpartInfo;
   const { auctionImageUrl, auctionTitle } = auctionInfo;
-  const userId = useAuthStore.getState().userId;
+  const {userId, profile} = useAuthStore.getState();
+
+  // 결제 실행 함수
+  async function handlePayment() {
+    try {
+      const tossPayments = await loadTossPayments(clientKey);
+      const payment = tossPayments.payment({
+        customerKey: generateRandomString(),
+      });
+
+      // 백엔드에 주문 생성 (buyerId는 현재 로그인 유저)
+      const orderResponse = await fetch("http://localhost:8080/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sellerId,
+          buyerId: userId,
+          type: "ESCROW",
+        }),
+      });
+
+      if (!orderResponse.ok) throw new Error("Order 생성 실패");
+      const orderData = await orderResponse.json();
+      const orderId = orderData.orderId;
+
+      // 금액 저장
+      const merchantOrderId = "ORDER_" + Date.now();
+      await fetch("http://localhost:8080/payments/saveAmount", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderId,
+          merchantOrderId,
+          amount: currentPrice,
+        }),
+      });
+
+      // 결제창 실행
+      await payment.requestPayment({
+        method: "CARD",
+        amount: { currency: "KRW", value: currentPrice },
+        orderId: merchantOrderId,
+        orderName: auctionTitle,
+        customerEmail: profile?.email,
+        customerName: profile?.nickname
+      });
+    } catch (err) {
+      console.error("결제 요청 실패:", err);
+    }
+  }
 
   return messageType === "CHAT" && sellerId === userId ? (
     <div className="mx-2 my-4 flex gap-2">
@@ -55,6 +109,7 @@ const ChatYou = ({
               <div>
                 <button
                   type="button"
+                  onClick={handlePayment}
                   className="bg-purple mt-2 w-full cursor-pointer rounded-md px-2 py-1.5 text-sm font-medium text-white"
                 >
                   결제하기
@@ -89,5 +144,9 @@ const ChatYou = ({
     </div>
   );
 };
+
+function generateRandomString() {
+  return window.btoa(Math.random().toString()).slice(0, 20);
+}
 
 export default ChatYou;
