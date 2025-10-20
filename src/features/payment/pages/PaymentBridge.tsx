@@ -1,10 +1,13 @@
 import { useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import api from "../../../shared/api/axiosInstance";
+import Toast from "../../../shared/components/Toast";
+import useToast from "../../../shared/hooks/useToast";
+
 
 export default function PaymentBridge() {
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { toast, showToast, hideToast } = useToast();
 
   useEffect(() => {
     const paymentKey = searchParams.get("paymentKey");
@@ -13,24 +16,22 @@ export default function PaymentBridge() {
     const code = searchParams.get("code"); // ❌ 실패 시 넘어옴
     const message = searchParams.get("message"); // ❌ 실패 메시지
 
+
     if (code) {
-      // PG 단계에서 실패한 경우 → confirm 호출할 것도 없음
-      navigate(`/chat/${orderId}`, {
-        state: { paymentStatus: "FAIL", reason: message || "결제 실패" },
-      });
+      showToast(message || "결제 실패", "error");
+      console.log("잘못된 요청 : " + message);
+      window.history.back(); // 이전 페이지로 이동
       return;
     }
-    console.log("pg 성공");
 
     if (!paymentKey || !orderId || !amount) {
-      navigate(`/chat/${orderId}`, {
-        state: { paymentStatus: "FAIL", reason: "잘못된 요청" },
-      });
+      showToast("잘못된 요청입니다.", "error");
+      alert("잘못된 요청입니다.");
+      window.history.back(); // 이전 페이지로 이동
       return;
     }
-    console.log("data 기입 성공");
 
-    // ✅ confirm 호출
+    // confirm 호출
     api
       .post("/payments/confirm", {
         paymentKey,
@@ -38,16 +39,22 @@ export default function PaymentBridge() {
         amount: Number(amount),
       })
       .then(() => {
-        navigate(`/mypage`, { state: { paymentStatus: "SUCCESS" } });
-        console.log("success");
+        console.log("결제 성공");
+        showToast("결제 성공!", "success");
+        window.history.back(); // 이전 페이지로 이동
       })
       .catch(() => {
-        navigate(`/chat/${orderId}`, {
-          state: { paymentStatus: "FAIL", reason: "승인 실패" },
-        });
-        console.log("fail");
+        console.log("결제 fail");
+        showToast("승인 실패", "error");
+        window.history.back(); // 이전 페이지로 이동
       });
   }, []);
 
-  return <div>결제 처리 중...</div>;
+  return <div>결제 처리 중...{toast && (
+    <Toast
+      message={toast.message}
+      type={toast.type}
+      onClose={() => setToast(null)}
+    />
+  )}</div>;
 }
