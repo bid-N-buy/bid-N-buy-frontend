@@ -168,7 +168,7 @@ const ChatRoom = ({
     const chatMessage = {
       chatroomId: chatroomId,
       message: inputMessage.trim(),
-      senderId: chatroomInfo.counterpartNickname, // HTML 클라이언트의 senderId 필드와 맞춤
+      senderId: userId, // HTML 클라이언트의 senderId 필드와 맞춤
       type: "CHAT",
     };
 
