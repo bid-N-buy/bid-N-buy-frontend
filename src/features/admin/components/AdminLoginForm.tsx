@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from "react";
 import axios from "axios";
-import api, { API_BASE } from "../../../shared/api/axiosInstance";
+import api from "../../../shared/api/axiosInstance";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAdminAuthStore, type AdminState } from "../store/adminStore";
 import type {
@@ -58,7 +58,6 @@ const AdminLoginForm = () => {
 
   const setTokens = useAdminAuthStore((s: AdminState) => s.setTokens);
 
-  // 4) 회원가입 제출
   const handleSubmit = useCallback(
     async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
@@ -179,21 +178,6 @@ const AdminLoginForm = () => {
     [email, password, loading, location.state, navigate, setTokens]
   );
 
-  /** 소셜 로그인 시작 */
-  const startKakao = useCallback(() => {
-    if (loading) return;
-    // 백엔드에 /auth/kakao/loginstart가 없다면, 지금처럼 카카오 인증 서버로 직접 이동
-    window.location.assign(
-      "https://kauth.kakao.com/oauth/authorize?response_type=code&client_id=3ca9c59cb383f463525c62ffb4615195&redirect_uri=http://localhost:8080/auth/kakao"
-    );
-  }, [loading]);
-
-  const startNaver = useCallback(() => {
-    if (loading) return;
-    // ✅ 백엔드에서 state 관리 및 authorize URL 빌드 → 이 엔드포인트로만 이동
-    window.location.assign(`${API_BASE}/auth/naver/loginstart`);
-  }, [loading]);
-
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
       {/* 이메일 */}
@@ -243,12 +227,12 @@ const AdminLoginForm = () => {
       )}
 
       {/* 링크 */}
-      <div className="mt-[10px] flex justify-center gap-3 text-sm">
-        <Link to="/resetPassword" className="text-h9 hover:underline">
+      <div className="mt-[10px] flex justify-center gap-3">
+        <Link to="/admin/resetPassword" className="text-sm hover:underline">
           비밀번호 찾기
         </Link>
-        <span className="text-h9">|</span>
-        <Link to="/admin/signup" className="text-h9 hover:underline">
+        <span className="text-g400 text-sm">|</span>
+        <Link to="/admin/signup" className="text-sm hover:underline">
           회원가입
         </Link>
       </div>

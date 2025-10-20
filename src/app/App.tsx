@@ -20,6 +20,8 @@ import FailPage from "../features/payment/pages/FailPage";
 import OAuthCallback from "../features/auth/components/OAuthCallback";
 import ProfileDetailsContainer from "../features/mypage/pages/ProfileDetailsContainer";
 import InquiryReportForm from "../features/mypage/components/support/InquiryReportForm";
+import AdminHeader from "../features/admin/components/AdminHeader";
+import AdminAsideMenu from "../features/admin/components/AdminAsideMenu";
 
 // 공통
 const Header = React.lazy(() => import("../shared/components/Header"));
@@ -110,6 +112,21 @@ function AppLayout() {
   );
 }
 
+function AdminLayout() {
+  return (
+    <div className="min-h-screen bg-white">
+      <Suspense fallback={<div className="p-6">로딩 중…</div>}>
+        <AdminHeader />
+      </Suspense>
+      <main className="container flex">
+        <AdminAsideMenu />
+        <Outlet />
+      </main>
+      <Suspense fallback={null}>{/* <Footer /> */}</Suspense>
+    </div>
+  );
+}
+
 export default function App() {
   const { ready } = useAuthInit();
   if (!ready) return <div className="p-6 text-center">초기화 중...</div>;
@@ -188,10 +205,12 @@ export default function App() {
 
           {/* 관리자 페이지 (로그인 필요) */}
           <Route element={<AdminProtectedRoute />}>
-            <Route index element={<AdminDashboard />} />
-            <Route path="inquiries" element={<AdminInquiryList />} />
-            <Route path="users" element={<AdminUserList />} />
-            <Route path="auctions" element={<AdminAuctionList />} />
+            <Route element={<AdminLayout />}>
+              <Route index element={<AdminDashboard />} />
+              <Route path="inquiries" element={<AdminInquiryList />} />
+              <Route path="users" element={<AdminUserList />} />
+              <Route path="auctions" element={<AdminAuctionList />} />
+            </Route>
           </Route>
         </Route>
       </Routes>

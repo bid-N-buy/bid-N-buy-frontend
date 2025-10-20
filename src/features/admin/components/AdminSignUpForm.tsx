@@ -54,7 +54,7 @@ const AdminSignUpForm = () => {
 
       if (data?.email) {
         // ✅ 가입 성공 → 로그인 페이지로 이동 (+ 배너 표시용 쿼리)
-        navigate("/admin/login?signedUp=1", { replace: true });
+        navigate("/admin/login", { replace: true });
         setMsg("회원가입이 완료되었습니다.");
         // 필요 시 이동:
         // window.location.href = "/login";
