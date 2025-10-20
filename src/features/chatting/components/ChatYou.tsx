@@ -18,7 +18,7 @@ const ChatYou = ({
   const { message, messageType, read, createdAt } = msgInfo;
   const { counterpartNickname, counterpartProfileImageUrl } = counterpartInfo;
   const { auctionImageUrl, auctionTitle } = auctionInfo;
-  const {userId, profile} = useAuthStore.getState();
+  const { userId, profile } = useAuthStore.getState();
 
   // 결제 실행 함수
   async function handlePayment() {
@@ -56,13 +56,15 @@ const ChatYou = ({
       });
 
       // 결제창 실행
-      await payment.requestPayment({
+       const result = await payment.requestPayment({
         method: "CARD",
         amount: { currency: "KRW", value: currentPrice },
         orderId: merchantOrderId,
         orderName: auctionTitle,
+        successUrl: window.location.origin + "/payment/bridge",
+        failUrl: window.location.origin + "/payment/bridge",
         customerEmail: profile?.email,
-        customerName: profile?.nickname
+        customerName: profile?.nickname 
       });
     } catch (err) {
       console.error("결제 요청 실패:", err);
