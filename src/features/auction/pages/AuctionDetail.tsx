@@ -11,7 +11,8 @@ import { useAuthStore } from "../../auth/store/authStore";
 const AuctionDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-
+  const userId = useAuthStore((s) => s.userId);
+  const authKey = useAuthStore((s) => s.userId ?? null);
   const {
     detail: auction,
     loading,
@@ -20,7 +21,6 @@ const AuctionDetail = () => {
     reset,
     patch,
   } = useAuctionDetailStore();
-  const authKey = useAuthStore((s) => s.userId ?? null);
 
   useEffect(() => {
     if (!id) return;
@@ -87,6 +87,12 @@ const AuctionDetail = () => {
               wishCount={auction.wishCount}
               liked={auction.liked}
               onAfterBid={handleAfterBid}
+              isSeller={userId === auction.sellerId}
+              // 삭제 성공 후 처리
+              onDeleteClick={() => {
+                reset(); // 상세 캐시 비우기
+                navigate("/", { replace: true }); // 메인으로
+              }}
             />
           </div>
         </div>
