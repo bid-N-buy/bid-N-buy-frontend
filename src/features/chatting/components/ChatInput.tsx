@@ -9,6 +9,25 @@ const ChatInput = ({
   sendMessage,
   isConnected,
 }: ChatInputProps) => {
+  // const images = [];
+  // const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+
+  // // *****파일 선택 핸들러 - 수정
+  // const onFilesSelected = (files: File[]) => {
+  //   const room = Math.max(0, 10 - images.length);
+
+  //   // 원본 파일도 보관
+  //   setSelectedFiles((prev) => [...prev, ...taking]);
+  // };
+
+  // const onRemoveImage = (idx: number) => {
+  //   const target = images[idx];
+  //   if (target?.imageUrl.startsWith("blob:"))
+  //     URL.revokeObjectURL(target.imageUrl);
+  //   removeImage(idx);
+  //   setSelectedFiles((prev) => prev.filter((_, i) => i !== idx));
+  // };
+
   return (
     <div className="bg-white px-3 py-2">
       <form className="w-full" onSubmit={sendMessage}>
@@ -27,6 +46,15 @@ const ChatInput = ({
           required
         />
         <div className="mt-2 flex items-center justify-between">
+          {/* <input
+            id="images"
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            disabled={images.length >= 1}
+            onChange={(e) => onFilesSelected(Array.from(e.target.files ?? []))}
+          /> */}
           <button type="button" className="p-2">
             <Camera />
           </button>

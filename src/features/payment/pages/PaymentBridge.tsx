@@ -10,7 +10,7 @@ export default function PaymentBridge() {
     const paymentKey = searchParams.get("paymentKey");
     const orderId = searchParams.get("orderId");
     const amount = searchParams.get("amount");
-    const code = searchParams.get("code");      // ❌ 실패 시 넘어옴
+    const code = searchParams.get("code"); // ❌ 실패 시 넘어옴
     const message = searchParams.get("message"); // ❌ 실패 메시지
 
     if (code) {
@@ -20,6 +20,7 @@ export default function PaymentBridge() {
       });
       return;
     }
+    console.log("pg 성공");
 
     if (!paymentKey || !orderId || !amount) {
       navigate(`/chat/${orderId}`, {
@@ -27,14 +28,24 @@ export default function PaymentBridge() {
       });
       return;
     }
+    console.log("data 기입 성공");
 
     // ✅ confirm 호출
-    api.post("/payments/confirm", { paymentKey, orderId, amount })
+    api
+      .post("/payments/confirm", {
+        paymentKey,
+        orderId,
+        amount: Number(amount),
+      })
       .then(() => {
-        navigate(`/chat/${orderId}`, { state: { paymentStatus: "SUCCESS" } });
+        navigate(`/mypage`, { state: { paymentStatus: "SUCCESS" } });
+        console.log("success");
       })
       .catch(() => {
-        navigate(`/chat/${orderId}`, { state: { paymentStatus: "FAIL", reason: "승인 실패" } });
+        navigate(`/chat/${orderId}`, {
+          state: { paymentStatus: "FAIL", reason: "승인 실패" },
+        });
+        console.log("fail");
       });
   }, []);
 
