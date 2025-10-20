@@ -248,40 +248,9 @@ const AdminLoginForm = () => {
           비밀번호 찾기
         </Link>
         <span className="text-h9">|</span>
-        <Link to="/signup" className="text-h9 hover:underline">
+        <Link to="/admin/signup" className="text-h9 hover:underline">
           회원가입
         </Link>
-      </div>
-
-      {/* 소셜 로그인 */}
-      <div className="mt-4 space-y-3">
-        {/* 네이버 */}
-        <button
-          type="button"
-          onClick={startNaver}
-          disabled={loading}
-          aria-label="네이버 로그인"
-          className="flex h-[50px] w-full items-center justify-center gap-2 rounded-md bg-[#03C75A] text-white transition hover:brightness-105 focus:ring-2 focus:ring-[#03C75A]/40 focus:outline-none active:brightness-95 disabled:opacity-60"
-        >
-          <span className="grid h-6 w-6 place-items-center rounded-[4px] bg-white font-black text-[#03C75A]">
-            N
-          </span>
-          <span className="text-[15px] font-semibold">네이버로 로그인</span>
-        </button>
-
-        {/* 카카오 */}
-        <button
-          type="button"
-          onClick={startKakao}
-          disabled={loading}
-          aria-label="카카오 로그인"
-          className="flex h-[50px] w-full items-center justify-center gap-2 rounded-md bg-[#FEE500] text-black transition hover:brightness-105 focus:ring-2 focus:ring-[#FEE500]/40 focus:outline-none active:brightness-95 disabled:opacity-60"
-        >
-          <span className="grid h-6 w-6 place-items-center rounded-full bg-black text-[13px] font-bold text-[#FEE500]">
-            K
-          </span>
-          <span className="text-[15px] font-semibold">카카오로 로그인</span>
-        </button>
       </div>
     </form>
   );
