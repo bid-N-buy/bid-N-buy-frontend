@@ -36,14 +36,11 @@ const ChatRoom = ({
 
   const fetchMessageHistory = async (chatroomId: number, token: string) => {
     try {
-      const response = await api.get<ChatMessageProps[]>(
-        `/chatrooms/${chatroomId}/message`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await api.get(`/chatrooms/${chatroomId}/message`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       setMessages(response.data);
     } catch (error) {
       console.error("Failed to load chat log:", error);
@@ -124,7 +121,7 @@ const ChatRoom = ({
       senderId: sellerId,
       message: `${currentPrice}원 결제를 요청합니다.`,
       currentPrice: currentPrice,
-      type: "REQUEST",
+      messageType: "REQUEST",
     };
 
     // 전송 실행
@@ -138,8 +135,7 @@ const ChatRoom = ({
   // 메시지 수신 및 화면 업데이트 로직
   const handleMessageReceived = (message: IMessage) => {
     try {
-      const messageBody: ChatMessageProps = JSON.parse(message.body);
-
+      const messageBody = JSON.parse(message.body);
       // 메시지 배열 상태 업데이트
       setMessages((prevMessages) => {
         return [...prevMessages, messageBody];
@@ -169,7 +165,7 @@ const ChatRoom = ({
       chatroomId: chatroomId,
       message: inputMessage.trim(),
       senderId: userId, // HTML 클라이언트의 senderId 필드와 맞춤
-      type: "CHAT",
+      messageType: "CHAT",
     };
 
     // 전송 실행

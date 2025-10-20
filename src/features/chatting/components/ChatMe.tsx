@@ -36,13 +36,14 @@ const ChatMe = ({
           <img
             src={auctionImageUrl ? auctionImageUrl : ""}
             alt={`${auctionTitle}의 메인 이미지`}
+            className="size-15"
           />
-          <div>
+          <div className="text-left">
             <p className="font-bold">{auctionTitle}</p>
-            <p className="text-g300">{currentPrice.toString()}</p>
+            <p className="text-g300">{currentPrice.toString()} 원</p>
           </div>
         </div>
-        <hr />
+        <hr className="bg-g300 my-2 h-[1px] border-0" />
         <div>{message}</div>
       </div>
     </div>
