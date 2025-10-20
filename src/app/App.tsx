@@ -17,6 +17,7 @@ import MypageLayout from "../features/mypage/pages/MypageLayout";
 import PaymentForm from "../features/payment/pages/CheckoutPage";
 import SuccessPage from "../features/payment/pages/SuccessPage";
 import FailPage from "../features/payment/pages/FailPage";
+import PaymentBridge from "../features/payment/pages/PaymentBridge";
 import OAuthCallback from "../features/auth/components/OAuthCallback";
 import ProfileDetailsContainer from "../features/mypage/pages/ProfileDetailsContainer";
 import InquiryReportForm from "../features/mypage/components/support/InquiryReportForm";
@@ -154,6 +155,7 @@ export default function App() {
           {/* 결제 관련 */}
           <Route path="/payment/checkout" element={<PaymentForm />} />
           <Route path="/payment/success" element={<SuccessPage />} />
+          <Route path="/payment/bridge" element={<PaymentBridge />} />
           <Route path="/payment/fail" element={<FailPage />} />
 
           {/* 마이페이지 */}
