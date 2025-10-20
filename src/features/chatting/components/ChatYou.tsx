@@ -57,7 +57,7 @@ const ChatYou = ({
       });
 
       // 결제창 실행
-       const result = await payment.requestPayment({
+      const result = await payment.requestPayment({
         method: "CARD",
         amount: { currency: "KRW", value: currentPrice },
         orderId: merchantOrderId,
@@ -65,7 +65,7 @@ const ChatYou = ({
         successUrl: window.location.origin + "/payment/bridge",
         failUrl: window.location.origin + "/payment/bridge",
         customerEmail: profile?.email,
-        customerName: profile?.nickname 
+        customerName: profile?.nickname,
       });
     } catch (err) {
       console.error("결제 요청 실패:", err);
@@ -94,7 +94,7 @@ const ChatYou = ({
       <div>
         <p className="mb-2 font-bold">{counterpartNickname}</p>
         <div className="flex items-end">
-          <p className="bg-g400 mr-2 max-w-65 rounded-md p-3">
+          <div className="bg-g400 mr-2 max-w-65 rounded-md p-3">
             <div className="flex gap-2">
               <img
                 src={auctionImageUrl ? auctionImageUrl : ""}
@@ -106,7 +106,7 @@ const ChatYou = ({
                 <p className="text-g300">{currentPrice.toString()} 원</p>
               </div>
             </div>
-            <hr className="bg-g300 my-2 h-[1px] border-0" />
+            <div className="bg-g300 my-2 h-[1px] border-0" />
             <div>
               {message}
               <div>
@@ -119,7 +119,7 @@ const ChatYou = ({
                 </button>
               </div>
             </div>
-          </p>
+          </div>
           <div>
             <p className="text-g300 text-xs">{read ? "읽음" : "전송됨"}</p>
             <p className="text-g300 text-xs">

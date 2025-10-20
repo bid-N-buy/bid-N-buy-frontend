@@ -132,6 +132,28 @@ const ChatRoom = ({
     });
   };
 
+  const handleSendImage = (imageUrl: File) => {
+    const client = clientRef.current;
+
+    // 유효성 검사
+    if (!client || !client.connected) {
+      console.warn("연결 상태가 좋지 않습니다.");
+      return;
+    }
+    const messagePayload = {
+      imageUrl: imageUrl,
+      message: `<img src=${imageUrl}`,
+      messageType: "REQUEST",
+    };
+
+    // 전송 실행
+    client.publish({
+      destination: `/app/chat/message`,
+      body: JSON.stringify(messagePayload),
+      headers: { "content-type": "application/json" },
+    });
+  };
+
   // 메시지 수신 및 화면 업데이트 로직
   const handleMessageReceived = (message: IMessage) => {
     try {
@@ -151,7 +173,7 @@ const ChatRoom = ({
   }, [messages]);
 
   // 메시지 전송 로직
-  const sendMessage = () => {
+  const sendMessage = (e: { preventDefault: () => void }) => {
     const client = clientRef.current;
 
     // 유효성 검사
@@ -176,6 +198,7 @@ const ChatRoom = ({
     });
 
     // 입력 상태 초기화
+    e.preventDefault();
     setInputMessage("");
   };
 
@@ -191,7 +214,7 @@ const ChatRoom = ({
       <div
         ref={chatContainerRef}
         key={chatroomId}
-        className="h-[calc(100%-232px)] w-[100%] overflow-x-hidden overflow-y-scroll"
+        className="h-[calc(100%-242px)] w-[100%] overflow-x-hidden overflow-y-scroll"
       >
         {messages.length === 0 && (
           <div className="text-g300 flex h-[100%] items-center justify-center text-sm">
@@ -227,6 +250,7 @@ const ChatRoom = ({
         inputMessage={inputMessage}
         setInputMessage={setInputMessage}
         sendMessage={sendMessage}
+        handleSendImage={handleSendImage}
       />
     </>
   );

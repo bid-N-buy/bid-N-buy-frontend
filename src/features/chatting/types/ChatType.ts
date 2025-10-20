@@ -109,4 +109,5 @@ export interface ChatInputProps {
   inputMessage: string;
   setInputMessage: (message: string) => void;
   sendMessage: () => void;
+  handleSendImage: (imageUrl: File) => void;
 }
