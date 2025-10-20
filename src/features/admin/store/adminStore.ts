@@ -12,17 +12,17 @@ export interface AdminProfile {
 export interface AdminState {
   accessToken: string | null;
   refreshToken: string | null;
-  profile: AdminProfile | null;
+  // profile: AdminProfile | null;
   adminId: AdminId | null;
 
   setTokens: (
     access: string | null | undefined,
     refresh: string | null | undefined,
-    profile?: AdminProfile | null,
+    // profile?: AdminProfile | null,
     adminId?: AdminId | null
   ) => void;
 
-  setAdminProfile: (p: AdminProfile | null) => void;
+  // setAdminProfile: (p: AdminProfile | null) => void;
 
   setAdminId: (id: AdminId | null) => void;
 
@@ -37,19 +37,24 @@ export const useAdminAuthStore = create<AdminState>()(
     (set, get) => ({
       accessToken: null,
       refreshToken: null,
-      profile: null,
+      // profile: null,
       adminId: null,
 
-      setTokens: (access, refresh, profile = null, adminId = undefined) =>
+      setTokens: (
+        access,
+        refresh,
+        // profile = null,
+        adminId = undefined
+      ) =>
         set((s) => ({
           accessToken: access ?? null, // undefined 방지
           refreshToken: refresh ?? null,
-          profile: profile ?? s.profile, // 프로필 미전달 시 기존 유지
+          // profile: profile ?? s.profile,
           adminId:
             typeof adminId === "undefined" ? s.adminId : (adminId ?? null), // 명시 전달 시에만 변경
         })),
 
-      setAdminProfile: (p) => set({ profile: p }),
+      // setAdminProfile: (p) => set({ profile: p }),
 
       setAdminId: (id) => set({ adminId: id }),
 
@@ -59,7 +64,7 @@ export const useAdminAuthStore = create<AdminState>()(
         set({
           accessToken: null,
           refreshToken: null,
-          profile: null,
+          // profile: null,
           adminId: null,
         }),
     }),
@@ -71,7 +76,7 @@ export const useAdminAuthStore = create<AdminState>()(
       partialize: (s) => ({
         accessToken: s.accessToken,
         refreshToken: s.refreshToken,
-        profile: s.profile,
+        // profile: s.profile,
         adminId: s.adminId, // ✅ adminId를 반드시 persist
       }),
     }
@@ -79,5 +84,5 @@ export const useAdminAuthStore = create<AdminState>()(
 );
 
 export const useAccessToken = () => useAdminAuthStore((s) => s.accessToken);
-export const useAdminProfile = () => useAdminAuthStore((s) => s.profile);
+// export const useAdminProfile = () => useAdminAuthStore((s) => s.profile);
 export const useAdminId = () => useAdminAuthStore((s) => s.adminId);

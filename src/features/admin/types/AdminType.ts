@@ -1,9 +1,16 @@
-export type AdminDto = {
+export interface AdminProps {
   adminId: number;
   email: string;
   password: string;
-  nickname: string;
   ipAddress: string;
-  createdAt: string | null;
-  updatedAt: string | null;
-};
+  nickname: string;
+  createdAt: string;
+  updatedAt?: string;
+  deletedAt?: string;
+}
+export interface AdminLoginResponse {
+  accessToken: string;
+  refreshToken: string;
+  grantType: "Bearer";
+  accessTokenExpiresIn: number;
+}

@@ -3,14 +3,8 @@ import axios from "axios";
 import api from "../../../shared/api/axiosInstance";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAdminAuthStore, type AdminState } from "../store/adminStore";
-import type {
-  LoginResponse,
-  ErrorResponse,
-} from "../../../shared/types/CommonType";
-
-function hasTokenInfo(d: LoginResponse): d is LoginResponse {
-  return typeof (d as LoginResponse).tokenInfo !== "undefined";
-}
+import type { AdminLoginResponse } from "../types/AdminType";
+import type { ErrorResponse } from "../../../shared/types/CommonType";
 
 /** (디버그) 간단 JWT payload 디코더 — 검증 X */
 const decodeJwt = (jwt?: string | null) => {
@@ -23,24 +17,20 @@ const decodeJwt = (jwt?: string | null) => {
   }
 };
 
-/** 응답/토큰에서 adminId 추출 */
-const resolveAdminIdFrom = (
-  data: any,
-  accessToken: string | null
-): number | null => {
-  if (typeof data?.adminId === "number") return data.adminId;
+/** 응답/토큰에서 AdminId 추출 */
+const resolveAdminIdFrom = (accessToken: string | null): number | null => {
   const claims = decodeJwt(accessToken);
   const sub = claims?.sub;
-  const uid = claims?.uid ?? claims?.adminId;
+  const aid = claims?.aid ?? claims?.adminId;
   const parsed =
     typeof sub === "number"
       ? sub
       : typeof sub === "string" && /^\d+$/.test(sub)
         ? Number(sub)
-        : typeof uid === "number"
-          ? uid
-          : typeof uid === "string" && /^\d+$/.test(uid)
-            ? Number(uid)
+        : typeof aid === "number"
+          ? aid
+          : typeof aid === "string" && /^\d+$/.test(aid)
+            ? Number(aid)
             : null;
   return parsed ?? null;
 };
@@ -48,15 +38,28 @@ const resolveAdminIdFrom = (
 const isEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
 
 const AdminLoginForm = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const setTokens = useAdminAuthStore((s: AdminState) => s.setTokens);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  /** (DEV) 스토어 변경 로그 */
+  useEffect(() => {
+    const unsub = useAdminAuthStore.subscribe((state, prev) => {
+      if (import.meta.env.DEV) {
+        console.debug("[auth] changed", {
+          accessChanged: state.accessToken !== prev.accessToken,
+          refreshChanged: state.refreshToken !== prev.refreshToken,
+          adminId: state.adminId,
+        });
+      }
+    });
+    return unsub;
+  }, []);
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent<HTMLFormElement>) => {
@@ -84,8 +87,8 @@ const AdminLoginForm = () => {
       try {
         setLoading(true);
 
-        const res = await api.post<LoginResponse>(
-          "/auth/login",
+        const res = await api.post<AdminLoginResponse>(
+          "/admin/auth/login",
           { email: emailTrim, password: pwTrim },
           {
             headers: { "Content-Type": "application/json" },
@@ -103,13 +106,9 @@ const AdminLoginForm = () => {
 
         const data = res.data;
 
-        const access = hasTokenInfo(data)
-          ? (data.tokenInfo?.accessToken ?? null)
-          : (data.accessToken ?? null);
+        const access = data.accessToken || null;
 
-        const refresh = hasTokenInfo(data)
-          ? (data.tokenInfo?.refreshToken ?? null)
-          : (data.refreshToken ?? null);
+        const refresh = data.refreshToken || null;
 
         if (!access) {
           throw new Error(
@@ -117,20 +116,20 @@ const AdminLoginForm = () => {
           );
         }
 
-        const parsedProfile = {
-          nickname: (data as any).nickname ?? undefined,
-          email: (data as any).email ?? undefined,
-        };
-        const hasAnyProfile =
-          typeof parsedProfile.nickname !== "undefined" ||
-          typeof parsedProfile.email !== "undefined";
+        // const parsedProfile = {
+        //   nickname: (data as any).nickname ?? undefined,
+        //   email: (data as any).email ?? undefined,
+        // };
+        // const hasAnyProfile =
+        //   typeof parsedProfile.nickname !== "undefined" ||
+        //   typeof parsedProfile.email !== "undefined";
 
-        const adminId = resolveAdminIdFrom(data, access);
+        const adminId = resolveAdminIdFrom(access);
 
         setTokens(
           access,
           refresh ?? null,
-          hasAnyProfile ? parsedProfile : undefined,
+          // hasAnyProfile ? parsedProfile : undefined,
           adminId
         );
 
@@ -139,15 +138,15 @@ const AdminLoginForm = () => {
           console.debug("[auth] after login (store)", {
             accessToken: !!snap.accessToken,
             refreshToken: !!snap.refreshToken,
-            profile: snap.profile,
+            // profile: snap.profile,
             adminId: snap.adminId,
           });
         }
 
         const to =
-          (location.state as any)?.from?.pathname ??
-          (location.state as any)?.redirect ??
-          "/";
+          location.state?.from?.pathname ??
+          location.state?.redirect ??
+          "/admin";
         navigate(to, { replace: true });
       } catch (err) {
         if (axios.isAxiosError<ErrorResponse>(err)) {
