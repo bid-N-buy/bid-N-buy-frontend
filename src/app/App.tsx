@@ -20,7 +20,6 @@ import FailPage from "../features/payment/pages/FailPage";
 import OAuthCallback from "../features/auth/components/OAuthCallback";
 import ProfileDetailsContainer from "../features/mypage/pages/ProfileDetailsContainer";
 import InquiryReportForm from "../features/mypage/components/support/InquiryReportForm";
-import AdminHeader from "../features/admin/components/AdminHeader";
 import AdminAsideMenu from "../features/admin/components/AdminAsideMenu";
 
 // 공통
@@ -115,10 +114,7 @@ function AppLayout() {
 function AdminLayout() {
   return (
     <div className="min-h-screen bg-white">
-      <Suspense fallback={<div className="p-6">로딩 중…</div>}>
-        <AdminHeader />
-      </Suspense>
-      <main className="container flex">
+      <main className="relative flex">
         <AdminAsideMenu />
         <Outlet />
       </main>
