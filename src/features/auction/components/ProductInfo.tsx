@@ -1,5 +1,5 @@
 // todo 백 수정 후 liked 다시 확인
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import BidModal from "./BidModal";
 import { useAuthStore } from "../../auth/store/authStore";
 import { useChatModalStore } from "../../../shared/store/ChatModalStore";
@@ -12,10 +12,11 @@ import { buildImageUrl } from "../../../shared/utils/imageUrl";
 import { useChatRoomAuc } from "../../chatting/api/useChatRoom";
 import { useBid } from "../hooks/useBid";
 import WishButton from "../../wish/components/WishButton";
+import { deleteAuction } from "../api/auctions";
 
 export interface ProductInfoProps {
-  auctionId: number; // 채팅방 생성 시 필요 -> 필수로 수정, number로 수정
-  sellerId: number; // 채팅방 생성 시 필요 -> 필수로 수정, number로 수정
+  auctionId: number;
+  sellerId: number;
   title?: string;
   categoryMain?: string;
   categorySub?: string;
@@ -60,16 +61,46 @@ const ProductInfo = ({
   onDeleteClick,
   onAfterBid,
 }: ProductInfoProps) => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isBidModalOpen, setIsBidModalOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
   const { toast, showToast, hideToast } = useToast();
 
-  // const userId = useAuthStore.getState().userId; // 이럼 리렌더링 안됨
-  // 이렇게 써야 상태 변경 시 반영
   const userId = useAuthStore((s) => s.userId);
   const token = useAuthStore((s) => s.accessToken);
 
   const { loadChatRoom } = useChatRoomAuc(sellerId, auctionId);
+
+  // 더보기 외부 클릭 시 닫기
+  useEffect(() => {
+    if (!isMenuOpen) return;
+    const onDocMouseDown = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onDocMouseDown);
+    return () => document.removeEventListener("mousedown", onDocMouseDown);
+  }, [isMenuOpen]);
+
+  // 삭제
+  const handleDeleteAuction = useCallback(async () => {
+    if (!isSeller) return;
+    const ok = window.confirm("정말로 이 경매를 삭제하시겠어요?");
+    if (!ok) return;
+
+    try {
+      await deleteAuction(auctionId);
+      showToast("경매가 삭제되었습니다.", "success");
+      onDeleteClick?.(); // 부모에서 후속 처리
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.message ?? err?.message ?? "삭제에 실패했습니다.";
+      showToast(msg, "error");
+    } finally {
+      setIsMenuOpen(false);
+    }
+  }, [isSeller, auctionId, onDeleteClick, showToast]);
 
   // 입찰
   const { submitBid, loading } = useBid({
@@ -186,34 +217,39 @@ const ProductInfo = ({
                 </div>
               )}
 
-              {/* 더보기? 아이콘 - todo 분리 */}
+              {/* 더보기 */}
               <div className="absolute top-0 right-0">
                 <button
                   onClick={() => setIsMenuOpen((v) => !v)}
                   className="hover:bg-g500/50 rounded-full p-1.5 transition-colors sm:p-2"
+                  aria-haspopup="menu"
+                  aria-expanded={isMenuOpen}
                   aria-label="더보기"
                 >
                   <EllipsisVertical className="text-g200 h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8" />
                 </button>
 
                 {isMenuOpen && (
-                  <div className="border-g400 absolute top-full right-0 z-10 mt-2 w-18 rounded-md border bg-white shadow-lg">
+                  <div
+                    role="menu"
+                    className="border-g400 absolute top-full right-0 z-10 mt-2 w-18 rounded-md border bg-white shadow-lg"
+                  >
                     <button
                       onClick={() => {
                         onShareClick?.();
                         setIsMenuOpen(false);
                       }}
-                      className="text-g100 hover:bg-g500 w-full px-4 py-2.5 text-center text-base transition-colors md:py-3"
+                      className="text-g100 hover:bg-g500 w-full px-3.5 py-2.5 text-center text-base transition-colors md:py-2.5"
+                      role="menuitem"
                     >
                       공유
                     </button>
+
                     {isSeller && (
                       <button
-                        onClick={() => {
-                          onDeleteClick?.();
-                          setIsMenuOpen(false);
-                        }}
-                        className="border-g400 text-red hover:bg-g500 w-full border-t px-4 py-2.5 text-left text-base transition-colors md:py-3"
+                        onClick={handleDeleteAuction}
+                        className="border-g400 text-red hover:bg-g500 w-full border-t px-3.5 py-2.5 text-center text-base transition-colors md:py-2.5"
+                        role="menuitem"
                       >
                         삭제
                       </button>

@@ -103,3 +103,11 @@ export async function postBid(
   const { data } = await api.post<PostBidResponse>(url, body);
   return data;
 }
+
+// 삭제
+export const deleteAuction = async (
+  auctionId: number
+): Promise<{ message?: string }> => {
+  const res = await api.delete(`/auctions/${auctionId}`);
+  return res.data;
+};
