@@ -17,11 +17,12 @@ const ChatYou = ({
 }: ChatYouProps) => {
   const { message, messageType, read, createdAt } = msgInfo;
   const { counterpartNickname, counterpartProfileImageUrl } = counterpartInfo;
-  const { auctionImageUrl, auctionTitle } = auctionInfo;
+  const { auctionImageUrl, auctionTitle , chatroomId} = auctionInfo;
   const { userId, profile } = useAuthStore.getState();
 
   // 결제 실행 함수
   async function handlePayment() {
+    sessionStorage.setItem("prevPage", window.location.pathname);
     try {
       const tossPayments = await loadTossPayments(clientKey);
       const payment = tossPayments.payment({
