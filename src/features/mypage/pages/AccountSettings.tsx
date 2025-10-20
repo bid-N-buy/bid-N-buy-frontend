@@ -1,5 +1,5 @@
 // src/features/mypage/pages/AccountSettings.tsx
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../../shared/api/axiosInstance";
 import { useAuthStore, type AuthState } from "../../auth/store/authStore";
@@ -15,6 +15,8 @@ type PasswordForm = {
 };
 
 const MAX_IMG_MB = 5;
+/** ⚙️ 팀 업로더 엔드포인트(파일 → URL 반환). 실제값으로 교체하세요. */
+const UPLOAD_ENDPOINT = "/files/upload";
 
 const AccountSettings: React.FC = () => {
   const navigate = useNavigate();
@@ -24,7 +26,7 @@ const AccountSettings: React.FC = () => {
   const clearAuth = useAuthStore((s: any) => s.clear);
   const userId = (useAuthStore.getState() as any)?.userId ?? null;
 
-  // 닉네임 인라인 편집
+  // 닉네임
   const [nickname, setNickname] = useState(profile?.nickname ?? "NickName");
   const [isEditName, setIsEditName] = useState(false);
   const [nickLoading, setNickLoading] = useState(false);
@@ -37,18 +39,19 @@ const AccountSettings: React.FC = () => {
   });
   const [pwLoading, setPwLoading] = useState(false);
 
-  // 프로필 이미지
+  // 🔸 프로필 이미지
   const [imgPreview, setImgPreview] = useState<string | null>(null);
   const [imgFile, setImgFile] = useState<File | null>(null);
   const [imgLoading, setImgLoading] = useState(false);
+  const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
 
-  // 🔥 사용자 탈퇴
+  // 탈퇴
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [delPw, setDelPw] = useState("");
   const [delLoading, setDelLoading] = useState(false);
 
-  // 주소 모달
+  // 주소
   const [addrOpen, setAddrOpen] = useState(false);
   const [editing, setEditing] = useState<Address | null>(null);
 
@@ -85,17 +88,60 @@ const AccountSettings: React.FC = () => {
     remove,
   } = useAddresses();
 
-  /* actions */
+  /** ✅ 프로필(닉네임/이메일/이미지) 하이드레이션: GET /mypage */
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const { data, status } = await api.get("/mypage", {
+          validateStatus: (s) => s >= 200 && s < 500,
+        });
+        if (!alive) return;
+
+        if (status === 401 || status === 403) {
+          toast(null, "세션이 만료되었거나 권한이 없습니다.");
+          return;
+        }
+
+        const nick = data?.nickname ?? "NickName";
+        const email = data?.email ?? "";
+        const avatar = data?.profileImageUrl ?? null;
+
+        setNickname(nick); // 닉네임 입력 기본값 갱신
+        setProfile?.({ nickname: nick, email }); // 전역 프로필 갱신
+        setCurrentImageUrl(avatar);
+        // temperature 필요 시 여기에 상태/스토어 추가 가능: data?.temperature
+      } catch {
+        toast(null, "프로필 정보를 불러오지 못했습니다.");
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [setProfile]);
+
+  /* ✅ 닉네임 변경: PUT /auth/{userId}/nickname  { nickname } */
   const submitNickname = async () => {
     const v = nickname.trim();
     if (!v) return toast(null, "닉네임을 입력하세요.");
     if (v.length < 2 || v.length > 20)
       return toast(null, "닉네임은 2~20자로 입력하세요.");
+    if (!userId) return toast(null, "userId를 확인할 수 없습니다.");
+
     try {
       setNickLoading(true);
-      await api.patch("/users/me", { nickname: v });
+      const { status, data } = await api.put(
+        `/auth/${userId}/nickname`,
+        { nickname: v },
+        { validateStatus: (s) => s >= 200 && s < 500 }
+      );
+      if (status === 401 || status === 403) {
+        toast(null, "세션이 만료되었거나 권한이 없습니다.");
+        return;
+      }
+      // 전역 스토어 반영
       setProfile({ nickname: v, email: profile?.email });
-      toast("닉네임이 변경되었습니다.", null);
+      toast(data?.message ?? "닉네임이 변경되었습니다.", null);
       setIsEditName(false);
     } catch (e: any) {
       const m =
@@ -108,7 +154,7 @@ const AccountSettings: React.FC = () => {
     }
   };
 
-  // 비밀번호 변경
+  /* 비밀번호 변경 */
   const submitPassword = async () => {
     const { currentPassword, newPassword, newPassword2 } = pw;
     if (!currentPassword || !newPassword || !newPassword2)
@@ -139,6 +185,7 @@ const AccountSettings: React.FC = () => {
     }
   };
 
+  /** 파일 선택 */
   const onPickImage = () => fileRef.current?.click();
 
   const onFileChange: React.ChangeEventHandler<HTMLInputElement> = (e) => {
@@ -150,23 +197,46 @@ const AccountSettings: React.FC = () => {
     setImgPreview(URL.createObjectURL(f));
   };
 
+  /** 파일 업로드 → URL(공개 접근 URL) 획득 */
+  const uploadImageAndGetUrl = async (file: File): Promise<string> => {
+    const form = new FormData();
+    form.append("file", file);
+    const { data } = await api.post(UPLOAD_ENDPOINT, form, {
+      headers: { "Content-Type": "multipart/form-data" },
+      validateStatus: (s) => s >= 200 && s < 500,
+    });
+    const url: string | undefined =
+      data?.url ?? data?.imageUrl ?? data?.profileImageUrl;
+    if (!url) throw new Error("업로드 응답에 이미지 URL이 없습니다.");
+    return url;
+  };
+
+  /** 업로드 후 PUT /auth/{userId}/profile 로 반영 */
   const submitImage = async () => {
     if (!imgFile) return toast(null, "변경할 이미지를 먼저 선택하세요.");
+    if (!userId) return toast(null, "userId를 확인할 수 없습니다.");
+
     try {
       setImgLoading(true);
-      const form = new FormData();
-      form.append("image", imgFile);
-      if (!userId)
-        return toast(null, "userId가 없어 업로드 불가(/auth/profile 권장)");
-      await api.put(`/auth/${userId}/profile`, form, {
-        headers: { "Content-Type": "multipart/form-data" },
+      // 1) 파일 업로드해서 최종 접근 URL 확보
+      const uploadedUrl = await uploadImageAndGetUrl(imgFile);
+      // 2) 서버 프로필에 URL 반영 (명세 키: profileImageUrl)
+      await api.put(`/auth/${userId}/profile`, {
+        profileImageUrl: uploadedUrl,
+      });
+      // 3) UI 갱신 & 전역 스토어(선택)
+      setCurrentImageUrl(uploadedUrl);
+      setProfile?.({
+        nickname: profile?.nickname ?? "NickName",
+        email: profile?.email ?? "",
       });
       toast("프로필 이미지가 변경되었습니다.", null);
     } catch (e: any) {
       const m =
         e?.response?.data?.message ??
         e?.response?.data?.error ??
-        "이미지 업로드에 실패했습니다.";
+        e?.message ??
+        "이미지 업로드/변경에 실패했습니다.";
       toast(null, m);
     } finally {
       setImgLoading(false);
@@ -176,6 +246,9 @@ const AccountSettings: React.FC = () => {
       if (fileRef.current) fileRef.current.value = "";
     }
   };
+
+  // const [delPw, setDelPw] = useState("");
+  // const [delLoading, setDelLoading] = useState(false);
 
   const openDelete = () => {
     setDelPw("");
@@ -226,10 +299,17 @@ const AccountSettings: React.FC = () => {
       {/* 상단: 아바타 + 이름 + 이미지 변경 */}
       <div className="mb-8 flex items-center gap-4">
         <div className="relative h-[96px] w-[96px] overflow-hidden rounded-full bg-neutral-200">
+          {/* 우선순위: 미리보기 > 서버 반영된 현재 URL */}
           {imgPreview ? (
             <img
               src={imgPreview}
               alt="미리보기"
+              className="h-full w-full object-cover"
+            />
+          ) : currentImageUrl ? (
+            <img
+              src={currentImageUrl}
+              alt="프로필"
               className="h-full w-full object-cover"
             />
           ) : null}
@@ -414,7 +494,6 @@ const AccountSettings: React.FC = () => {
             type="button"
             className="rounded-full bg-purple-600 px-3 py-[6px] text-[13px] text-white hover:opacity-90"
             onClick={() => {
-              // 추가: editing을 null로 두고 모달에서 빈 폼으로 시작
               setEditing(null);
               setAddrOpen(true);
             }}
@@ -436,11 +515,14 @@ const AccountSettings: React.FC = () => {
         />
       </section>
 
-      {/* 하단: 탈퇴하기 */}
+      {/* 하단: 탈퇴 */}
       <div className="mb-2 flex justify-end">
         <button
           type="button"
-          onClick={openDelete}
+          onClick={() => {
+            setDelPw("");
+            setDeleteOpen(true);
+          }}
           className="rounded-md px-2 py-1 text-[12px] text-neutral-400 hover:text-rose-600"
         >
           탈퇴하기
@@ -459,7 +541,7 @@ const AccountSettings: React.FC = () => {
         </p>
       )}
 
-      {/* 🔒 탈퇴 모달 */}
+      {/* 탈퇴 모달 */}
       {deleteOpen && (
         <div
           role="dialog"
@@ -514,16 +596,15 @@ const AccountSettings: React.FC = () => {
         </div>
       )}
 
-      {/* 📦 주소 편집 모달 */}
+      {/* 주소 편집 모달 */}
       <AddressEditorModal
         open={addrOpen}
-        initial={editing} // Address | null
+        initial={editing}
         onClose={() => {
           setAddrOpen(false);
           setEditing(null);
         }}
         onSave={async (draft) => {
-          // draft.id 있으면 수정, 없으면 추가
           const payload: AddressDraft = {
             receiver: draft.receiver.trim(),
             phone: draft.phone.trim(),
