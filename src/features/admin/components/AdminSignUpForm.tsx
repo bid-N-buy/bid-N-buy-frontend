@@ -1,34 +1,30 @@
 import React, { useState } from "react";
-import axios, { AxiosError } from "axios";
+import { AxiosError } from "axios";
+import api from "../../../shared/api/axiosInstance";
 import { useNavigate } from "react-router-dom";
 import type { AdminDto } from "../types/AdminType";
 import { ChevronRight } from "lucide-react";
 
 type ApiErr = { message?: string; error?: string };
-const BASE = import.meta.env.VITE_BACKEND_ADDRESS ?? "http://localhost:8080";
-
-const normEmail = (raw: string) => raw.trim().toLowerCase();
-
-/** 공개 전용 axios (Authorization 절대 안 붙음) */
-const publicApi = axios.create({
-  baseURL: BASE,
-  withCredentials: true,
-  timeout: 10_000,
-});
 
 const AdminSignUpForm = () => {
   const navigate = useNavigate();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [password2, setPassword2] = useState("");
-  const [nickname, setNickname] = useState("");
-  const [ipAdress, setIpAdress] = useState("");
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [password2, setPassword2] = useState<string>("");
+  const [nickname, setNickname] = useState<string>("");
+  const [ipConsentAgreed, setIpConsentAgreed] = useState<boolean>(false);
 
   const [loadingSubmit, setLoadingSubmit] = useState<boolean>(false);
   const [msg, setMsg] = useState<string | null>(null);
 
-  // 4) 회원가입 제출
+  const handleIpConsentAgreed = (e) => {
+    const isChecked = e.target.checked;
+    setIpConsentAgreed(isChecked);
+  };
+
+  // 회원가입 제출
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setMsg(null);
@@ -41,20 +37,25 @@ const AdminSignUpForm = () => {
       setMsg("비밀번호가 일치하지 않습니다.");
       return;
     }
+    if (!ipConsentAgreed) {
+      setMsg("IP 수집 및 이용에 동의해 주세요.");
+      return;
+    }
 
     try {
       setLoadingSubmit(true);
 
-      const { data } = await publicApi.post<AdminDto>("/admin/auth/signup", {
-        email: normEmail(email),
+      const { data } = await api.post<AdminDto>("/admin/auth/signup", {
+        email,
         password,
         nickname,
+        ipConsentAgreed,
       });
 
       if (data?.email) {
         // ✅ 가입 성공 → 로그인 페이지로 이동 (+ 배너 표시용 쿼리)
         navigate("/admin/login?signedUp=1", { replace: true });
-        setMsg("회원가입이 완료되었습니다. (인증메일 발송됨)");
+        setMsg("회원가입이 완료되었습니다.");
         // 필요 시 이동:
         // window.location.href = "/login";
       } else {
@@ -76,7 +77,7 @@ const AdminSignUpForm = () => {
     <form onSubmit={handleSubmit} className="m-auto w-[420px]">
       {/* 이메일 + (선택) 중복확인/인증 */}
       <div className="mb-[20px]">
-        <h5 className="text-h5 font-bold">이메일</h5>
+        <h5 className="text-h5 mb-[10px] font-bold">이메일</h5>
         <div>
           <input
             type="email"
@@ -123,7 +124,7 @@ const AdminSignUpForm = () => {
           type="text"
           value={nickname}
           onChange={(e) => setNickname(e.target.value)}
-          className="focus:border-purple mb-[50px] h-[40px] w-[420px] rounded-md border px-3 outline-none focus:border-2"
+          className="focus:border-purple mb-[20px] h-[40px] w-[420px] rounded-md border px-3 outline-none focus:border-2"
           placeholder="닉네임을 입력해 주세요"
           autoComplete="nickname"
         />
@@ -131,13 +132,14 @@ const AdminSignUpForm = () => {
 
       <div>
         <label htmlFor="ipConsentAgreed">
-          <span className="flex">
+          <span className="mb-[20px] flex">
             <input
               type="checkbox"
               name="ipConsentAgreed"
               id="ipConsentAgreed"
               className="mr-1"
-              onClick={() => setIpAdress()}
+              onChange={handleIpConsentAgreed}
+              checked={ipConsentAgreed}
             />
             IP 수집 및 이용에 동의합니다
             <ChevronRight />
