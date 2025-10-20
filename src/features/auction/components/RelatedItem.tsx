@@ -1,54 +1,96 @@
-// todo 이거 어떻게 처리할지 정해야
-import React from "react";
+import React, { useEffect, useState } from "react";
 import ProductCard from "./ProductCard";
+import { fetchAuctions, type FetchAuctionsParams } from "../api/auctions";
 import type { AuctionItem } from "../types/auctions";
 
 type RelatedItemProps = {
-  items?: AuctionItem[];
+  mainCategoryId?: number; // 카테고리 id
+  currentAuctionId?: number; // 현재 상품 제외
   onCardClick?: (id: number) => void;
-  onLikeToggle?: (id: number, liked: boolean) => void;
 };
 
 const RelatedItem = ({
-  items = [],
+  mainCategoryId,
+  currentAuctionId,
   onCardClick,
-  onLikeToggle,
 }: RelatedItemProps) => {
-  // 더미데이터
-  const dummyItems: AuctionItem[] = Array(4)
-    .fill(null)
-    .map((_, i) => ({
-      auctionId: i + 1,
-      title: "관련 상품 제목",
-      currentPrice: 50000,
-      endTime: "2025-10-20T10:00:00",
-      mainImageUrl: null,
-      sellingStatus: "진행중" as const,
-      sellerNickname: "판매자",
-      wishCount: 10,
-    }));
+  const [items, setItems] = useState<AuctionItem[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const displayItems = items.length > 0 ? items : dummyItems;
+  useEffect(() => {
+    if (!mainCategoryId) return;
+
+    const fetchRelated = async () => {
+      try {
+        setLoading(true);
+        const query: FetchAuctionsParams = {
+          mainCategoryId,
+          sortBy: "latest",
+          includeEnded: false,
+          page: 0,
+          size: 5, // 현재 상품 제외 가능성 고려해 5개 요청
+        };
+        const data = await fetchAuctions(query);
+        const list =
+          (data as any).data ??
+          (data as any).items ??
+          (data as any).content ??
+          [];
+
+        // 현재 상품 제외하고 4개만
+        const filtered = (list as AuctionItem[])
+          .filter((item) => item.auctionId !== currentAuctionId)
+          .slice(0, 4);
+
+        setItems(filtered);
+      } catch (error) {
+        console.error("연관 상품 불러오기 실패:", error);
+        setItems([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRelated();
+  }, [mainCategoryId, currentAuctionId]);
+
+  // 연관 상품 없으면 섹션 자체를 숨김
+  if (!loading && items.length === 0) {
+    return null;
+  }
 
   return (
     <section
-      className="flex flex-col gap-1.5 px-1.5 sm:gap-1.5 sm:px-3 md:gap-2 lg:gap-3.5"
+      className="flex flex-col gap-3.5 px-1.5 sm:px-3"
       aria-label="연관 상품"
     >
       <span className="text-g100 text-h5 sm:text-h4 font-bold">
         이런 상품은 어때요?
       </span>
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:gap-[30px] xl:grid-cols-4">
-        {displayItems.map((item) => (
-          <ProductCard
-            key={item.auctionId}
-            item={item}
-            liked={false}
-            onCardClick={onCardClick}
-            onLikeToggle={onLikeToggle}
-          />
-        ))}
-      </div>
+
+      {loading ? (
+        // 로딩 스켈레톤
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:gap-[30px] xl:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="animate-pulse">
+              <div className="bg-g500/60 aspect-square w-full rounded-2xl" />
+              <div className="bg-g500/60 mt-3 h-4 w-3/4 rounded" />
+              <div className="bg-g500/60 mt-2 h-5 w-1/2 rounded" />
+            </div>
+          ))}
+        </div>
+      ) : (
+        // 상품 목록
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:gap-[30px] xl:grid-cols-4">
+          {items.map((item) => (
+            <ProductCard
+              key={item.auctionId}
+              item={item}
+              onCardClick={onCardClick}
+            />
+          ))}
+        </div>
+      )}
     </section>
   );
 };

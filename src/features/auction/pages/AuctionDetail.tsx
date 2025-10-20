@@ -111,7 +111,8 @@ const AuctionDetail = () => {
       {/* 하단 - RelatedItem */}
       <section className="w-full">
         <RelatedItem
-          items={[]} // todo 실제 데이터 전달
+          mainCategoryId={auction.categoryId} // 카테고리 id 전달
+          currentAuctionId={auction.auctionId} // 현재 상품 제외
           onCardClick={handleCardClick}
         />
       </section>
