@@ -15,7 +15,7 @@ import { useAuthInit } from "../../features/auth/hooks/UseAuthInit";
 import api from "../../shared/api/axiosInstance";
 import { useChatModalStore } from "../store/ChatModalStore";
 
-const Header: React.FC = () => {
+const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -131,10 +131,10 @@ const Header: React.FC = () => {
         {/* 검색 (데스크탑) */}
         <form
           onSubmit={handleSearch}
-          className="hidden w-100 items-center justify-between rounded-md border-1 border-gray-400 px-3 py-2 text-sm md:flex lg:w-200 dark:bg-gray-900 dark:text-gray-400 dark:placeholder:text-gray-600"
+          className="text-g100 focus-within:border-purple border-g300 dark:text-g400 text-h7 hidden w-100 items-center justify-between rounded-md border px-3 py-2.5 md:flex lg:w-200 dark:bg-gray-900 dark:placeholder:text-gray-600"
         >
           <input
-            type="search"
+            type="text"
             id="search"
             placeholder="검색어를 입력해 주세요"
             className="w-[90%] min-w-[120px] focus:outline-none lg:min-w-[250px]"
@@ -180,9 +180,9 @@ const Header: React.FC = () => {
           {!ready ? (
             // 재발급 대기 스켈레톤
             <ul className="flex gap-4">
-              <li className="h-4 w-28 animate-pulse rounded bg-gray-200" />
-              <li className="h-4 w-14 animate-pulse rounded bg-gray-200" />
-              <li className="h-4 w-16 animate-pulse rounded bg-gray-200" />
+              <li className="bg-g500 h-4 w-28 animate-pulse" />
+              <li className="bg-g500 h-4 w-14 animate-pulse" />
+              <li className="bg-g500 h-4 w-16 animate-pulse" />
             </ul>
           ) : isAuthed ? (
             // 로그인 후
