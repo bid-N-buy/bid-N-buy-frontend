@@ -9,10 +9,24 @@ import type { ModalProps } from "../types/ChatType";
 import { useChatModalStore } from "../../../shared/store/ChatModalStore";
 import ChatList from "./ChatList";
 import ChatRoom from "./ChatRoom";
+import AddressModal from "./AddressModal";
+import type { Address } from "../../mypage/types/address";
+import type { ChatAddressModalProps } from "../types/ChatType";
 import { X, ChevronLeft, EllipsisVertical } from "lucide-react";
 
 const ChatModal = ({ onClose }: ModalProps) => {
   const modalRef = useRef<HTMLDivElement>(null);
+  const [isAdOpen, setIsAdOpen] = useState(false); // 주소
+  const [editing, setEditing] = useState<Address | null>(null);
+
+  const onToggleModal = () => {
+    setIsAdOpen((prev) => !prev);
+  };
+
+  const handleComplete = (data: Address) => {
+    console.log(data);
+    onToggleModal(); // 주소창은 자동으로 사라지므로 모달만 꺼주면 된다.
+  };
 
   // 채팅목록/채팅방 화면 상태관리
   const { targetView, selectedChatroomId } = useChatModalStore(
@@ -137,6 +151,29 @@ const ChatModal = ({ onClose }: ModalProps) => {
           </>
         )}
       </div>
+      {isAdOpen && (
+        <AddressModal
+          open={isAdOpen}
+          initial={editing}
+          onClose={() => {
+            setIsAdOpen(false);
+            setEditing(null);
+          }}
+          onSave={async (draft) => {
+            const payload: ChatAddressModalProps = {
+              postcode: draft.postcode.trim(),
+              address1: draft.address1.trim(),
+              address2: (draft.address2 ?? "").trim(),
+              isDefault: !!draft.isDefault,
+            };
+            if (draft.id) {
+              await update(draft.id, payload);
+            } else {
+              await add(payload);
+            }
+          }}
+        />
+      )}
       <div className="h-[calc(100%-59px)] overflow-x-hidden overflow-y-auto">
         {currentView === "list" && (
           <ChatList

@@ -111,3 +111,10 @@ export interface ChatInputProps {
   sendMessage: () => void;
   handleSendImage: (image: File) => void;
 }
+
+export interface ChatAddressModalProps {
+  postcode: string;
+  address1: string;
+  address2?: string;
+  isDefault: boolean;
+}

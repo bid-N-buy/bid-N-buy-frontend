@@ -50,7 +50,7 @@ const ChatInput = ({
   };
 
   // 버튼 통합
-  const handleSendButtonClick = (e) => {
+  const submitMessage = (e) => {
     e.preventDefault(); // 폼 전송 방지
 
     if (file) {
@@ -64,7 +64,7 @@ const ChatInput = ({
 
   return (
     <div className="bg-white px-3 py-2">
-      <form className="w-full" onSubmit={sendMessage}>
+      <form className="w-full" onSubmit={submitMessage}>
         <div
           className={`border-purple relative block min-h-21 w-full rounded-md border-2 p-2 ${preview && `flex gap-2`}`}
         >
@@ -111,7 +111,6 @@ const ChatInput = ({
           <button
             type="submit"
             className="bg-purple w-15 rounded-md py-2 text-white"
-            onClick={handleSendButtonClick}
           >
             전송
           </button>
