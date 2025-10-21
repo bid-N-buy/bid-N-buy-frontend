@@ -71,7 +71,7 @@ export interface ChatMessageProps {
 export type ChatMeProps = {
   msgInfo: Pick<
     ChatMessageProps,
-    "createdAt" | "message" | "read" | "messageType"
+    "createdAt" | "message" | "read" | "messageType" | "imageUrl"
   >;
   sellerId: number;
   currentPrice: number;
@@ -87,7 +87,7 @@ export type ChatMeProps = {
 export type ChatYouProps = {
   msgInfo: Pick<
     ChatMessageProps,
-    "createdAt" | "message" | "read" | "messageType"
+    "createdAt" | "message" | "read" | "messageType" | "imageUrl"
   >;
   counterpartInfo: Pick<
     ChatListItemProps,
@@ -109,5 +109,5 @@ export interface ChatInputProps {
   inputMessage: string;
   setInputMessage: (message: string) => void;
   sendMessage: () => void;
-  handleSendImage: (imageUrl: File) => void;
+  handleSendImage: (image: File) => void;
 }
