@@ -7,6 +7,8 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryStore } from "../../features/auction/store/categoryStore";
 import { getCategoryIcon } from "../utils/iconMap";
 import AuctionSection from "../components/AuctionSection";
+import AuctionGuideCard from "../components/AuctionGuideCard";
+import ServiceIntroCard from "../components/ServiceIntroCard";
 
 const banners = [
   { src: Banner1, to: "/auctions/new", alt: "Banner 1" }, // 로그인 -> 경매 등록, 비로그인 -> 로그인 페이지
@@ -44,7 +46,7 @@ const Main = () => {
               ? Array.from({ length: 10 }).map((_, i) => (
                   <div key={i} className="flex flex-col items-center gap-3">
                     <div className="bg-g500/60 h-[90px] w-[90px] animate-pulse rounded-full" />
-                    <div className="bg-g500/60 h-[16px] w-[48px] animate-pulse rounded" />
+                    <div className="bg-g500/60 h-[16px] w-[48px] animate-pulse" />
                   </div>
                 ))
               : mains.map((c) => {
@@ -69,40 +71,14 @@ const Main = () => {
         </div>
       </section>
 
-      {/* 경매 중인 상품 영역 */}
-      {/* <section className="pb-[60px]">
-        <div className="container">
-          <div className="mb-8 flex items-center justify-between">
-            <h4 className="text-g100 font-bold">경매 중인 상품</h4>
-            <button
-              onClick={() => navigate("/auctions")}
-              className="text-g300 hover:text-purple text-[15px] transition-colors"
-            >
-              전체보기
-            </button>
-          </div>
-          <div className="bg-g500 flex min-h-[500px] w-full items-center justify-center">
-            <span className="text-g300 text-[20px]">
-              경매 중인 상품 영역 (1320 x 500+)
-            </span>
-          </div>
-        </div>
-      </section> */}
-
       <AuctionSection title="경매 중인 상품" size={10} moreLink="/auctions" />
 
-      {/* (보류) 인기 경매 */}
+      {/* 보류 영역 */}
       <section className="pb-[60px]">
         <div className="container">
-          <div className="mb-8 flex items-center justify-between">
-            <h4 className="text-g100 font-bold">(보류) 인기 경매</h4>
-            <button className="text-g300 hover:text-purple text-[15px] transition-colors">
-              전체보기
-            </button>
-          </div>
-
-          <div className="bg-g500 flex min-h-[500px] w-full items-center justify-center">
-            <span className="text-g300 text-[20px]">보류 영역</span>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8">
+            <AuctionGuideCard />
+            <ServiceIntroCard />
           </div>
         </div>
       </section>
