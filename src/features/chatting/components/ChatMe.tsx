@@ -8,7 +8,7 @@ const ChatMe = ({
   currentPrice,
   auctionInfo,
 }: ChatMeProps) => {
-  const { message, messageType, read, createdAt } = msgInfo;
+  const { message, messageType, read, createdAt, imageUrl } = msgInfo;
   const { auctionImageUrl, auctionTitle } = auctionInfo;
   const userId = useAuthStore.getState().userId;
   const isSenderSeller = sellerId === userId;
@@ -45,6 +45,23 @@ const ChatMe = ({
         </div>
         <div className="bg-g300 my-2 h-[1px] border-0" />
         <div>{message}</div>
+      </div>
+    </div>
+  ) : messageType === "IMAGE" ? (
+    <div className="m-2 flex items-end justify-end gap-2 text-right">
+      <div>
+        <p className="text-g300 text-xs">{read ? "읽음" : "전송됨"}</p>
+        <p className="text-g300 text-xs">
+          {new Date(createdAt).toLocaleTimeString()}
+        </p>
+      </div>
+      <div className="bg-light-purple max-w-80 rounded-md p-3">
+        <img
+          src={imageUrl!}
+          alt="전송된 이미지"
+          className="max-w-full object-cover"
+        />
+        <p className="hidden">{message}</p>
       </div>
     </div>
   ) : (

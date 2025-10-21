@@ -15,9 +15,9 @@ const ChatYou = ({
   currentPrice,
   auctionInfo,
 }: ChatYouProps) => {
-  const { message, messageType, read, createdAt } = msgInfo;
+  const { message, messageType, read, createdAt, imageUrl } = msgInfo;
   const { counterpartNickname, counterpartProfileImageUrl } = counterpartInfo;
-  const { auctionImageUrl, auctionTitle , chatroomId} = auctionInfo;
+  const { auctionImageUrl, auctionTitle } = auctionInfo;
   const { userId, profile } = useAuthStore.getState();
 
   // 결제 실행 함수
@@ -119,6 +119,29 @@ const ChatYou = ({
                 </button>
               </div>
             </div>
+          </div>
+          <div>
+            <p className="text-g300 text-xs">{read ? "읽음" : "전송됨"}</p>
+            <p className="text-g300 text-xs">
+              {new Date(createdAt).toLocaleTimeString()}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  ) : messageType === "IMAGE" ? (
+    <div className="mx-2 my-4 flex gap-2">
+      <Avatar imageUrl={counterpartProfileImageUrl} />
+      <div>
+        <p className="mb-2 font-bold">{counterpartNickname}</p>
+        <div className="flex items-end">
+          <div className="bg-g400 mr-2 max-w-65 rounded-md p-3">
+            <img
+              src={imageUrl!}
+              alt="전송된 이미지"
+              className="max-w-full object-cover"
+            />
+            <p className="hidden">{message}</p>
           </div>
           <div>
             <p className="text-g300 text-xs">{read ? "읽음" : "전송됨"}</p>
