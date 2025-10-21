@@ -60,10 +60,8 @@ const ChatRoom = ({
     if (!lastMessage) {
       return;
     }
-    const lastMessageId = lastMessage.chatmessageId;
-
-    sendReadStatus(lastMessageId);
-  }, [chatroomId, userId, isConnected]);
+    if (lastMessage.senderId !== userId) sendReadStatus();
+  }, [chatroomId, userId, isConnected, messages]);
 
   // 이전 메시지 로드
   const fetchMessageHistory = async (chatroomId: number, token: string) => {
@@ -108,9 +106,10 @@ const ChatRoom = ({
         });
 
         client.subscribe(readDestination, (readMessage) => {
-          console.log("읽음 처리 중");
+          console.log("읽음 처리 중"); // 🚨 이 로그가 찍혀야 실시간 반영이 시작됩니다.
           try {
             const readData = JSON.parse(readMessage.body);
+            // 서버 알림을 받아 setMessages로 화면 갱신
             setMessages((prevMessages) =>
               prevMessages.map((msg) =>
                 msg.chatmessageId <= readData.lastReadMessageId
@@ -158,25 +157,18 @@ const ChatRoom = ({
   }, [messages]);
 
   // [전송] 읽음 상태
-  const sendReadStatus = (lastMessageId: number) => {
-    const client = clientRef.current;
-
-    if (!client || !client.connected || !lastMessageId) {
-      console.warn("오류 혹은 읽을 메시지 없음");
-      return;
+  const sendReadStatus = async () => {
+    if (!token || !chatroomId) return;
+    try {
+      await api.put(`/chat/${chatroomId}/read`, {
+        headers: {
+          Authorizations: `Bearer ${token}`,
+        },
+      });
+      console.log("채팅 읽음 상태 전송 완료");
+    } catch (error) {
+      console.error("읽음 상태 전송 실패:", error);
     }
-
-    const readStatusPayload = {
-      chatroomId: chatroomId,
-      lastMessageId: lastMessageId,
-      readerId: userId,
-    };
-
-    client.publish({
-      destination: `/chat/${chatroomId}/read`, // 서버의 MessageMapping 주소에 맞춰 수정
-      body: JSON.stringify(readStatusPayload),
-      headers: { "content-type": "application/json" },
-    });
   };
 
   // [전송] 거래 요청 메시지
@@ -227,7 +219,6 @@ const ChatRoom = ({
       // 폼 데이터로 전송(요청 파라미터)
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("messageType", "IMAGE");
 
       const url = await api.post(`/chat/${chatroomId}/image`, formData, {
         headers: {
@@ -296,7 +287,7 @@ const ChatRoom = ({
       <div
         ref={chatContainerRef}
         key={chatroomId}
-        className="h-[calc(100%-258px)] w-[100%] overflow-x-hidden overflow-y-scroll"
+        className="h-[calc(100%-15.15rem)] w-[100%] overflow-x-hidden overflow-y-scroll"
       >
         {messages.length === 0 && (
           <div className="text-g300 flex h-[100%] items-center justify-center text-sm">

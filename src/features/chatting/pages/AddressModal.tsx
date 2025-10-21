@@ -1,7 +1,7 @@
-// AddressEditorModal.tsx (일부만 발췌)
+// AddressModal.tsx (일부만 발췌)
 import React, { useEffect, useState } from "react";
-import PostcodeSearchButton from "./PostcodeSearchButton"; // 경로 맞춰주세요
-import type { Address, AddressDraft } from "../../types/address";
+import PostcodeSearchButton from "../../mypage/components/myAddress/PostcodeSearchButton"; // 경로 맞춰주세요
+import type { Address, AddressDraft } from "../../mypage/types/address";
 
 type Props = {
   open: boolean;
@@ -15,14 +15,7 @@ type Props = {
 const lineInput =
   "w-full rounded-none border-0 border-b border-neutral-300 bg-transparent px-0 py-[10px] text-[15px] placeholder:text-neutral-400 focus:border-neutral-800 focus:ring-0";
 
-const AddressEditorModal: React.FC<Props> = ({
-  open,
-  initial,
-  onClose,
-  onSave,
-}) => {
-  const [receiver, setReceiver] = useState(initial?.receiver ?? "");
-  const [phone, setPhone] = useState(initial?.phone ?? "");
+const AddressModal: React.FC<Props> = ({ open, initial, onClose, onSave }) => {
   const [postcode, setPostcode] = useState(initial?.postcode ?? "");
   const [address1, setAddress1] = useState(initial?.address1 ?? "");
   const [address2, setAddress2] = useState(initial?.address2 ?? "");
@@ -33,8 +26,6 @@ const AddressEditorModal: React.FC<Props> = ({
 
   useEffect(() => {
     if (!open) return;
-    setReceiver(initial?.receiver ?? "");
-    setPhone(initial?.phone ?? "");
     setPostcode(initial?.postcode ?? "");
     setAddress1(initial?.address1 ?? "");
     setAddress2(initial?.address2 ?? "");
@@ -44,20 +35,13 @@ const AddressEditorModal: React.FC<Props> = ({
   if (!open) return null;
 
   const handleSave = async () => {
-    if (
-      !receiver.trim() ||
-      !phone.trim() ||
-      !postcode.trim() ||
-      !address1.trim()
-    ) {
+    if (!postcode.trim() || !address1.trim()) {
       alert("받는 사람, 전화번호, 우편번호, 주소1은 필수입니다.");
       return;
     }
     setSubmitting(true);
     await onSave({
       ...(initial?.id ? { id: initial.id } : {}),
-      receiver: receiver.trim(),
-      phone: phone.trim(),
       postcode: postcode.trim(),
       address1: address1.trim(),
       address2: address2.trim(),
@@ -81,28 +65,6 @@ const AddressEditorModal: React.FC<Props> = ({
         <h3 className="text-[18px] font-semibold text-neutral-900">
           {initial?.id ? "주소 수정" : "새 주소 추가"}
         </h3>
-
-        {/* 받는 사람 */}
-        <label className="mt-4 mb-1 block text-[12px] text-neutral-500">
-          받는 사람
-        </label>
-        <input
-          className={lineInput}
-          value={receiver}
-          onChange={(e) => setReceiver(e.target.value)}
-          placeholder="이름"
-        />
-
-        {/* 전화번호 */}
-        <label className="mt-4 mb-1 block text-[12px] text-neutral-500">
-          전화번호
-        </label>
-        <input
-          className={lineInput}
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          placeholder="010-0000-0000"
-        />
 
         {/* 우편번호 + 검색 */}
         <div className="mt-4 flex items-end gap-2">
@@ -190,4 +152,4 @@ const AddressEditorModal: React.FC<Props> = ({
   );
 };
 
-export default AddressEditorModal;
+export default AddressModal;
