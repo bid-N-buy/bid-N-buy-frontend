@@ -22,7 +22,7 @@ import AdminAsideMenu from "../features/admin/components/AdminAsideMenu";
 
 // 공통
 const Header = React.lazy(() => import("../shared/components/Header"));
-// const Footer = React.lazy(() => import("../shared/components/Footer"));
+const Footer = React.lazy(() => import("../shared/components/Footer"));
 
 const LoginPage = React.lazy(
   () => import("../features/auth/pages/login/LoginPage")
@@ -104,7 +104,9 @@ function AppLayout() {
       <main className="container">
         <Outlet />
       </main>
-      <Suspense fallback={null}>{/* <Footer /> */}</Suspense>
+      <Suspense fallback={null}>
+        <Footer />
+      </Suspense>
     </div>
   );
 }
@@ -116,7 +118,9 @@ function AdminLayout() {
         <AdminAsideMenu />
         <Outlet />
       </main>
-      <Suspense fallback={null}>{/* <Footer /> */}</Suspense>
+      <Suspense fallback={null}>
+        <Footer />
+      </Suspense>
     </div>
   );
 }
