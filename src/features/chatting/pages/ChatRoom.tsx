@@ -61,7 +61,7 @@ const ChatRoom = ({
       return;
     }
     if (lastMessage.senderId !== userId) sendReadStatus();
-  }, [chatroomId, userId, isConnected, messages]);
+  }, [chatroomId, userId, isConnected, messages.length]);
 
   // 이전 메시지 로드
   const fetchMessageHistory = async (chatroomId: number, token: string) => {

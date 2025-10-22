@@ -17,7 +17,7 @@ export interface ChatListItemProps {
   counterpartProfileImageUrl: string | null;
   lastMessageTime: string;
   lastMessagePreview: string;
-  unis_readCount: number;
+  unreadCount: number;
 }
 
 export interface ChatListProps {
@@ -65,13 +65,13 @@ export interface ChatMessageProps {
   message: string;
   messageType: string;
   createdAt: string;
-  is_read: boolean;
+  read: boolean;
 }
 
 export type ChatMeProps = {
   msgInfo: Pick<
     ChatMessageProps,
-    "createdAt" | "message" | "is_read" | "messageType" | "imageUrl"
+    "createdAt" | "message" | "read" | "messageType" | "imageUrl"
   >;
   sellerId: number;
   currentPrice: number;
@@ -87,7 +87,7 @@ export type ChatMeProps = {
 export type ChatYouProps = {
   msgInfo: Pick<
     ChatMessageProps,
-    "createdAt" | "message" | "is_read" | "messageType" | "imageUrl"
+    "createdAt" | "message" | "read" | "messageType" | "imageUrl"
   >;
   counterpartInfo: Pick<
     ChatListItemProps,
