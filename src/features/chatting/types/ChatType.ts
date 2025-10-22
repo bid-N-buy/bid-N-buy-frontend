@@ -116,5 +116,4 @@ export interface ChatAddressModalProps {
   postcode: string;
   address1: string;
   address2?: string;
-  isDefault: boolean;
 }

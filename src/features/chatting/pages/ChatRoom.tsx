@@ -163,15 +163,14 @@ const ChatRoom = ({
     if (
       !token ||
       !chatroomId ||
-      !lastMessage
-      // || lastMessage.senderId === userId
+      !lastMessage ||
+      lastMessage.senderId === userId
     )
       return;
 
     setMessages((prevMessages) =>
       prevMessages.map((msg) =>
-        // msg.senderId !== userId &&
-        !msg.read ? { ...msg, read: true } : msg
+        msg.senderId !== userId && !msg.read ? { ...msg, read: true } : msg
       )
     );
     try {
