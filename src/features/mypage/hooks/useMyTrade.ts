@@ -6,49 +6,11 @@ import type {
   PurchaseResponseItem,
   SaleResponseItem,
 } from "../types/trade";
+import { fromPurchase, fromSale } from "../types/trade";
 
-/* ------------------ 유틸 ------------------ */
-const STATUS_LABELS: Record<string, TradeItem["status"]> = {
-  BIDDING: "입찰 중",
-  WIN: "낙찰",
-  CLOSED: "마감",
-  PENDING: "대기",
-  "입찰 중": "입찰 중",
-  낙찰: "낙찰",
-  마감: "마감",
-  대기: "대기",
-};
-
-const toStatus = (s?: string): TradeItem["status"] => {
-  if (!s) return "대기";
-  const key = s.trim();
-  const upper = key.toUpperCase();
-  return STATUS_LABELS[upper] ?? STATUS_LABELS[key] ?? "대기";
-};
-
+/* ------------------ 내부 유틸 ------------------ */
 const safeDate = (v?: string | number | null) =>
   v ? new Date(v).getTime() || 0 : 0;
-
-/* ---------- 서버 응답 → 공통 모델 ---------- */
-const fromPurchase = (r: PurchaseResponseItem): TradeItem => ({
-  id: String(r.id),
-  title: r.itemName,
-  sellerName: r.seller ?? "", // 필요시 구매자/판매자 필드명 맞추세요
-  thumbUrl: r.thumbnail ?? null,
-  status: toStatus(r.status),
-  auctionStart: r.startAt,
-  auctionEnd: r.endAt,
-});
-
-const fromSale = (r: SaleResponseItem): TradeItem => ({
-  id: String(r.id),
-  title: r.title,
-  sellerName: r.meAsSeller ?? "", // 자신(판매자) 표시용
-  thumbUrl: r.image ?? null,
-  status: toStatus(r.status),
-  auctionStart: r.startAt,
-  auctionEnd: r.endAt,
-});
 
 type UseMyTradesOptions = {
   /** 정렬 기준: 기본은 종료 시각 최신순 */
@@ -67,7 +29,7 @@ export function useMyTrades(opts: UseMyTradesOptions = {}) {
     sortBy = "auctionEnd",
     once = false,
     endpoints = {
-      purchases: "/mypage/purchases",
+      purchases: "/mypage/purchase",
       sales: "/mypage/sales",
     },
   } = opts;
@@ -120,7 +82,6 @@ export function useMyTrades(opts: UseMyTradesOptions = {}) {
   };
 
   useEffect(() => {
-    // once=true면 최초 1회만 자동 호출
     if (once && didRunOnceRef.current) return;
     didRunOnceRef.current = true;
     fetchAll();

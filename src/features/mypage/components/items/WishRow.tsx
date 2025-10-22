@@ -1,10 +1,10 @@
-import React from "react";
+import React, { useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import type { TradeItem } from "../../types/trade";
+import type { AuctionItem } from "../../../auction/types/auctions";
 
 type Props = {
-  item: TradeItem;
-  onToggleLike?: (id: string) => void;
+  item: AuctionItem;
+  onToggleLike?: (auctionId: number, nextLiked: boolean) => void;
 };
 
 const Heart: React.FC<{ filled?: boolean; color?: string }> = ({
@@ -25,32 +25,70 @@ const Heart: React.FC<{ filled?: boolean; color?: string }> = ({
   </svg>
 );
 
+function fmtEnd(dt?: string) {
+  if (!dt) return "";
+  const d = new Date(dt);
+  if (Number.isNaN(d.getTime())) return "";
+  const p2 = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())} ${p2(
+    d.getHours()
+  )}:${p2(d.getMinutes())}`;
+}
+
+function makeAbsolute(url?: string | null): string | null {
+  if (!url) return null;
+  if (/^https?:\/\//i.test(url)) return url;
+  try {
+    const path = url.startsWith("/") ? url : `/${url}`;
+    return `${window.location.origin}${path}`;
+  } catch {
+    return url;
+  }
+}
+
 export default function WishRow({ item, onToggleLike }: Props) {
   const nav = useNavigate();
 
-  const fmt = (dt?: string) => {
-    if (!dt) return "";
-    const d = new Date(dt);
-    if (Number.isNaN(d.getTime())) return "";
-    const p2 = (n: number) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())} ${p2(
-      d.getHours()
-    )}:${p2(d.getMinutes())}`;
+  const endStr = useMemo(() => fmtEnd(item.endTime), [item.endTime]);
+  const priceStr = useMemo(
+    () => (item.currentPrice ?? 0).toLocaleString("ko-KR"),
+    [item.currentPrice]
+  );
+
+  const thumb = useMemo(
+    () => makeAbsolute(item.mainImageUrl) ?? undefined,
+    [item.mainImageUrl]
+  );
+
+  const goDetail = useCallback(
+    () => nav(`/auctions/${item.auctionId}`),
+    [nav, item.auctionId]
+  );
+
+  const onKey = (e: React.KeyboardEvent<HTMLLIElement>) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      goDetail();
+    }
   };
+
+  const liked = !!item.liked;
 
   return (
     <li
       className="cursor-pointer select-none"
-      onClick={() => nav(`/auctions/${item.id}`)}
+      onClick={goDetail}
+      onKeyDown={onKey}
+      tabIndex={0}
       role="button"
       aria-label={item.title}
     >
       <div className="flex items-start gap-4 py-5">
         {/* 썸네일 */}
         <div className="h-16 w-16 shrink-0 overflow-hidden rounded bg-neutral-200">
-          {item.thumbUrl ? (
+          {thumb ? (
             <img
-              src={item.thumbUrl}
+              src={thumb}
               alt={item.title}
               className="h-full w-full object-cover"
               loading="lazy"
@@ -63,30 +101,40 @@ export default function WishRow({ item, onToggleLike }: Props) {
           <p className="truncate text-[16px] font-semibold text-neutral-900">
             {item.title}
           </p>
+
+          {/* 판매자 */}
           <p className="mt-1 text-sm text-neutral-600">
-            {item.counterparty ? `판매자: ${item.counterparty}` : ""}
+            {item.sellerNickname ? `판매자: ${item.sellerNickname}` : ""}
           </p>
+
+          {/* 상태 + 종료 시간 */}
           <p className="text-sm text-neutral-600">
-            {item.auctionEnd ? `경매 마감 시간 ${fmt(item.auctionEnd)}` : ""}
+            {endStr ? `경매 마감 시간 ${endStr}` : ""}
           </p>
+          {item.sellingStatus && (
+            <span className="mt-1 inline-flex items-center rounded-full border px-2 py-[2px] text-[11px] text-neutral-700">
+              {item.sellingStatus}
+            </span>
+          )}
         </div>
 
         {/* 우측: 하트 + 현재가 */}
         <div className="shrink-0 text-right">
           <button
             type="button"
-            aria-label="찜 해제"
+            aria-label={liked ? "찜 해제" : "찜 하기"}
+            aria-pressed={liked}
             className="mb-2 inline-flex items-center justify-center rounded-full p-1 hover:bg-neutral-50"
             onClick={(e) => {
               e.stopPropagation();
-              onToggleLike?.(item.id);
+              onToggleLike?.(item.auctionId, !liked);
             }}
           >
-            <Heart />
+            <Heart filled={liked} />
           </button>
           <div className="text-xs text-neutral-500">현재가</div>
           <div className="text-[15px] font-semibold text-neutral-900">
-            {item.price ? item.price.toLocaleString("ko-KR") : 0} 원
+            {priceStr} 원
           </div>
         </div>
       </div>

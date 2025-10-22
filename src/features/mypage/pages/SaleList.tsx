@@ -6,67 +6,108 @@ import TradeRowCompact from "../components/items/TradeRowCompact";
 import StatusTriFilter, {
   type TriFilterValue,
 } from "../components/filters/StatusTriFilter";
-// 상태+종료시간을 함께 판단하는 아이템 전용 헬퍼
-import { isOngoing as isOngoingItem } from "../utils/tradeStatus";
-import { MOCK_SALES } from "../mocks/tradeMocks"; // 경로 확인
+import { MOCK_SALES } from "../mocks/tradeMocks";
+
+// ✅ 공통 유틸: 판매탭은 BEFORE(= "시작전")를 진행으로 취급
+import { isOngoing, compareTradeItems } from "../utils/tradeStatus";
+
+// ✅ API 타입 (경로는 프로젝트 구조에 맞춰 조정)
+import type { AuctionItem } from "../../auction/types/auctions";
+
+/** 유틸용으로 최소 필드만 노멀라이즈한 타입 */
+type NormForFilter = {
+  id: number; // auctionId or id
+  status: string; // sellingStatus or status
+  auctionEnd: string; // endTime or auctionEnd
+  original: AuctionItem | any; // 원본 아이템(렌더링용)
+};
 
 export default function SaleList() {
   const [filter, setFilter] = useState<TriFilterValue>("all");
   const nav = useNavigate();
 
+  // ✅ useSales는 AuctionItem[]을 반환한다고 가정 (목업도 같은 스키마)
   const { data, loading, error } = useSales({
     page: 0,
     size: 20,
     sort: "end",
-    useMock: true, // 서버 비었으면 훅에서 목업 채움
+    useMock: true,
   });
 
-  // 실데이터가 있으면 사용, 없으면 목업
-  const base = useMemo(() => {
-    return data && data.length > 0 ? data : MOCK_SALES;
-  }, [data]);
+  // ✅ 실데이터 우선, 없으면 목업
+  const baseRaw: (AuctionItem | any)[] = useMemo(
+    () => (data && data.length > 0 ? data : (MOCK_SALES as any[])),
+    [data]
+  );
 
-  // 카운트 (상태+종료시간 모두 고려)
+  // ✅ 유틸(isOngoing/compareTradeItems)에서 쓰는 키로만 노멀라이즈
+  const normalized: NormForFilter[] = useMemo(
+    () =>
+      (baseRaw ?? []).map((it) => ({
+        id: (it?.auctionId ?? it?.id) as number,
+        status: (it?.sellingStatus ?? it?.status) as string,
+        auctionEnd: (it?.endTime ?? it?.auctionEnd) as string,
+        original: it,
+      })),
+    [baseRaw]
+  );
+
+  // ✅ 카운트 — 판매탭: BEFORE(시작전)도 진행으로 취급
   const counts = useMemo(() => {
-    const all = base.length;
-    const ongoing = base.filter((d) =>
-      isOngoingItem({ status: d.status, auctionEnd: d.auctionEnd })
+    const all = normalized.length;
+    const ongoing = normalized.filter((d) =>
+      isOngoing({ status: d.status, auctionEnd: d.auctionEnd })
     ).length;
     const ended = all - ongoing;
     return { all, ongoing, ended };
-  }, [base]);
+  }, [normalized]);
 
-  // 필터링
+  // ✅ 필터 적용
   const filtered = useMemo(() => {
-    if (filter === "all") return base;
+    if (filter === "all") return normalized;
     if (filter === "ongoing") {
-      return base.filter((d) =>
-        isOngoingItem({ status: d.status, auctionEnd: d.auctionEnd })
+      return normalized.filter((d) =>
+        isOngoing({ status: d.status, auctionEnd: d.auctionEnd })
       );
     }
-    return base.filter(
-      (d) => !isOngoingItem({ status: d.status, auctionEnd: d.auctionEnd })
+    // ended
+    return normalized.filter(
+      (d) => !isOngoing({ status: d.status, auctionEnd: d.auctionEnd })
     );
-  }, [base, filter]);
+  }, [normalized, filter]);
 
-  const renderList = (list: typeof base) => (
+  // ✅ 정렬: 기존 compareTradeItems 재사용 (status/auctionEnd 기반)
+  const sorted = useMemo(
+    () => [...filtered].sort((a, b) => compareTradeItems(a as any, b as any)),
+    [filtered]
+  );
+
+  // ✅ 렌더: 원본 아이템을 그대로 전달 (TradeRowCompact가 하이브리드 대응)
+  const renderList = (list: NormForFilter[]) => (
     <ul>
-      {list.map((it) => (
+      {list.map(({ id, original }) => (
         <TradeRowCompact
-          key={it.id}
-          item={it}
-          onClick={(id) => nav(`/auctions/${id}`)}
+          key={id}
+          item={original}
+          onClick={(clickedId) => nav(`/auctions/${clickedId}`)}
         />
       ))}
     </ul>
   );
 
-  // 에러이면서 데이터가 정말 비어 있는 특수 케이스(보통은 base가 목업으로 채워짐)
-  if (error && base.length === 0) {
+  // 에러이면서 데이터가 정말 비어 있는 특수 케이스
+  if (error && normalized.length === 0) {
     return (
       <div className="p-4">
         <h2 className="mb-3 text-lg font-semibold">판매 내역</h2>
-        {renderList(MOCK_SALES)}
+        {renderList(
+          (MOCK_SALES as any[]).map((it) => ({
+            id: it.auctionId ?? it.id,
+            status: it.sellingStatus ?? it.status,
+            auctionEnd: it.endTime ?? it.auctionEnd,
+            original: it,
+          }))
+        )}
       </div>
     );
   }
@@ -84,10 +125,10 @@ export default function SaleList() {
 
       {loading ? (
         <p>불러오는 중…</p>
-      ) : filtered.length === 0 ? (
+      ) : sorted.length === 0 ? (
         <p className="text-neutral-500">판매 내역이 없습니다.</p>
       ) : (
-        renderList(filtered)
+        renderList(sorted)
       )}
     </div>
   );

@@ -17,7 +17,6 @@ const publicApi = axios.create({
  *        Types
  * ======================= */
 type ApiErr = { message?: string; error?: string };
-type EmailCheckResponse = { available: boolean };
 type UserDto = {
   userId: number;
   adminId: number;
@@ -33,11 +32,13 @@ type UserDto = {
   deletedAt: string | null;
 };
 
-/* 이메일 정규화(서버와 통일) */
+/* 이메일 정규화 + 형식 체크(프론트 UX용) */
 const normEmail = (raw: string) => raw.trim().toLowerCase();
+const isEmailFormat = (v: string) =>
+  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
 
 const SignUpForm: React.FC = () => {
-  const navigate = useNavigate(); // ✅ 추가
+  const navigate = useNavigate();
 
   // form
   const [email, setEmail] = useState("");
@@ -47,10 +48,9 @@ const SignUpForm: React.FC = () => {
   const [nickname, setNickname] = useState("");
 
   // UX 상태
-  const [isEmailChecked, setIsEmailChecked] = useState<boolean | null>(null); // null=미확인
   const [isCodeSent, setIsCodeSent] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
-  const [lastSentEmail, setLastSentEmail] = useState<string | null>(null); // ✅ 보낸 이메일 기억
+  const [lastSentEmail, setLastSentEmail] = useState<string | null>(null);
 
   // timer/msg/loading
   const [leftSec, setLeftSec] = useState(0);
@@ -60,7 +60,6 @@ const SignUpForm: React.FC = () => {
   );
   const ss = useMemo(() => String(leftSec % 60).padStart(2, "0"), [leftSec]);
 
-  const [loadingCheck, setLoadingCheck] = useState(false);
   const [loadingSend, setLoadingSend] = useState(false);
   const [loadingVerify, setLoadingVerify] = useState(false);
   const [loadingSubmit, setLoadingSubmit] = useState(false);
@@ -68,7 +67,6 @@ const SignUpForm: React.FC = () => {
 
   // 이메일 바뀌면 인증 단계 초기화
   useEffect(() => {
-    setIsEmailChecked(null);
     setIsCodeSent(false);
     setIsVerified(false);
     setLastSentEmail(null);
@@ -76,53 +74,34 @@ const SignUpForm: React.FC = () => {
     setLeftSec(0);
   }, [email]);
 
-  // 타이머
+  // ⏱️ 타이머 (인증코드 유효시간) — 인증되면 즉시 멈춤
   useEffect(() => {
-    if (!isCodeSent || leftSec <= 0) return;
+    if (!isCodeSent || leftSec <= 0 || isVerified) return;
     const t = setInterval(() => setLeftSec((s) => s - 1), 1000);
     return () => clearInterval(t);
-  }, [isCodeSent, leftSec]);
+  }, [isCodeSent, leftSec, isVerified]);
 
   /* =======================
    *        Handlers
    * ======================= */
 
-  // 1) 이메일 중복확인
-  const checkEmail = async () => {
-    setMsg(null);
-    try {
-      setLoadingCheck(true);
-      const { data } = await publicApi.get<EmailCheckResponse>(
-        "/auth/email/check",
-        {
-          params: { email: normEmail(email) },
-        }
-      );
-      setIsEmailChecked(!!data?.available);
-      if (!data?.available) setMsg("이미 사용 중인 이메일입니다.");
-    } catch (e) {
-      const err = e as AxiosError<ApiErr>;
-      setIsEmailChecked(null);
-      setMsg(
-        err.response?.data?.message ??
-          err.response?.data?.error ??
-          "이메일 확인 실패"
-      );
-    } finally {
-      setLoadingCheck(false);
-    }
-  };
-
-  // 2) 코드 전송
+  // 1) 코드 전송
   const sendCode = async () => {
     setMsg(null);
+
+    if (!isEmailFormat(email)) {
+      setMsg("올바른 이메일 형식을 입력해 주세요.");
+      return;
+    }
+
     try {
       setLoadingSend(true);
       await publicApi.post("/auth/email/send", { email: normEmail(email) });
 
-      setLastSentEmail(normEmail(email)); // ✅ 이 이메일로만 verify 허용
+      setLastSentEmail(normEmail(email));
       setIsCodeSent(true);
-      setLeftSec(300); // ✅ 서버 만료(5분)와 동일
+      setIsVerified(false);
+      setLeftSec(300); // 서버 만료(5분)와 동일
       setMsg("인증코드를 전송했어요. 메일함을 확인하세요.");
     } catch (e) {
       const err = e as AxiosError<ApiErr>;
@@ -136,27 +115,30 @@ const SignUpForm: React.FC = () => {
     }
   };
 
-  // 3) 코드 검증 (HTTP 200이면 성공)
+  // 2) 코드 검증
   const verifyCode = async () => {
     setMsg(null);
 
-    // 보낸 이메일과 현재 이메일이 같지 않으면 차단
     if (!lastSentEmail || normEmail(email) !== lastSentEmail) {
       setMsg(
         "코드를 전송한 이메일과 현재 이메일이 달라요. 이메일을 맞춰주세요."
       );
       return;
     }
+    if (!code.trim()) {
+      setMsg("인증번호를 입력해 주세요.");
+      return;
+    }
 
     try {
       setLoadingVerify(true);
-
       await publicApi.post("/auth/email/verify", {
-        email: normEmail(email), // ✅ 필수
-        code: code.trim(), // ✅ 숫자 변환 금지(앞자리 0 보존)
+        email: normEmail(email),
+        code: code.trim(), // 앞자리 0 보존
       });
 
       setIsVerified(true);
+      setLeftSec(0); // ✅ 인증 성공 즉시 타이머 정지
       setMsg("이메일 인증이 완료되었습니다. ✅");
     } catch (e) {
       const err = e as AxiosError<ApiErr>;
@@ -169,7 +151,7 @@ const SignUpForm: React.FC = () => {
     }
   };
 
-  // 4) 회원가입 제출
+  // 3) 회원가입 제출
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setMsg(null);
@@ -178,34 +160,32 @@ const SignUpForm: React.FC = () => {
       setMsg("이메일 / 비밀번호 / 닉네임을 입력해 주세요.");
       return;
     }
+    if (!isEmailFormat(email)) {
+      setMsg("올바른 이메일 형식을 입력해 주세요.");
+      return;
+    }
     if (password2 && password !== password2) {
       setMsg("비밀번호가 일치하지 않습니다.");
       return;
     }
 
+    // 정책상 인증 필수라면 아래 주석 해제
+    // if (!isVerified) {
+    //   setMsg("이메일 인증을 완료해 주세요.");
+    //   return;
+    // }
+
     try {
       setLoadingSubmit(true);
-
-      // ⚠️ 서버 스펙이 '이메일 인증 후 가입'이라면 verify 완료를 강제하고 싶으면 아래 주석 해제
-      // if (!isVerified) {
-      //   setMsg("이메일 인증을 완료해 주세요.");
-      //   return;
-      // }
-
       const { data } = await publicApi.post<UserDto>("/auth/signup", {
         email: normEmail(email),
         password,
         nickname,
-        // 서버가 validCode를 요구한다면 아래도 함께 전송:
-        // validCode: Number(code) // (앞자리 0 필요하면 문자열 유지해야 함)
       });
 
       if (data?.email) {
-        // ✅ 가입 성공 → 로그인 페이지로 이동 (+ 배너 표시용 쿼리)
         navigate("/login?signedUp=1", { replace: true });
         setMsg("회원가입이 완료되었습니다. (인증메일 발송됨)");
-        // 필요 시 이동:
-        // window.location.href = "/login";
       } else {
         setMsg("회원가입 처리에 실패했습니다.");
       }
@@ -227,79 +207,63 @@ const SignUpForm: React.FC = () => {
 
   return (
     <form onSubmit={handleSubmit} className="m-auto w-[420px]">
-      {/* 이메일 + (선택) 중복확인/인증 */}
+      {/* 이메일 */}
       <div className="mb-[20px]">
-        <h5 className="text-h5 font-bold">이메일</h5>
+        <h5 className="text-h5 mb-[8px] font-bold">이메일</h5>
 
-        <div className="mb-[10px] flex w-[420px] items-center justify-between">
-          {isEmailChecked === false && (
-            <p className="text-h7 text-red">중복된 이메일 입니다.</p>
-          )}
-          {isEmailChecked === true && (
-            <p className="text-h7 text-green">사용 가능한 이메일입니다.</p>
-          )}
-          {isEmailChecked === null && (
-            <p className="text-h7 text-g300">중복확인을 진행하세요.</p>
-          )}
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          disabled={isCodeSent && !isVerified}
+          className="focus:border-purple mb-[12px] h-[40px] w-[420px] rounded-md border px-3 outline-none focus:border-2"
+          placeholder="이메일을 입력해 주세요"
+          autoComplete="email"
+        />
 
+        <div className="flex gap-[10px]">
+          <input
+            type="text"
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            className="focus:border-purple h-[50px] w-[190px] rounded-md border px-3 outline-none focus:border-2"
+            placeholder="인증번호 입력"
+            inputMode="numeric"
+            disabled={!isCodeSent || isVerified}
+          />
           <button
             type="button"
-            onClick={checkEmail}
-            disabled={loadingCheck || !email}
-            className={`h-[30px] w-[100px] rounded-md border ${
-              isEmailChecked
-                ? "border-green text-green"
-                : "border-purple text-purple hover:bg-light-purple/40"
-            } disabled:opacity-60`}
+            onClick={sendCode}
+            // ✅ 인증 완료면 버튼은 보이되 항상 비활성화 (타이머/재전송 텍스트도 없음)
+            disabled={
+              isVerified ||
+              loadingSend ||
+              (isCodeSent && leftSec > 0) || // 쿨다운
+              !isEmailFormat(email)
+            }
+            className={[
+              "h-[50px] w-[120px] rounded-md border disabled:opacity-60",
+              isVerified
+                ? "border-g300 text-g300 bg-g500/20 cursor-not-allowed"
+                : "border-purple text-purple hover:bg-light-purple/40",
+            ].join(" ")}
           >
-            {isEmailChecked
-              ? "사용가능"
-              : loadingCheck
-                ? "확인중…"
-                : "중복 확인"}
+            {isVerified
+              ? "전송됨" // 인증 완료 상태: 타이머/재전송 표시 X
+              : isCodeSent && leftSec > 0
+                ? `재전송 ${mm}:${ss}`
+                : "코드 전송"}
           </button>
-        </div>
-
-        <div>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            disabled={isCodeSent && !isVerified}
-            className="focus:border-purple mb-[15px] h-[40px] w-[420px] rounded-md border px-3 outline-none focus:border-2"
-            placeholder="이메일을 입력해 주세요"
-            autoComplete="email"
-          />
-
-          <div className="flex gap-[10px]">
-            <input
-              type="text"
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              className="focus:border-purple h-[50px] w-[190px] rounded-md border px-3 outline-none focus:border-2"
-              placeholder="인증번호 입력"
-              inputMode="numeric"
-              disabled={!isCodeSent || isVerified}
-            />
-            <button
-              type="button"
-              onClick={sendCode}
-              disabled={loadingSend || (isCodeSent && leftSec > 0) || !email}
-              className="border-purple text-purple hover:bg-light-purple/40 h-[50px] w-[120px] rounded-md border disabled:opacity-60"
-            >
-              {isCodeSent && leftSec > 0 ? `재전송 ${mm}:${ss}` : "코드 전송"}
-            </button>
-            <button
-              type="button"
-              onClick={verifyCode}
-              disabled={loadingVerify || isVerified || !isCodeSent}
-              className={`h-[50px] w-[90px] rounded-md font-medium text-white disabled:opacity-60 ${
-                isVerified ? "bg-g400" : "bg-purple hover:opacity-90"
-              }`}
-            >
-              {isVerified ? "완료" : "인증"}
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={verifyCode}
+            disabled={loadingVerify || isVerified || !isCodeSent}
+            className={`h-[50px] w-[90px] rounded-md font-medium text-white disabled:opacity-60 ${
+              isVerified ? "bg-g400" : "bg-purple hover:opacity-90"
+            }`}
+          >
+            {isVerified ? "완료" : "인증"}
+          </button>
         </div>
       </div>
 
@@ -337,7 +301,7 @@ const SignUpForm: React.FC = () => {
           type="text"
           value={nickname}
           onChange={(e) => setNickname(e.target.value)}
-          className="focus:border-purple mb-[50px] h-[40px] w-[420px] rounded-md border px-3 outline-none focus:border-2"
+          className="focus:border-purple mb-[20px] h-[40px] w-[420px] rounded-md border px-3 outline-none focus:border-2"
           placeholder="닉네임을 입력해 주세요"
           autoComplete="nickname"
         />

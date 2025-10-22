@@ -171,7 +171,7 @@ const ProfilePreview: React.FC<Props> = ({
               onClick={onAuction}
               className="h-[40px] w-[120px] rounded-[10px] bg-white/90 px-7 text-[15px] font-bold text-neutral-900 shadow-[0_6px_16px_rgba(0,0,0,0.08)] transition hover:bg-white active:translate-y-[5px]"
             >
-              경매 하기
+              경매 등록
             </button>
           </Link>
         </div>
@@ -192,7 +192,7 @@ const ProfilePreview: React.FC<Props> = ({
             onClick={onAuction}
             className="rounded-2xl bg-white/90 px-4 py-3 font-bold text-neutral-900 shadow-[0_6px_16px_rgba(0,0,0,0.08)] transition hover:bg-white active:translate-y-[1px]"
           >
-            경매 하기
+            경매 등록
           </button>
         </Link>
       </div>

@@ -2,11 +2,9 @@ import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Search, Menu, MessageCircleMore, Bell, X } from "lucide-react";
-
 import New from "./New";
 import ChatModal from "../../features/chatting/pages/ChatModal";
 import NotiModal from "../../features/notification/pages/NotiModal";
-
 import {
   useAuthStore,
   type AuthState,
@@ -19,27 +17,49 @@ const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // 리프레시 재발급 완료 여부
   const { ready } = useAuthInit();
 
-  // 전역 인증 상태
+  // ✅ 프로필도 함께 가져오도록 수정
   const accessToken = useAuthStore((s: AuthState) => s.accessToken);
-  const userNickname = useAuthStore(
-    (s: AuthState) => s.profile?.nickname ?? "User"
-  );
+  const profile = useAuthStore((s: AuthState) => s.profile);
+  const setProfile = useAuthStore((s: AuthState) => s.setProfile);
+  const userNickname = profile?.nickname ?? "User";
   const clearAuth = useAuthStore((s: AuthState) => s.clear);
 
   const { isChatOpen, openChatList, onClose } = useChatModalStore();
 
-  // 로컬 상태
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isNotiOpen, setIsNotiOpen] = useState<boolean>(false);
 
-  // 로그인 여부
   const isAuthed = useMemo<boolean>(
     () => ready && Boolean(accessToken),
     [ready, accessToken]
   );
+
+  // ✅ 리프레시/로그인 완료 후, 프로필 없으면 한 번 불러오기
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!isAuthed) return;
+      if (profile?.nickname) return; // 이미 있으면 skip
+      try {
+        const { data } = await api.get("/mypage", {
+          // 실패해도 전체 앱 흐름 막지 않기
+          validateStatus: (s) => s >= 200 && s < 500,
+        });
+        const nickname = data?.nickname ?? "";
+        const email = data?.email ?? "";
+        if (!cancelled && (nickname || email)) {
+          setProfile({ nickname, email });
+        }
+      } catch {
+        /* ignore */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthed, profile?.nickname, setProfile]);
 
   // url -> 입력 동기화
   useEffect(() => {
@@ -52,28 +72,21 @@ const Header = () => {
   const handleSearch = (e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault();
     const q = searchQuery.trim();
-    // 빈 검색어면 /auctions 로(전체 목록)
     const next = ((): URLSearchParams => {
-      // 결과 목록 내 검색 시 기존 필터/정렬 유지
       if (location.pathname.startsWith("/auctions")) {
         const keep = new URLSearchParams(location.search);
-        // 페이지 초기화
         keep.delete("page");
-        // searchKeyword 설정/삭제
         if (q) keep.set("searchKeyword", q);
         else keep.delete("searchKeyword");
         return keep;
       }
-      // 이외 경로에선 새 쿼리로
       const sp = new URLSearchParams();
       if (q) sp.set("searchKeyword", q);
       return sp;
     })();
-
     navigate(`/auctions?${next.toString()}`);
   };
 
-  // 검색어 지우기
   const clearSearch = () => {
     setSearchQuery("");
     const sp = new URLSearchParams(location.search);
@@ -94,8 +107,7 @@ const Header = () => {
     }
   };
 
-  // 채팅 관련 함수
-  // 모바일에서 모달 열릴 때 스크롤 잠금
+  // 모바일 모달 시 스크롤 잠금
   useEffect(() => {
     const mql: MediaQueryList = window.matchMedia(
       "screen and (max-width: 768px)"
@@ -113,7 +125,6 @@ const Header = () => {
     };
   }, [isChatOpen, isNotiOpen]);
 
-  // 포털 루트
   const modalRoot: HTMLElement | null = document.getElementById("modal-root");
   if (!modalRoot) {
     console.error("Portal root element '#modal-root' not found.");
@@ -123,7 +134,6 @@ const Header = () => {
   return (
     <header className="relative m-auto h-20 w-full md:h-23">
       <div className="flex h-full items-center justify-between gap-8 px-6 lg:px-10 xl:px-40">
-        {/* 로고 */}
         <Link to="/" className="font-logo text-h3 md:text-h2 lg:text-h1 block">
           Bid<span className="text-purple">&amp;</span>Buy
         </Link>
@@ -141,7 +151,6 @@ const Header = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
-
           {searchQuery && (
             <button
               type="button"
@@ -158,11 +167,10 @@ const Header = () => {
           </button>
         </form>
 
-        {/* 모바일 우측 아이콘 */}
+        {/* 모바일 아이콘 */}
         <nav className="block md:hidden">
           <ul className="flex gap-4">
             <li>
-              {/* 모바일은 검색 페이지 이동 후 거기서 입력 */}
               <Link to="/auctions" title="검색 화면 이동" aria-label="검색">
                 <Search />
               </Link>
@@ -175,17 +183,15 @@ const Header = () => {
           </ul>
         </nav>
 
-        {/* 데스크탑 우측 메뉴 */}
+        {/* 우측 메뉴 */}
         <nav className="hidden md:block">
           {!ready ? (
-            // 재발급 대기 스켈레톤
             <ul className="flex gap-4">
               <li className="bg-g500 h-4 w-28 animate-pulse" />
               <li className="bg-g500 h-4 w-14 animate-pulse" />
               <li className="bg-g500 h-4 w-16 animate-pulse" />
             </ul>
           ) : isAuthed ? (
-            // 로그인 후
             <ul className="text-h7 flex items-center gap-4 text-nowrap">
               <li>
                 <Link to="/mypage">
@@ -197,9 +203,8 @@ const Header = () => {
                 <button onClick={handleLogout}>로그아웃</button>
               </li>
               <li>
-                <Link to="/cs">문의하기</Link>
+                <Link to="/mypage/inquiries">문의하기</Link>
               </li>
-
               <li>
                 <button
                   className="relative"
@@ -233,7 +238,6 @@ const Header = () => {
                 )}
             </ul>
           ) : (
-            // 로그인 전
             <ul className="text-h7 flex gap-4 text-nowrap">
               <li>
                 <Link to="/login">로그인</Link>
@@ -242,7 +246,7 @@ const Header = () => {
                 <Link to="/signup">회원가입</Link>
               </li>
               <li>
-                <Link to="/cs">문의하기</Link>
+                <Link to="/mypage/inquiries">문의하기</Link>
               </li>
             </ul>
           )}

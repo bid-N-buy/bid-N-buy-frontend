@@ -84,8 +84,6 @@ const LoginForm: React.FC = () => {
     return unsub;
   }, []);
 
-  // ❌ (삭제) 예전 소셜 콜백 ?token= 처리 useEffect — 이제 /oauth/callback에서 처리하므로 불필요
-
   const handleSubmit = useCallback(
     async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
@@ -112,19 +110,18 @@ const LoginForm: React.FC = () => {
       try {
         setLoading(true);
 
+        // ✅ Bearer 모드: 쿠키 인증 사용하지 않음 → withCredentials 생략/false
         const res = await api.post<LoginResponse | LegacyLoginResponse>(
           "/auth/login",
           { email: emailTrim, password: pwTrim },
           {
             headers: { "Content-Type": "application/json" },
-            withCredentials: true,
           }
         );
 
         if (import.meta.env.DEV) {
           console.debug("[login] axios response", {
             status: res.status,
-            headers: res.headers,
             data: res.data,
           });
         }
@@ -155,6 +152,7 @@ const LoginForm: React.FC = () => {
 
         const userId = resolveUserIdFrom(data, access);
 
+        // ✅ 반드시 refreshToken 저장! (reissue가 여기에 의존)
         setTokens(
           access,
           refresh ?? null,
@@ -209,7 +207,6 @@ const LoginForm: React.FC = () => {
   /** 소셜 로그인 시작 */
   const startKakao = useCallback(() => {
     if (loading) return;
-    // 백엔드에 /auth/kakao/loginstart가 없다면, 지금처럼 카카오 인증 서버로 직접 이동
     window.location.assign(
       "https://kauth.kakao.com/oauth/authorize?response_type=code&client_id=3ca9c59cb383f463525c62ffb4615195&redirect_uri=http://localhost:8080/auth/kakao"
     );
@@ -217,7 +214,6 @@ const LoginForm: React.FC = () => {
 
   const startNaver = useCallback(() => {
     if (loading) return;
-    // ✅ 백엔드에서 state 관리 및 authorize URL 빌드 → 이 엔드포인트로만 이동
     window.location.assign(`${API_BASE}/auth/naver/loginstart`);
   }, [loading]);
 
