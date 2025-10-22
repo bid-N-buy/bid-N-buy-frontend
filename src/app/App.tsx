@@ -19,6 +19,7 @@ import OAuthCallback from "../features/auth/components/OAuthCallback";
 import ProfileDetailsContainer from "../features/mypage/pages/ProfileDetailsContainer";
 import InquiryReportForm from "../features/mypage/components/support/InquiryReportForm";
 import AdminAsideMenu from "../features/admin/components/AdminAsideMenu";
+import InquiryDetailPage from "../features/mypage/pages/InquiryDetailPage";
 
 // 공통
 const Header = React.lazy(() => import("../shared/components/Header"));
@@ -179,6 +180,7 @@ export default function App() {
                 />
                 <Route path="inquiries/new" element={<InquiryReportForm />} />
                 <Route path="reports/new" element={<InquiryReportForm />} />
+                <Route path="inquiries/:id" element={<InquiryDetailPage />} />
               </Route>
 
               {/* <Route path="inquiries/:id" element={<InquiryDetail />} /> */}

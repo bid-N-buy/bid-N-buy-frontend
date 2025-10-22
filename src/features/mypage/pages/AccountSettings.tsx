@@ -1,5 +1,11 @@
 // src/features/mypage/pages/AccountSettings.tsx
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../../shared/api/axiosInstance";
 import { useAuthStore, type AuthState } from "../../auth/store/authStore";
@@ -8,6 +14,9 @@ import AddressEditorModal from "../components/myAddress/AddressEditorModal";
 import { useAddresses } from "../hooks/useAddresses";
 import type { Address, AddressDraft } from "../types/address";
 
+/* =======================
+ *        Config
+ * ======================= */
 type PasswordForm = {
   currentPassword: string;
   newPassword: string;
@@ -15,8 +24,21 @@ type PasswordForm = {
 };
 
 const MAX_IMG_MB = 5;
-/** ⚙️ 팀 업로더 엔드포인트(파일 → URL 반환). 실제값으로 교체하세요. */
-const UPLOAD_ENDPOINT = "/files/upload";
+
+const DEFAULT_AVATAR =
+  "https://bid-1024-aws-prac.s3.ap-northeast-2.amazonaws.com/user-profiles/default-profile.png";
+
+function makeAbsolute(u?: string | null): string | null {
+  if (!u) return null;
+  if (/^https?:\/\//i.test(u)) return u;
+  try {
+    const base = new URL(DEFAULT_AVATAR);
+    const path = u.startsWith("/") ? u : `/${u}`;
+    return `${base.origin}${path}`;
+  } catch {
+    return u;
+  }
+}
 
 const AccountSettings: React.FC = () => {
   const navigate = useNavigate();
@@ -24,7 +46,8 @@ const AccountSettings: React.FC = () => {
   const profile = useAuthStore((s: AuthState) => s.profile);
   const setProfile = useAuthStore((s: AuthState) => s.setProfile);
   const clearAuth = useAuthStore((s: any) => s.clear);
-  const userId = (useAuthStore.getState() as any)?.userId ?? null;
+  const setUserId = useAuthStore((s: any) => s.setUserId);
+  const userIdFromStore = useAuthStore((s: any) => s.userId);
 
   // 닉네임
   const [nickname, setNickname] = useState(profile?.nickname ?? "NickName");
@@ -39,11 +62,13 @@ const AccountSettings: React.FC = () => {
   });
   const [pwLoading, setPwLoading] = useState(false);
 
-  // 🔸 프로필 이미지
+  // 프로필 이미지
   const [imgPreview, setImgPreview] = useState<string | null>(null);
   const [imgFile, setImgFile] = useState<File | null>(null);
   const [imgLoading, setImgLoading] = useState(false);
-  const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(null);
+  const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(
+    DEFAULT_AVATAR
+  );
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   // 탈퇴
@@ -51,9 +76,32 @@ const AccountSettings: React.FC = () => {
   const [delPw, setDelPw] = useState("");
   const [delLoading, setDelLoading] = useState(false);
 
-  // 주소
-  const [addrOpen, setAddrOpen] = useState(false);
+  // 주소(실서버 훅)
+  const {
+    addresses,
+    loading: addrLoading,
+    error: addrError,
+    add,
+    update,
+    remove,
+  } = useAddresses();
+
+  // 주소(목업 전환)
+  const [addrOpen, setAddrOpen] = useState<boolean>(false);
   const [editing, setEditing] = useState<Address | null>(null);
+  const [addrMock, setAddrMock] = useState<boolean>(false);
+  const [addressesMock, setAddressesMock] = useState<Address[]>([
+    {
+      addressId: 1,
+      name: "홍길동",
+      phoneNumber: "010-1234-5678",
+      zonecode: "04524",
+      address: "서울 중구 세종대로 110",
+      detailAddress: "1층",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+  ]);
 
   // 메시지
   const [msg, setMsg] = useState<string | null>(null);
@@ -72,75 +120,110 @@ const AccountSettings: React.FC = () => {
   const toast = (ok: string | null, error: string | null) => {
     setMsg(ok);
     setErr(error);
-    setTimeout(() => {
+    window.setTimeout(() => {
       setMsg(null);
       setErr(null);
     }, 2200);
   };
 
-  /* 주소 훅 */
-  const {
-    addresses,
-    loading: addrLoading,
-    error: addrError,
-    add,
-    update,
-    remove,
-  } = useAddresses();
+  /** userId 복구: /auth/me → /users/me → /mypage 중 첫 성공 */
+  const resolveUserId = useCallback(async (): Promise<number | null> => {
+    let uid = useAuthStore.getState().userId;
+    if (uid) return uid;
 
-  /** ✅ 프로필(닉네임/이메일/이미지) 하이드레이션: GET /mypage */
-  useEffect(() => {
-    let alive = true;
-    (async () => {
+    const tryGet = async (path: string) => {
       try {
-        const { data, status } = await api.get("/mypage", {
+        const { data } = await api.get(path, {
           validateStatus: (s) => s >= 200 && s < 500,
         });
-        if (!alive) return;
+        const cand =
+          data?.id ?? data?.userId ?? data?.user_id ?? data?.data?.id ?? null;
+        if (typeof cand === "number") return cand as number;
+        if (typeof cand === "string" && /^\d+$/.test(cand))
+          return parseInt(cand, 10);
+        return null;
+      } catch {
+        return null;
+      }
+    };
 
-        if (status === 401 || status === 403) {
-          toast(null, "세션이 만료되었거나 권한이 없습니다.");
-          return;
-        }
+    uid =
+      (await tryGet("/auth/me")) ??
+      (await tryGet("/users/me")) ??
+      (await tryGet("/mypage"));
 
+    if (uid) setUserId(uid);
+    return uid ?? null;
+  }, [setUserId]);
+
+  /** 첫 로드: 프로필/이미지 + userId 복구 */
+  const onceRef = useRef(false);
+  useEffect(() => {
+    if (onceRef.current) return;
+    onceRef.current = true;
+
+    (async () => {
+      try {
+        const { data } = await api.get("/mypage");
         const nick = data?.nickname ?? "NickName";
         const email = data?.email ?? "";
-        const avatar = data?.profileImageUrl ?? null;
+        setNickname(nick);
+        if (!profile || profile.nickname !== nick || profile.email !== email) {
+          setProfile?.({ nickname: nick, email });
+        }
+      } catch (e: any) {
+        toast(
+          null,
+          e?.response?.data?.message ?? "프로필 정보를 불러오지 못했습니다."
+        );
+      }
 
-        setNickname(nick); // 닉네임 입력 기본값 갱신
-        setProfile?.({ nickname: nick, email }); // 전역 프로필 갱신
-        setCurrentImageUrl(avatar);
-        // temperature 필요 시 여기에 상태/스토어 추가 가능: data?.temperature
+      // userId 확보 후 프로필 이미지 조회
+      const uid = (await resolveUserId()) ?? userIdFromStore;
+      if (!uid) {
+        setCurrentImageUrl(DEFAULT_AVATAR);
+        return;
+      }
+
+      try {
+        const { data } = await api.get(`/auth/${uid}/profile`);
+        const raw = data?.profileImageUrl ?? null;
+        const abs = makeAbsolute(raw) ?? DEFAULT_AVATAR;
+        // ✅ 초기 로딩에도 캐시버스터
+        const bust = `${abs}${abs.includes("?") ? "&" : "?"}v=${Date.now()}`;
+        setCurrentImageUrl(bust);
       } catch {
-        toast(null, "프로필 정보를 불러오지 못했습니다.");
+        setCurrentImageUrl(DEFAULT_AVATAR);
       }
     })();
-    return () => {
-      alive = false;
-    };
-  }, [setProfile]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  /* ✅ 닉네임 변경: PUT /auth/{userId}/nickname  { nickname } */
+  /** 주소 훅 에러 → 401이면 목업 전환 */
+  useEffect(() => {
+    const unauthorized =
+      (addrError as any)?.status === 401 ||
+      (addrError as any)?.code === 401 ||
+      (addrError as any)?.message?.includes?.("Unauthorized");
+    if (unauthorized) setAddrMock(true);
+  }, [addrError]);
+
+  /* ========== 닉네임 변경 ========== */
   const submitNickname = async () => {
     const v = nickname.trim();
     if (!v) return toast(null, "닉네임을 입력하세요.");
     if (v.length < 2 || v.length > 20)
       return toast(null, "닉네임은 2~20자로 입력하세요.");
-    if (!userId) return toast(null, "userId를 확인할 수 없습니다.");
+
+    const uid = (await resolveUserId()) ?? userIdFromStore;
+    if (!uid) return toast(null, "userId를 확인할 수 없습니다.");
 
     try {
       setNickLoading(true);
-      const { status, data } = await api.put(
-        `/auth/${userId}/nickname`,
-        { nickname: v },
-        { validateStatus: (s) => s >= 200 && s < 500 }
-      );
-      if (status === 401 || status === 403) {
-        toast(null, "세션이 만료되었거나 권한이 없습니다.");
-        return;
+      const { data } = await api.put(`/auth/${uid}/nickname`, { nickname: v });
+      if (!profile || profile.nickname !== v) {
+        setProfile({ nickname: v, email: profile?.email });
       }
-      // 전역 스토어 반영
-      setProfile({ nickname: v, email: profile?.email });
       toast(data?.message ?? "닉네임이 변경되었습니다.", null);
       setIsEditName(false);
     } catch (e: any) {
@@ -154,7 +237,7 @@ const AccountSettings: React.FC = () => {
     }
   };
 
-  /* 비밀번호 변경 */
+  /* ========== 비밀번호 변경 ========== */
   const submitPassword = async () => {
     const { currentPassword, newPassword, newPassword2 } = pw;
     if (!currentPassword || !newPassword || !newPassword2)
@@ -185,7 +268,7 @@ const AccountSettings: React.FC = () => {
     }
   };
 
-  /** 파일 선택 */
+  /* ========== 이미지 업로드 ========== */
   const onPickImage = () => fileRef.current?.click();
 
   const onFileChange: React.ChangeEventHandler<HTMLInputElement> = (e) => {
@@ -193,49 +276,68 @@ const AccountSettings: React.FC = () => {
     if (!f) return;
     if (f.size > MAX_IMG_MB * 1024 * 1024)
       return toast(null, `이미지 용량은 최대 ${MAX_IMG_MB}MB까지 가능합니다.`);
+    if (imgPreview) URL.revokeObjectURL(imgPreview);
     setImgFile(f);
     setImgPreview(URL.createObjectURL(f));
   };
 
-  /** 파일 업로드 → URL(공개 접근 URL) 획득 */
-  const uploadImageAndGetUrl = async (file: File): Promise<string> => {
-    const form = new FormData();
-    form.append("file", file);
-    const { data } = await api.post(UPLOAD_ENDPOINT, form, {
-      headers: { "Content-Type": "multipart/form-data" },
-      validateStatus: (s) => s >= 200 && s < 500,
-    });
-    const url: string | undefined =
-      data?.url ?? data?.imageUrl ?? data?.profileImageUrl;
-    if (!url) throw new Error("업로드 응답에 이미지 URL이 없습니다.");
-    return url;
-  };
-
-  /** 업로드 후 PUT /auth/{userId}/profile 로 반영 */
   const submitImage = async () => {
+    const uid = (await resolveUserId()) ?? userIdFromStore;
     if (!imgFile) return toast(null, "변경할 이미지를 먼저 선택하세요.");
-    if (!userId) return toast(null, "userId를 확인할 수 없습니다.");
+    if (!uid) return toast(null, "userId를 확인할 수 없습니다.");
+
+    // 업로드 동안 낙관적 프리뷰 적용
+    const optimisticUrl = URL.createObjectURL(imgFile);
+    setCurrentImageUrl(optimisticUrl);
 
     try {
       setImgLoading(true);
-      // 1) 파일 업로드해서 최종 접근 URL 확보
-      const uploadedUrl = await uploadImageAndGetUrl(imgFile);
-      // 2) 서버 프로필에 URL 반영 (명세 키: profileImageUrl)
-      await api.put(`/auth/${userId}/profile`, {
-        profileImageUrl: uploadedUrl,
+      const form = new FormData();
+
+      // ✅ 백엔드 @RequestPart("images")에 맞춤
+      form.append("images", imgFile);
+
+      const { data } = await api.put(`/auth/${uid}/profile`, form, {
+        xsrfCookieName: "XSRF-TOKEN",
+        xsrfHeaderName: "X-XSRF-TOKEN",
+        withCredentials: true,
+        transformRequest: [(body) => body], // Content-Type 자동
       });
-      // 3) UI 갱신 & 전역 스토어(선택)
-      setCurrentImageUrl(uploadedUrl);
+
+      const raw = data?.profileImageUrl ?? data?.imageUrl ?? data?.url ?? null;
+      let next = raw;
+      if (!next) {
+        const r = await api.get(`/auth/${uid}/profile`);
+        next = r?.data?.profileImageUrl ?? null;
+      }
+      const abs = makeAbsolute(next) ?? DEFAULT_AVATAR;
+      const bust = `${abs}${abs.includes("?") ? "&" : "?"}v=${Date.now()}`;
+      setCurrentImageUrl(bust);
+
+      // 임시 객체 URL 해제
+      URL.revokeObjectURL(optimisticUrl);
+
       setProfile?.({
         nickname: profile?.nickname ?? "NickName",
         email: profile?.email ?? "",
       });
+
       toast("프로필 이미지가 변경되었습니다.", null);
     } catch (e: any) {
+      // 실패 시 임시 프리뷰 해제 및 기본 이미지로 롤백(선택)
+      URL.revokeObjectURL(optimisticUrl);
+      setCurrentImageUrl(DEFAULT_AVATAR);
+
+      if (import.meta.env.DEV) {
+        console.debug("[upload:error]", {
+          status: e?.response?.status,
+          data: e?.response?.data,
+        });
+      }
       const m =
-        e?.response?.data?.message ??
-        e?.response?.data?.error ??
-        e?.message ??
+        e?.response?.data?.message ||
+        e?.response?.data?.error ||
+        e?.message ||
         "이미지 업로드/변경에 실패했습니다.";
       toast(null, m);
     } finally {
@@ -247,23 +349,18 @@ const AccountSettings: React.FC = () => {
     }
   };
 
-  // const [delPw, setDelPw] = useState("");
-  // const [delLoading, setDelLoading] = useState(false);
-
-  const openDelete = () => {
-    setDelPw("");
-    setDeleteOpen(true);
-  };
-
+  /* ========== 탈퇴 ========== */
   const submitDelete = async () => {
-    if (!userId) return toast(null, "userId를 확인할 수 없습니다.");
+    const uid = (await resolveUserId()) ?? userIdFromStore;
+    if (!uid) return toast(null, "userId를 확인할 수 없습니다.");
     if (!delPw) return toast(null, "비밀번호를 입력하세요.");
 
     try {
       setDelLoading(true);
-      const { data } = await api.delete(`/auth/user/${userId}`, {
+      const { data } = await api.delete(`/auth/user/${uid}`, {
         data: { password: delPw },
         headers: { "Content-Type": "application/json" },
+        withCredentials: true,
       });
       toast(data?.message ?? "사용자 삭제 완료", null);
       clearAuth?.();
@@ -272,15 +369,59 @@ const AccountSettings: React.FC = () => {
       const m =
         e?.response?.data?.message ??
         e?.response?.data?.error ??
-        (e?.response?.status === 401
-          ? "세션이 만료되었거나 권한이 없습니다. 다시 로그인해 주세요."
-          : "탈퇴에 실패했습니다.");
+        "탈퇴에 실패했습니다.";
       toast(null, m);
     } finally {
       setDelLoading(false);
       setDeleteOpen(false);
     }
   };
+
+  /* ===== 주소: 목업 add/update/remove (서버 스펙 일치) ===== */
+  const addMock = useCallback(async (draft: AddressDraft) => {
+    setAddressesMock((prev) => {
+      const nextId = (prev.at(-1)?.addressId ?? 0) + 1;
+      const now = new Date().toISOString();
+      return [
+        ...prev,
+        {
+          addressId: nextId,
+          name: draft.name,
+          phoneNumber: draft.phoneNumber,
+          zonecode: draft.zonecode,
+          address: draft.address,
+          detailAddress: draft.detailAddress ?? "",
+          createdAt: now,
+          updatedAt: now,
+        },
+      ];
+    });
+  }, []);
+
+  const updateMock = useCallback(
+    async (id: number, patch: Partial<AddressDraft>) => {
+      setAddressesMock((prev) =>
+        prev.map((a) =>
+          a.addressId === id
+            ? {
+                ...a,
+                ...patch,
+                detailAddress:
+                  patch.detailAddress !== undefined
+                    ? patch.detailAddress
+                    : a.detailAddress,
+                updatedAt: new Date().toISOString(),
+              }
+            : a
+        )
+      );
+    },
+    []
+  );
+
+  const removeMock = useCallback(async (id: number) => {
+    setAddressesMock((prev) => prev.filter((a) => a.addressId !== id));
+  }, []);
 
   /* design tokens */
   const lineInput =
@@ -291,28 +432,20 @@ const AccountSettings: React.FC = () => {
     "rounded-md bg-purple-600 px-3 py-[6px] text-[13px] text-white hover:opacity-90 disabled:opacity-60";
   const dangerBtn =
     "rounded-md bg-rose-600 px-3 py-[6px] text-[13px] text-white hover:opacity-90 disabled:opacity-60";
-  const chipBtn =
-    "rounded-full bg-purple-600 px-3 py-[6px] text-[13px] text-white hover:opacity-90";
 
   return (
     <div className="mx-auto w-full max-w-[720px]">
       {/* 상단: 아바타 + 이름 + 이미지 변경 */}
       <div className="mb-8 flex items-center gap-4">
         <div className="relative h-[96px] w-[96px] overflow-hidden rounded-full bg-neutral-200">
-          {/* 우선순위: 미리보기 > 서버 반영된 현재 URL */}
-          {imgPreview ? (
-            <img
-              src={imgPreview}
-              alt="미리보기"
-              className="h-full w-full object-cover"
-            />
-          ) : currentImageUrl ? (
-            <img
-              src={currentImageUrl}
-              alt="프로필"
-              className="h-full w-full object-cover"
-            />
-          ) : null}
+          <img
+            src={imgPreview || currentImageUrl || DEFAULT_AVATAR}
+            alt="프로필"
+            className="h-full w-full object-cover"
+            onError={(e) => {
+              (e.currentTarget as HTMLImageElement).src = DEFAULT_AVATAR;
+            }}
+          />
         </div>
         <div className="flex flex-col">
           <div className="text-[20px] font-semibold text-neutral-900">
@@ -352,7 +485,7 @@ const AccountSettings: React.FC = () => {
           프로필 정보
         </h4>
 
-        {/* 닉네임 라인 */}
+        {/* 닉네임 */}
         <div className="mb-8">
           <div className="mb-1 text-[13px] font-semibold text-neutral-800">
             닉네임
@@ -400,7 +533,7 @@ const AccountSettings: React.FC = () => {
           )}
         </div>
 
-        {/* 이메일 (마스킹) */}
+        {/* 이메일 */}
         {emailMasked && (
           <div className="mb-8">
             <div className="mb-1 text-[13px] font-semibold text-neutral-800">
@@ -453,7 +586,7 @@ const AccountSettings: React.FC = () => {
             />
           </div>
 
-          <div className="mt-4 flex items-end gap-2">
+          <div className="items=end mt-4 flex gap-2">
             <div className="flex-1">
               <label className="mb-1 block text-[12px] text-neutral-500">
                 새 비밀번호 확인
@@ -502,16 +635,18 @@ const AccountSettings: React.FC = () => {
           </button>
         </div>
 
-        {addrError && <p className="mb-2 text-sm text-rose-600">{addrError}</p>}
+        {addrError && !addrMock && (
+          <p className="mb-2 text-sm text-rose-600">{String(addrError)}</p>
+        )}
 
         <AddressDetails
-          addresses={addresses ?? []}
-          loading={addrLoading}
+          addresses={addrMock ? addressesMock : (addresses ?? [])}
+          loading={addrMock ? false : addrLoading}
           onEdit={(addr) => {
             setEditing(addr);
             setAddrOpen(true);
           }}
-          onDelete={remove}
+          onDelete={addrMock ? removeMock : remove}
         />
       </section>
 
@@ -519,10 +654,7 @@ const AccountSettings: React.FC = () => {
       <div className="mb-2 flex justify-end">
         <button
           type="button"
-          onClick={() => {
-            setDelPw("");
-            setDeleteOpen(true);
-          }}
+          onClick={() => setDeleteOpen(true)}
           className="rounded-md px-2 py-1 text-[12px] text-neutral-400 hover:text-rose-600"
         >
           탈퇴하기
@@ -606,17 +738,18 @@ const AccountSettings: React.FC = () => {
         }}
         onSave={async (draft) => {
           const payload: AddressDraft = {
-            receiver: draft.receiver.trim(),
-            phone: draft.phone.trim(),
-            postcode: draft.postcode.trim(),
-            address1: draft.address1.trim(),
-            address2: (draft.address2 ?? "").trim(),
-            isDefault: !!draft.isDefault,
+            name: draft.name.trim(),
+            phoneNumber: draft.phoneNumber.trim(),
+            zonecode: draft.zonecode.trim(),
+            address: draft.address.trim(),
+            detailAddress: (draft.detailAddress ?? "").trim(),
           };
-          if (draft.id) {
-            await update(draft.id, payload);
+
+          if ((draft as any).addressId) {
+            const id = (draft as any).addressId as number;
+            await (addrMock ? updateMock(id, payload) : update(id, payload));
           } else {
-            await add(payload);
+            await (addrMock ? addMock(payload) : add(payload));
           }
         }}
       />

@@ -3,15 +3,15 @@ import React from "react";
 import type { Address } from "../../types/address";
 
 type Props = {
-  addresses?: Address[]; // ❗️옵셔널로
+  addresses?: Address[]; // 옵션
   loading?: boolean;
   onEdit: (addr: Address) => void;
   onDelete: (id: number) => void;
 };
 
 const AddressDetails: React.FC<Props> = ({
-  addresses = [], // ❗️디폴트 빈 배열
-  loading = false, // ❗️디폴트 false
+  addresses = [],
+  loading = false,
   onEdit,
   onDelete,
 }) => {
@@ -23,21 +23,19 @@ const AddressDetails: React.FC<Props> = ({
     <ul className="space-y-3">
       {addresses.map((a) => (
         <li
-          key={a.id}
+          key={a.addressId}
           className="rounded-2xl border border-neutral-200 bg-white p-4"
         >
           <div className="mb-2 flex items-start justify-between">
             <div>
               <div className="text-[15px] font-semibold text-neutral-900">
-                {a.receiver}
-                {a.isDefault && (
-                  <span className="ml-1 rounded-full border px-2 py-[2px] text-[11px] text-neutral-700">
-                    기본
-                  </span>
-                )}
+                {a.name}
               </div>
-              <div className="text-[13px] text-neutral-600">{a.phone}</div>
+              <div className="text-[13px] text-neutral-600">
+                {a.phoneNumber}
+              </div>
             </div>
+
             <div className="flex items-center gap-2">
               <button
                 type="button"
@@ -49,7 +47,7 @@ const AddressDetails: React.FC<Props> = ({
               <button
                 type="button"
                 className="rounded-md bg-neutral-200 px-3 py-[6px] text-[13px] text-neutral-700 hover:bg-neutral-300"
-                onClick={() => onDelete(a.id)}
+                onClick={() => onDelete(a.addressId)}
               >
                 삭제
               </button>
@@ -57,7 +55,7 @@ const AddressDetails: React.FC<Props> = ({
           </div>
 
           <p className="text-[12px] leading-relaxed text-neutral-600">
-            ({a.postcode}) {a.address1} {a.address2}
+            ({a.zonecode}) {a.address} {a.detailAddress ?? ""}
           </p>
         </li>
       ))}

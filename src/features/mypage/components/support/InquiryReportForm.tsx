@@ -35,16 +35,15 @@ const modeToPath = (m: Mode) =>
 const pathToMode = (p: string): Mode =>
   p.includes("/reports") ? "report" : "inquiry";
 
+/** ✅ 폼 상태: 주문번호 제거, 공통으로 title/content 사용 */
 type FormState = {
   title: string;
   content: string;
-  orderId?: string;
 };
 
 const initialState: FormState = {
   title: "",
   content: "",
-  orderId: "",
 };
 
 const InquiryReportForm: React.FC = () => {
@@ -64,7 +63,6 @@ const InquiryReportForm: React.FC = () => {
     setForm(initialState);
     setMsg(null);
     setErr(null);
-    /** ✅ 절대 경로로 이동 */
     navigate(modeToPath(next), { replace: false });
   };
 
@@ -77,15 +75,8 @@ const InquiryReportForm: React.FC = () => {
 
   const validate = (): string | null => {
     if (!accessToken) return "로그인이 필요합니다.";
-    if (mode === "inquiry") {
-      if (!form.title.trim()) return "제목을 입력해 주세요.";
-      if (!form.content.trim()) return "내용을 입력해 주세요.";
-    } else {
-      if (!form.orderId?.trim()) return "주문번호를 입력해 주세요.";
-      if (!/^\d+$/.test(form.orderId))
-        return "주문번호는 숫자만 입력해 주세요.";
-      if (!form.content.trim()) return "내용을 입력해 주세요.";
-    }
+    if (!form.title.trim()) return "제목을 입력해 주세요.";
+    if (!form.content.trim()) return "내용을 입력해 주세요.";
     return null;
   };
 
@@ -118,10 +109,12 @@ const InquiryReportForm: React.FC = () => {
           { headers }
         );
         setMsg(data?.message ?? "문의가 등록되었습니다.");
+        // 필요 시 상세 페이지로 이동:
         // navigate(`/mypage/support/inquiries/${data.data?.inquiriesId}`);
       } else {
+        // ✅ 신고도 제목과 내용만 전송
         const payload = {
-          order_id: Number(form.orderId),
+          title: form.title.trim(),
           content: form.content.trim(),
         };
         const { data } = await axios.post<ReportResp>(
@@ -130,6 +123,7 @@ const InquiryReportForm: React.FC = () => {
           { headers }
         );
         setMsg(data?.message ?? "신고가 접수되었습니다.");
+        // 필요 시 목록으로 이동:
         // navigate("/mypage/support");
       }
 
@@ -158,7 +152,7 @@ const InquiryReportForm: React.FC = () => {
             className={[
               "px-4 py-2 text-sm font-medium transition-colors",
               mode === "inquiry"
-                ? "text-purple border-purple border-b-2"
+                ? "border-purple text-purple border-b-2"
                 : "text-g200 hover:text-g100",
             ].join(" ")}
           >
@@ -170,7 +164,7 @@ const InquiryReportForm: React.FC = () => {
             className={[
               "px-4 py-2 text-sm font-medium transition-colors",
               mode === "report"
-                ? "text-purple border-purple border-b-2"
+                ? "border-purple text-purple border-b-2"
                 : "text-g200 hover:text-g100",
             ].join(" ")}
           >
@@ -180,37 +174,19 @@ const InquiryReportForm: React.FC = () => {
       </div>
 
       <form onSubmit={onSubmit} className="space-y-4">
-        {mode === "inquiry" && (
-          <label className="block">
-            <span className="text-g200 mb-1 block text-sm">제목</span>
-            <div className="field">
-              <input
-                name="title"
-                value={form.title}
-                onChange={onChange}
-                placeholder="제목을 입력하세요"
-                className="field-input"
-                maxLength={100}
-              />
-            </div>
-          </label>
-        )}
-
-        {mode === "report" && (
-          <label className="block">
-            <span className="text-g200 mb-1 block text-sm">제목</span>
-            <div className="field">
-              <input
-                name="title"
-                value={form.title}
-                onChange={onChange}
-                placeholder="제목을 입력하세요"
-                className="field-input"
-                maxLength={100}
-              />
-            </div>
-          </label>
-        )}
+        <label className="block">
+          <span className="text-g200 mb-1 block text-sm">제목</span>
+          <div className="field">
+            <input
+              name="title"
+              value={form.title}
+              onChange={onChange}
+              placeholder="제목을 입력하세요"
+              className="field-input"
+              maxLength={100}
+            />
+          </div>
+        </label>
 
         <label className="block">
           <span className="text-g200 mb-1 block text-sm">내용</span>

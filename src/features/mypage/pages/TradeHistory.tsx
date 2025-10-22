@@ -2,11 +2,23 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../../../shared/api/axiosInstance";
+
+// ✅ 공통 타입/유틸을 한 군데에서만 import해서 중복 제거
+//    (경로는 너가 만든 공통 모듈 경로로 맞춰줘)
+//    예: "../../mypage/types/trade" 에 우리가 합친 유틸이 있다고 가정
 import type { TradeItem, TradeStatus } from "../../mypage/types/trade";
+import {
+  // 공통 유틸들 (앞서 내가 만들어 준 파일 기준)
+  toStatus as toStdStatus,
+  STATUS_LABEL,
+  compareTradeItems,
+} from "../../mypage/types/trade";
 
 /* =========================
- *        Utils
+ *        Utils (local)
  * ========================= */
+
+// 날짜 포맷
 const formatDate = (iso?: string) => {
   if (!iso) return "-";
   const d = new Date(iso);
@@ -21,33 +33,13 @@ const formatDate = (iso?: string) => {
 const currency = (n?: number | null) =>
   typeof n === "number" ? `${n.toLocaleString()}원` : "";
 
-/** status 정규화(서버 문자열 → 앱 표준) */
-const toStatus = (raw?: string): TradeStatus => {
-  const s = (raw ?? "").trim().toUpperCase();
-  if (/COMPLETED|거래완료|구매확정|수취완료|정산완료|완료됨/.test(s))
-    return "COMPLETED";
-  if (/FINISH|CLOSED|ENDED|종료|마감|유찰/.test(s)) return "FINISH";
-  if (/PROGRESS|WAIT|결제|배송|발송|진행중|PAID|SHIP/.test(s))
-    return "PROGRESS";
-  if (/SALE|SELLING|BIDDING|입찰|판매중/.test(s)) return "SALE";
-  if (/BEFORE|대기|준비중|등록전|비공개|검수/.test(s)) return "BEFORE";
-  return "FINISH";
-};
-
+// ✅ 배지 색상은 화면 톤에 맞춰 이 파일에서만 유지
 const STATUS_BADGE: Record<TradeStatus, string> = {
   BEFORE: "border-neutral-200 bg-neutral-50 text-neutral-700",
   SALE: "border-emerald-200 bg-emerald-50 text-emerald-700",
   PROGRESS: "border-blue-200 bg-blue-50 text-blue-700",
   COMPLETED: "border-neutral-200 bg-neutral-50 text-neutral-700",
   FINISH: "border-neutral-200 bg-neutral-50 text-neutral-500",
-};
-
-const STATUS_LABEL: Record<TradeStatus, string> = {
-  BEFORE: "대기",
-  SALE: "판매중",
-  PROGRESS: "진행중",
-  COMPLETED: "완료",
-  FINISH: "종료",
 };
 
 /* =========================
@@ -60,6 +52,7 @@ type RawTrade = {
   itemName?: string;
   status?: string;
   createdAt?: string;
+  endAt?: string; // ✅ 백엔드가 endAt을 주면 얘를 우선 사용
   thumbnailUrl?: string;
   mainImageUrl?: string;
   image?: string;
@@ -73,7 +66,12 @@ const fromRaw = (r: RawTrade): TradeItem => {
   const id = String(r.id ?? r.auctionId ?? "");
   const price =
     Number(r.price ?? r.currentPrice ?? r.finalPrice ?? 0) || undefined;
-  const status = toStatus(r.status);
+
+  // ✅ 상태는 공통 유틸로 정규화 (여기서 별도 로직 만들지 않음)
+  const status = toStdStatus(r.status);
+
+  // ✅ 종료 시각: endAt 우선, 없으면 createdAt(임시) — 실제 스키마에 맞춰 바꿔줘
+  const auctionEnd = r.endAt ?? r.createdAt;
 
   return {
     id,
@@ -83,14 +81,14 @@ const fromRaw = (r: RawTrade): TradeItem => {
     status,
     statusText: STATUS_LABEL[status],
     auctionStart: undefined,
-    auctionEnd: r.createdAt, // 서버 스키마 맞춰 필요 시 교체
+    auctionEnd,
   };
 };
 
 /* =========================
  *        API
  * ========================= */
-type Summary = { completedSalesCount: number; activeSalesCount: number };
+// type Summary = { completedSalesCount: number; activeSalesCount: number };
 
 async function fetchSummary(): Promise<Summary> {
   const { data } = await api.get<Summary>("/me/trades/summary");
@@ -189,6 +187,12 @@ const Section: React.FC<{
   emptyText = "내역이 없습니다.",
   onRowClick,
 }) => {
+  // ✅ 로딩 끝나면 공통 정렬(compareTradeItems) 적용
+  const sorted = useMemo(
+    () => (!loading && items ? [...items].sort(compareTradeItems) : items),
+    [items, loading]
+  );
+
   return (
     <section className="mt-8">
       <div className="flex items-baseline justify-between">
@@ -203,7 +207,7 @@ const Section: React.FC<{
           <li className="py-8 text-center text-sm text-red-500">{error}</li>
         )}
 
-        {!loading && !error && items && items.length === 0 && (
+        {!loading && !error && sorted && sorted.length === 0 && (
           <li className="py-10 text-center text-sm text-neutral-500">
             {emptyText}
           </li>
@@ -211,8 +215,8 @@ const Section: React.FC<{
 
         {!loading &&
           !error &&
-          items &&
-          items.map((it) => (
+          sorted &&
+          sorted.map((it) => (
             <TradeRow key={it.id} item={it} onClick={onRowClick} />
           ))}
       </ul>
@@ -223,6 +227,8 @@ const Section: React.FC<{
 /* =========================
  *         Summary
  * ========================= */
+type Summary = { completedSalesCount: number; activeSalesCount: number };
+
 const SummaryBar: React.FC<{ summary: Summary | null; loading: boolean }> = ({
   summary,
   loading,
