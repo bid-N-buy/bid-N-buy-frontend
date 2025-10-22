@@ -18,6 +18,17 @@ const ChatModal = ({ onClose }: ModalProps) => {
   const modalRef = useRef<HTMLDivElement>(null);
   const [isAdOpen, setIsAdOpen] = useState(false); // 주소
   const [editing, setEditing] = useState<Address | null>(null);
+  const [addrMock, setAddrMock] = useState<boolean>(false);
+  const [addressesMock, setAddressesMock] = useState<Address[]>([
+    {
+      addressId: 1,
+      zonecode: "04524",
+      address: "서울 중구 세종대로 110",
+      detailAddress: "1층",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+  ]);
 
   const onToggleModal = () => {
     setIsAdOpen((prev) => !prev);
@@ -160,16 +171,17 @@ const ChatModal = ({ onClose }: ModalProps) => {
             setEditing(null);
           }}
           onSave={async (draft) => {
-            const payload: ChatAddressModalProps = {
-              postcode: draft.postcode.trim(),
-              address1: draft.address1.trim(),
-              address2: (draft.address2 ?? "").trim(),
-              isDefault: !!draft.isDefault,
+            const payload: AddressDraft = {
+              zonecode: draft.zonecode.trim(),
+              address: draft.address.trim(),
+              detailAddress: (draft.detailAddress ?? "").trim(),
             };
-            if (draft.id) {
-              await update(draft.id, payload);
+
+            if ((draft as any).addressId) {
+              const id = (draft as any).addressId as number;
+              await (addrMock ? updateMock(id, payload) : update(id, payload));
             } else {
-              await add(payload);
+              await (addrMock ? addMock(payload) : add(payload));
             }
           }}
         />
