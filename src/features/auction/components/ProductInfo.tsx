@@ -13,6 +13,8 @@ import { useChatRoomAuc } from "../../chatting/api/useChatRoom";
 import { useBid } from "../hooks/useBid";
 import WishButton from "../../wish/components/WishButton";
 import { deleteAuction } from "../api/auctions";
+import { useAdminAuthStore } from "../../admin/store/adminStore";
+import { adminDeleteAuction } from "../../admin/api/admin";
 
 export interface ProductInfoProps {
   auctionId: number;
@@ -69,6 +71,8 @@ const ProductInfo = ({
   const userId = useAuthStore((s) => s.userId);
   const token = useAuthStore((s) => s.accessToken);
 
+  const adminToken = useAdminAuthStore((s) => s.accessToken);
+
   const { loadChatRoom } = useChatRoomAuc(sellerId, auctionId);
 
   // 더보기 외부 클릭 시 닫기
@@ -85,12 +89,13 @@ const ProductInfo = ({
 
   // 삭제
   const handleDeleteAuction = useCallback(async () => {
-    if (!isSeller) return;
+    if (!isSeller && !adminToken) return;
     const ok = window.confirm("정말로 이 경매를 삭제하시겠어요?");
     if (!ok) return;
 
     try {
-      await deleteAuction(auctionId);
+      if (isSeller) await deleteAuction(auctionId);
+      if (adminToken) await adminDeleteAuction(auctionId);
       showToast("경매가 삭제되었습니다.", "success");
       onDeleteClick?.(); // 부모에서 후속 처리
     } catch (err: any) {
@@ -100,7 +105,7 @@ const ProductInfo = ({
     } finally {
       setIsMenuOpen(false);
     }
-  }, [isSeller, auctionId, onDeleteClick, showToast]);
+  }, [isSeller, adminToken, auctionId, onDeleteClick, showToast]);
 
   // 입찰
   const { submitBid, loading } = useBid({
@@ -245,7 +250,7 @@ const ProductInfo = ({
                       공유
                     </button>
 
-                    {isSeller && (
+                    {(isSeller || adminToken) && (
                       <button
                         onClick={handleDeleteAuction}
                         className="border-g400 text-red hover:bg-g500 w-full border-t px-3.5 py-2.5 text-center text-base transition-colors md:py-2.5"
