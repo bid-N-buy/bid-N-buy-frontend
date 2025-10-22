@@ -16,7 +16,7 @@ const ChatMe = ({
   return messageType === "CHAT" ? (
     <div className="m-2 flex items-end justify-end gap-2 text-right">
       <div>
-        <p className="text-g300 text-xs">{read ? "" : "읽지 않음"}</p>
+        <p className="text-g300 text-xs">{read ? "" : "전송됨"}</p>
         <p className="text-g300 text-xs">
           {new Date(createdAt).toLocaleTimeString()}
         </p>
@@ -26,7 +26,7 @@ const ChatMe = ({
   ) : messageType === "REQUEST" && isSenderSeller ? (
     <div className="m-2 flex items-end justify-end gap-2 text-right">
       <div>
-        <p className="text-g300 text-xs">{read ? "" : "읽지 않음"}</p>
+        <p className="text-g300 text-xs">{read ? "" : "전송됨"}</p>
         <p className="text-g300 text-xs">
           {new Date(createdAt).toLocaleTimeString()}
         </p>
@@ -50,7 +50,7 @@ const ChatMe = ({
   ) : messageType === "IMAGE" ? (
     <div className="m-2 flex items-end justify-end gap-2 text-right">
       <div>
-        <p className="text-g300 text-xs">{read ? "" : "읽지 않음"}</p>
+        <p className="text-g300 text-xs">{read ? "" : "전송됨"}</p>
         <p className="text-g300 text-xs">
           {new Date(createdAt).toLocaleTimeString()}
         </p>
@@ -67,7 +67,7 @@ const ChatMe = ({
   ) : (
     <div className="m-2 flex items-end justify-end gap-2 text-right">
       <div>
-        <p className="text-g300 text-xs">{read ? "" : "읽지 않음"}</p>
+        <p className="text-g300 text-xs">{read ? "" : "전송됨"}</p>
         <p className="text-g300 text-xs">
           {new Date(createdAt).toLocaleTimeString()}
         </p>

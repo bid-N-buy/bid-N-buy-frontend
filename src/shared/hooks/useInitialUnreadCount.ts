@@ -1,6 +1,6 @@
 // hooks/useInitialChatLoad.ts 파일 생성
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useAuthInit } from "../../features/auth/hooks/UseAuthInit"; // 고객님의 인증 훅 경로
 import { useAuthStore } from "../../features/auth/store/authStore";
 import { useChatModalStore } from "../../shared/store/ChatModalStore"; // 고객님의 스토어 경로

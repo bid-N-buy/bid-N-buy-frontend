@@ -3,6 +3,7 @@ import api from "../../../shared/api/axiosInstance";
 import { Client, type IMessage } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 import { useAuthStore } from "../../auth/store/authStore";
+import { useChatModalStore } from "../../../shared/store/ChatModalStore";
 import ChatProductInfo from "../components/ChatProductInfo";
 import ChatMe from "../components/ChatMe";
 import ChatYou from "../components/ChatYou";
@@ -31,6 +32,8 @@ const ChatRoom = ({
   const token = useAuthStore((state) => state.accessToken);
   const userId = useAuthStore.getState().userId;
 
+  const { markAsRead } = useChatModalStore();
+
   // 웹소켓 주소
   const WS_URL = import.meta.env.VITE_WEBSOCKET_URL;
 
@@ -56,11 +59,7 @@ const ChatRoom = ({
       console.log("메시지 기록이 없어 읽음 요청을 건너뜁니다.");
       return;
     }
-    const lastMessage = messages[messages.length - 1];
-    if (!lastMessage) {
-      return;
-    }
-    if (lastMessage.senderId !== userId) sendReadStatus();
+    sendReadStatus();
   }, [chatroomId, userId, isConnected, messages.length]);
 
   // 이전 메시지 로드
@@ -158,13 +157,34 @@ const ChatRoom = ({
 
   // [전송] 읽음 상태
   const sendReadStatus = async () => {
-    if (!token || !chatroomId) return;
+    const lastMessage = messages[messages.length - 1];
+    const lastReadMessageId = lastMessage.chatmessageId;
+
+    if (
+      !token ||
+      !chatroomId ||
+      !lastMessage
+      // || lastMessage.senderId === userId
+    )
+      return;
+
+    setMessages((prevMessages) =>
+      prevMessages.map((msg) =>
+        // msg.senderId !== userId &&
+        !msg.read ? { ...msg, read: true } : msg
+      )
+    );
     try {
-      await api.put(`/chat/${chatroomId}/read`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      await api.put(
+        `/chat/${chatroomId}/read`,
+        { lastReadMessageId },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      markAsRead(chatroomId);
       console.log("채팅 읽음 상태 전송 완료");
     } catch (error) {
       console.error("읽음 상태 전송 실패:", error);

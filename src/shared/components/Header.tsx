@@ -12,7 +12,6 @@ import {
 import { useAuthInit } from "../../features/auth/hooks/UseAuthInit";
 import api from "../../shared/api/axiosInstance";
 import { useChatModalStore } from "../store/ChatModalStore";
-import { useChatListApi } from "../../features/chatting/api/useChatList";
 import { useInitialUnreadCount } from "../hooks/useInitialUnreadCount";
 
 const Header = () => {
