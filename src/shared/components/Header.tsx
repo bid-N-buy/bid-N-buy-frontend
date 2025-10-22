@@ -12,6 +12,8 @@ import {
 import { useAuthInit } from "../../features/auth/hooks/UseAuthInit";
 import api from "../../shared/api/axiosInstance";
 import { useChatModalStore } from "../store/ChatModalStore";
+import { useChatListApi } from "../../features/chatting/api/useChatList";
+import { useInitialUnreadCount } from "../hooks/useInitialUnreadCount";
 
 const Header = () => {
   const navigate = useNavigate();
@@ -26,7 +28,8 @@ const Header = () => {
   const userNickname = profile?.nickname ?? "User";
   const clearAuth = useAuthStore((s: AuthState) => s.clear);
 
-  const { isChatOpen, openChatList, onClose } = useChatModalStore();
+  const { isChatOpen, openChatList, onClose, totalUnreadCount } =
+    useChatModalStore();
 
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isNotiOpen, setIsNotiOpen] = useState<boolean>(false);
@@ -35,6 +38,8 @@ const Header = () => {
     () => ready && Boolean(accessToken),
     [ready, accessToken]
   );
+
+  useInitialUnreadCount();
 
   // ✅ 리프레시/로그인 완료 후, 프로필 없으면 한 번 불러오기
   useEffect(() => {
@@ -112,13 +117,16 @@ const Header = () => {
     const mql: MediaQueryList = window.matchMedia(
       "screen and (max-width: 768px)"
     );
+
     const apply = (): void => {
       const small = mql.matches;
       document.body.style.overflow =
         (isChatOpen || isNotiOpen) && small ? "hidden" : "";
     };
+
     apply();
     mql.addEventListener("change", apply);
+
     return () => {
       mql.removeEventListener("change", apply);
       document.body.style.overflow = "";
@@ -213,7 +221,7 @@ const Header = () => {
                   title="채팅"
                 >
                   <MessageCircleMore />
-                  <New />
+                  {totalUnreadCount >= 1 && <New />}
                 </button>
               </li>
               {isChatOpen &&
