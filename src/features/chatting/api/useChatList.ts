@@ -3,7 +3,7 @@ import api from "../../../shared/api/axiosInstance";
 import { useAuthStore } from "../../auth/store/authStore";
 import type { ChatListItemProps } from "../types/ChatType";
 
-export const useChatListApi = (isChatOpen: boolean) => {
+export const useChatListApi = () => {
   const [chatList, setChatList] = useState<ChatListItemProps[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -29,13 +29,13 @@ export const useChatListApi = (isChatOpen: boolean) => {
   };
 
   useEffect(() => {
-    if (token && isChatOpen) {
+    if (token) {
       loadChatList();
-    } else if (!isChatOpen) {
+    } else {
       setIsLoading(false);
       return;
     }
-  }, [token, isChatOpen]);
+  }, [token]);
 
   return { chatList, isLoading, error, refetchList: loadChatList };
 };

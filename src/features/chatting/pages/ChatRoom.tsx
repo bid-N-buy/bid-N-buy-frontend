@@ -61,7 +61,7 @@ const ChatRoom = ({
       return;
     }
     if (lastMessage.senderId !== userId) sendReadStatus();
-  }, [chatroomId, userId, isConnected, messages]);
+  }, [chatroomId, userId, isConnected, messages.length]);
 
   // 이전 메시지 로드
   const fetchMessageHistory = async (chatroomId: number, token: string) => {
@@ -162,7 +162,7 @@ const ChatRoom = ({
     try {
       await api.put(`/chat/${chatroomId}/read`, {
         headers: {
-          Authorizations: `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
       console.log("채팅 읽음 상태 전송 완료");

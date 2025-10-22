@@ -38,7 +38,7 @@ const ChatModal = ({ onClose }: ModalProps) => {
   const [currentView, setCurrentView] = useState<string>(targetView);
 
   // chatlist
-  const listApi = useChatListApi(true);
+  const listApi = useChatListApi();
   // 불러와진 ChatListItemProps 중 원하는 요소만 사용할 수 있게 처리
   type ChatListItem = (typeof listApi.chatList)[number];
   // 이동할 roomInfo(list에서 접근 시)
@@ -46,7 +46,7 @@ const ChatModal = ({ onClose }: ModalProps) => {
     null
   );
 
-  // header>modal || 경매 상세 페이지에서 챗방 바로 생성할 시
+  // header에서 버튼 눌렀을 때 || 경매 상세 페이지에서 챗방 생성했을 때
   const targetChatroomId = selectedRoomInfo?.chatroomId || selectedChatroomId;
 
   // chatroom 상세 데이터
