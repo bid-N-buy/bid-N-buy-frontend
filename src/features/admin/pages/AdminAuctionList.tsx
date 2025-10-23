@@ -1,7 +1,7 @@
 import React from "react";
 
 const AdminAuctionList = () => {
-  return <div>AdminAuctionList</div>;
+  return <div></div>;
 };
 
 export default AdminAuctionList;
