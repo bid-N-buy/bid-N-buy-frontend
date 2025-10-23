@@ -1,11 +1,6 @@
 import type { AuctionDetail } from "../../auction/types/auctions";
 
 export const WS_URL = import.meta.env.VITE_WEBSOCKET_URL;
-export interface ModalProps {
-  isChatOpen?: boolean;
-  onClose: () => void;
-  onDelete?: () => void;
-}
 
 export interface ChatListItemProps {
   chatroomId: number;

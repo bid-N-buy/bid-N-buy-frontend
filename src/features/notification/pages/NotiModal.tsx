@@ -1,6 +1,6 @@
 import React from "react";
 import { useRef, useEffect, useState } from "react";
-import type { ModalProps } from "../../chatting/types/ChatType";
+import type { ModalProps } from "../../../shared/types/CommonType";
 import type { NotiListProps } from "../types/NotiType";
 import NotiList from "./NotiList";
 import { X } from "lucide-react";

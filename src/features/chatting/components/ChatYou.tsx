@@ -141,7 +141,6 @@ const ChatYou = ({
               alt="전송된 이미지"
               className="max-w-full object-cover"
             />
-            <p className="hidden">{message}</p>
           </div>
           <div>
             <p className="text-g300 text-xs">{read ? "" : "읽지 않음"}</p>

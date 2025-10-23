@@ -61,7 +61,6 @@ const ChatMe = ({
           alt="전송된 이미지"
           className="max-w-full object-cover"
         />
-        <p className="hidden">{message}</p>
       </div>
     </div>
   ) : (

@@ -5,7 +5,7 @@ import { useAuthStore } from "../../auth/store/authStore";
 import { useChatListApi } from "../api/useChatList";
 import { useChatRoomApi } from "../api/useChatRoom";
 import useToast from "../../../shared/hooks/useToast";
-import type { ModalProps } from "../types/ChatType";
+import type { ModalProps } from "../../../shared/types/CommonType";
 import { useChatModalStore } from "../../../shared/store/ChatModalStore";
 import ChatList from "./ChatList";
 import ChatRoom from "./ChatRoom";

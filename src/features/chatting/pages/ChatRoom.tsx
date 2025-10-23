@@ -4,6 +4,7 @@ import { Client, type IMessage } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 import { useAuthStore } from "../../auth/store/authStore";
 import { useChatModalStore } from "../../../shared/store/ChatModalStore";
+import { useChatListApi } from "../api/useChatList";
 import ChatProductInfo from "../components/ChatProductInfo";
 import ChatMe from "../components/ChatMe";
 import ChatYou from "../components/ChatYou";
@@ -33,6 +34,7 @@ const ChatRoom = ({
   const userId = useAuthStore.getState().userId;
 
   const { markAsRead } = useChatModalStore();
+  const { refetchList } = useChatListApi();
 
   // 웹소켓 주소
   const WS_URL = import.meta.env.VITE_WEBSOCKET_URL;
@@ -133,9 +135,6 @@ const ChatRoom = ({
                 })
                 .reverse(); // 5. 순서를 원래대로 되돌립니다.
             });
-
-            // 💡 [추가] 읽음 처리 후, 전역 totalUnreadCount도 갱신합니다.
-            markAsRead(readData.chatroomId);
           } catch (e) {
             console.error("읽음 상태 파싱 오류:", e);
           }
@@ -248,11 +247,13 @@ const ChatRoom = ({
 
     // 받아올 url 정의
     let uploadedImageUrl: string;
+    const messageText = "사진을 보냈습니다.";
 
     try {
       // 폼 데이터로 전송(요청 파라미터)
       const formData = new FormData();
       formData.append("file", file);
+      formData.append("messageText", messageText);
 
       const url = await api.post(`/chat/${chatroomId}/image`, formData, {
         headers: {
@@ -271,7 +272,6 @@ const ChatRoom = ({
       chatroomId: chatroomId,
       senderId: userId,
       imageUrl: uploadedImageUrl,
-      message: "사진을 보냈습니다.",
       messageType: "IMAGE",
     };
 
@@ -332,7 +332,9 @@ const ChatRoom = ({
           },
         }
       );
-      console.log("채팅 읽음 상태 전송 완료");
+      markAsRead(chatroomId);
+      await refetchList();
+      console.log("채팅 읽음 상태 전송 및 채팅 목록 갱신 완료");
     } catch (error) {
       console.error("읽음 상태 전송 실패:", error);
     }
