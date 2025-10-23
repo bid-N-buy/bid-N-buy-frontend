@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Search, Menu, MessageCircleMore, Bell, X } from "lucide-react";
+import { Search, Menu, MessageCircleMore, Bell, X, Plus } from "lucide-react";
 import New from "./New";
 import ChatModal from "../../features/chatting/pages/ChatModal";
 import NotiModal from "../../features/notification/pages/NotiModal";
@@ -20,7 +20,7 @@ const Header = () => {
 
   const { ready } = useAuthInit();
 
-  // ✅ 프로필도 함께 가져오도록 수정
+  // 프로필도 함께 가져오도록 수정
   const accessToken = useAuthStore((s: AuthState) => s.accessToken);
   const profile = useAuthStore((s: AuthState) => s.profile);
   const setProfile = useAuthStore((s: AuthState) => s.setProfile);
@@ -40,7 +40,7 @@ const Header = () => {
 
   useInitialUnreadCount();
 
-  // ✅ 리프레시/로그인 완료 후, 프로필 없으면 한 번 불러오기
+  // 리프레시/로그인 완료 후, 프로필 없으면 한 번 불러오기
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -201,25 +201,39 @@ const Header = () => {
           ) : isAuthed ? (
             <ul className="text-h7 flex items-center gap-4 text-nowrap">
               <li>
-                <Link to="/mypage">
+                <Link to="/mypage" className="cursor-pointer">
                   <span className="font-bold">{userNickname}</span>님
-                  환영합니다.
+                  환영합니다!
                 </Link>
               </li>
               <li>
-                <button onClick={handleLogout}>로그아웃</button>
+                <button
+                  onClick={handleLogout}
+                  className="hover:text-purple cursor-pointer transition-colors"
+                >
+                  로그아웃
+                </button>
               </li>
               <li>
-                <Link to="/mypage/inquiries">문의하기</Link>
+                <button>
+                  <Link
+                    to="/auctions/new"
+                    className="cursor-pointer"
+                    aria-label="경매 등록"
+                    title="경매 등록"
+                  >
+                    <Plus className="text-purple h-7 w-7" strokeWidth={2.5} />
+                  </Link>
+                </button>
               </li>
               <li>
                 <button
-                  className="relative"
+                  className="hover:text-purple relative cursor-pointer transition-colors"
                   onClick={openChatList}
                   aria-label="채팅"
                   title="채팅"
                 >
-                  <MessageCircleMore />
+                  <MessageCircleMore className="mb-0.5 h-6 w-6" />
                   {totalUnreadCount >= 1 && <New />}
                 </button>
               </li>
@@ -227,12 +241,12 @@ const Header = () => {
                 createPortal(<ChatModal onClose={onClose} />, modalRoot)}
               <li>
                 <button
-                  className="relative"
+                  className="hover:text-purple relative cursor-pointer transition-colors"
                   onClick={() => setIsNotiOpen(true)}
                   aria-label="알림"
                   title="알림"
                 >
-                  <Bell />
+                  <Bell className="h-6 w-6" />
                 </button>
               </li>
               {isNotiOpen &&
@@ -247,13 +261,28 @@ const Header = () => {
           ) : (
             <ul className="text-h7 flex gap-4 text-nowrap">
               <li>
-                <Link to="/login">로그인</Link>
+                <Link
+                  to="/login"
+                  className="hover:text-purple cursor-pointer transition-colors"
+                >
+                  로그인
+                </Link>
               </li>
               <li>
-                <Link to="/signup">회원가입</Link>
+                <Link
+                  to="/signup"
+                  className="hover:text-purple cursor-pointer transition-colors"
+                >
+                  회원가입
+                </Link>
               </li>
               <li>
-                <Link to="/mypage/inquiries">문의하기</Link>
+                <Link
+                  to="/mypage/inquiries"
+                  className="hover:text-purple cursor-pointer transition-colors"
+                >
+                  문의하기
+                </Link>
               </li>
             </ul>
           )}
