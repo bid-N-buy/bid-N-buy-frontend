@@ -7,6 +7,7 @@ const ChatProductInfo = ({
   currentPrice,
   sellingStatus,
   handleSendPaymentRequest,
+  handleSendAddress,
 }: ChatProductInfoProps) => {
   const { auctionId, auctionImageUrl, auctionTitle, counterpartId } =
     auctionInfo;
@@ -48,6 +49,9 @@ const ChatProductInfo = ({
             <button
               type="button"
               className="bg-purple w-full rounded-md px-2 py-1.5 text-xs text-white"
+              onClick={() => {
+                handleSendAddress(auctionId, buyerId!, sellerId);
+              }}
             >
               주소 입력
             </button>
