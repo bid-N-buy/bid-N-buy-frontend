@@ -55,6 +55,11 @@ export interface ChatProductInfoProps {
     sellerId: number,
     currentPrice: number
   ) => void;
+  handleSendAddress: (
+    auctionId: number,
+    buyerId: number,
+    sellerId: number
+  ) => void;
 }
 
 export interface ChatMessageProps {
@@ -76,12 +81,6 @@ export type ChatMeProps = {
   sellerId: number;
   currentPrice: number;
   auctionInfo: Pick<ChatListItemProps, "auctionImageUrl" | "auctionTitle">;
-  handleSendPaymentRequest: (
-    auctionId: number,
-    buyerId: number,
-    sellerId: number,
-    currentPrice: number
-  ) => void;
 };
 
 export type ChatYouProps = {
@@ -96,12 +95,6 @@ export type ChatYouProps = {
   sellerId: number;
   currentPrice: number;
   auctionInfo: Pick<ChatListItemProps, "auctionImageUrl" | "auctionTitle">;
-  handleSendPaymentRequest: (
-    auctionId: number,
-    buyerId: number,
-    sellerId: number,
-    currentPrice: number
-  ) => void;
 };
 
 export interface ChatInputProps {
