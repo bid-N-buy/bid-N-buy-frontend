@@ -76,19 +76,9 @@ const Header = () => {
   const handleSearch = (e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault();
     const q = searchQuery.trim();
-    const next = ((): URLSearchParams => {
-      if (location.pathname.startsWith("/auctions")) {
-        const keep = new URLSearchParams(location.search);
-        keep.delete("page");
-        if (q) keep.set("searchKeyword", q);
-        else keep.delete("searchKeyword");
-        return keep;
-      }
-      const sp = new URLSearchParams();
-      if (q) sp.set("searchKeyword", q);
-      return sp;
-    })();
-    navigate(`/auctions?${next.toString()}`);
+    const sp = new URLSearchParams();
+    if (q) sp.set("searchKeyword", q);
+    navigate(`/auctions?${sp.toString()}`);
   };
 
   const clearSearch = () => {
@@ -153,7 +143,7 @@ const Header = () => {
           <input
             type="text"
             id="search"
-            placeholder="검색어를 입력해 주세요"
+            placeholder="상품명을 입력해 주세요"
             className="w-[90%] min-w-[120px] focus:outline-none lg:min-w-[250px]"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
