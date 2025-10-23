@@ -24,7 +24,7 @@ export const useAuctionSearch = ({
   const [last, setLast] = useState(false);
 
   // 최고가(가격 필터 상한)
-  const [topPrice, setTopPrice] = useState<number>(500_000);
+  const [topPrice, setTopPrice] = useState<number>(1_000_000);
   const topAbortRef = useRef<AbortController | null>(null);
 
   const abortRef = useRef<AbortController | null>(null);
@@ -135,12 +135,12 @@ export const useAuctionSearch = ({
         const top = res?.data?.[0];
         const ceil = top
           ? Math.max(1000, Number(top.currentPrice) || 0)
-          : 500_000;
+          : 1_000_000;
         setTopPrice(ceil);
       } catch (e: any) {
         const canceled =
           e?.name === "CanceledError" || e?.code === "ERR_CANCELED";
-        if (!canceled) setTopPrice(500_000); // 실패 시 기본값
+        if (!canceled) setTopPrice(1_000_000); // 실패 시 기본값 100만 원으로
       }
     })();
 
