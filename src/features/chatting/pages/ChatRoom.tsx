@@ -190,6 +190,36 @@ const ChatRoom = ({
     }
   };
 
+  // [전송] 주소 입력 완료 알림
+  const handleSendAddress = (
+    auctionId: number,
+    buyerId: number,
+    sellerId: number
+  ) => {
+    const client = clientRef.current;
+
+    // 유효성 검사
+    if (!client || !client.connected) {
+      console.warn("연결 상태가 좋지 않습니다.");
+      return;
+    }
+    const messageAddress = {
+      chatroomId: chatroomId,
+      auctionId: auctionId,
+      buyerId: buyerId,
+      senderId: sellerId,
+      message: "주소를 입력했습니다.",
+      messageType: "SYSTEM",
+    };
+
+    // 전송 실행
+    client.publish({
+      destination: `/app/chat/message`,
+      body: JSON.stringify(messageAddress),
+      headers: { "content-type": "application/json" },
+    });
+  };
+
   // [전송] 거래 요청 메시지
   const handleSendPaymentRequest = (
     auctionId: number,
@@ -298,15 +328,16 @@ const ChatRoom = ({
     <>
       <ChatProductInfo
         auctionInfo={chatroomInfo}
+        sellerId={sellerId}
         currentPrice={productInfo.currentPrice}
         sellingStatus={productInfo.sellingStatus}
         handleSendPaymentRequest={handleSendPaymentRequest}
-        sellerId={sellerId}
+        handleSendAddress={handleSendAddress}
       />
       <div
         ref={chatContainerRef}
         key={chatroomId}
-        className="h-[calc(100%-15.15rem)] w-[100%] overflow-x-hidden overflow-y-scroll"
+        className="h-[calc(100%-15.4rem)] w-[100%] overflow-x-hidden overflow-y-scroll"
       >
         {messages.length === 0 && (
           <div className="text-g300 flex h-[100%] items-center justify-center text-sm">
@@ -321,7 +352,6 @@ const ChatRoom = ({
               msgInfo={msg}
               auctionInfo={chatroomInfo}
               currentPrice={productInfo.currentPrice}
-              handleSendPaymentRequest={handleSendPaymentRequest}
             />
           ) : (
             <ChatYou
@@ -331,7 +361,6 @@ const ChatRoom = ({
               counterpartInfo={chatroomInfo}
               auctionInfo={chatroomInfo}
               currentPrice={productInfo.currentPrice}
-              handleSendPaymentRequest={handleSendPaymentRequest}
             />
           )
         )}

@@ -80,11 +80,12 @@ const ChatInput = ({
               </button>
             </div>
           )}
-          <input
-            type="text"
+          <textarea
             name="chatMessage"
             id="chatMessage"
-            placeholder={preview ? "" : "메시지를 입력하세요."}
+            placeholder={
+              preview ? "이미지를 전송합니다." : "메시지를 입력하세요."
+            }
             disabled={!isConnected || !!preview}
             className={`h-16 ${preview ? `min-w-[80%]` : `w-full`} focus:outline-none`}
             value={inputMessage}
@@ -92,6 +93,7 @@ const ChatInput = ({
             onKeyDown={(e) =>
               e.key === "Enter" && !e.nativeEvent.isComposing && sendMessage()
             }
+            style={{ resize: "none" }}
             required
           />
         </div>
