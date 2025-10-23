@@ -25,6 +25,12 @@ export interface AvatarProps {
   nickname?: UserProps["nickname"];
 }
 
+export interface ModalProps {
+  isChatOpen?: boolean;
+  onClose: () => void;
+  onDelete?: () => void;
+}
+
 export const profile_default =
   "https://img.daisyui.com/images/profile/demo/yellingcat@192.webp";
 

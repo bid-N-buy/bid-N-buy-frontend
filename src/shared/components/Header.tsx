@@ -123,6 +123,7 @@ const Header = () => {
   }, [isChatOpen, isNotiOpen]);
 
   const modalRoot: HTMLElement | null = document.getElementById("modal-root");
+
   if (!modalRoot) {
     console.error("Portal root element '#modal-root' not found.");
     return null;
