@@ -7,8 +7,6 @@ import { useCategoryStore } from "../store/categoryStore";
 import type { CategoryNode } from "../api/categories";
 import type { AuctionItem } from "../types/auctions";
 
-// todo 이거 처리할 것..
-const MAX_PRICE = 500000;
 const PAGE_SIZE = 20;
 
 const AuctionList = () => {
@@ -35,29 +33,7 @@ const AuctionList = () => {
       ? Number(sp.get("mainCategoryId"))
       : undefined;
 
-  // 가격 - 버튼 클릭 시 반영
-  const [tempMinPrice, setTempMinPrice] = useState<number>(minPrice ?? 0);
-  const [tempMaxPrice, setTempMaxPrice] = useState<number>(
-    maxPrice ?? MAX_PRICE
-  );
-
-  useEffect(() => {
-    setTempMinPrice(minPrice ?? 0);
-    setTempMaxPrice(maxPrice ?? MAX_PRICE);
-  }, [minPrice, maxPrice]);
-
-  const applyPriceFilter = () => {
-    const lo = Math.max(0, Math.min(tempMinPrice, MAX_PRICE));
-    const hi = Math.max(0, Math.min(tempMaxPrice, MAX_PRICE));
-    const [minOk, maxOk] = lo <= hi ? [lo, hi] : [hi, lo];
-
-    const next = new URLSearchParams(sp);
-    next.set("minPrice", String(minOk));
-    next.set("maxPrice", String(maxOk));
-    setSp(next, { replace: false });
-  };
-
-  // 카테고리 스토어
+  // 카테고리
   const { mains, subsByParent, loadingTop, loadTop, loadSubs } =
     useCategoryStore();
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
@@ -105,7 +81,7 @@ const AuctionList = () => {
     })();
   }, [mainCategoryId, subCategoryId, mains, subsByParent, loadSubs]);
 
-  const { items, loading, error, last, loadMore } = useAuctionSearch({
+  const { items, loading, error, last, loadMore, topPrice } = useAuctionSearch({
     searchKeyword,
     mainCategoryId,
     subCategoryId,
@@ -115,6 +91,42 @@ const AuctionList = () => {
     sortBy,
     size: PAGE_SIZE,
   });
+
+  // 가격
+  const priceCeil = Math.max(1000, topPrice || 1_000_000);
+
+  const [tempMinPrice, setTempMinPrice] = useState<number>(minPrice ?? 0);
+  const [tempMaxPrice, setTempMaxPrice] = useState<number>(
+    maxPrice ?? priceCeil
+  );
+
+  useEffect(() => {
+    const toMin = Math.max(0, Math.min(minPrice ?? 0, priceCeil));
+    const toMax = Math.max(0, Math.min(maxPrice ?? priceCeil, priceCeil));
+    const [lo, hi] = toMin <= toMax ? [toMin, toMax] : [toMax, toMin];
+    setTempMinPrice(lo);
+    setTempMaxPrice(hi);
+  }, [minPrice, maxPrice, priceCeil]);
+
+  const applyPriceFilter = () => {
+    const loRaw = Math.max(0, tempMinPrice);
+    const hiRaw = Math.max(0, tempMaxPrice);
+    const lo = Math.min(loRaw, priceCeil);
+    const hi = Math.min(hiRaw, priceCeil);
+    const [minOk, maxOk] = lo <= hi ? [lo, hi] : [hi, lo];
+
+    const next = new URLSearchParams(sp);
+    next.set("minPrice", String(minOk));
+    next.set("maxPrice", String(maxOk));
+    setSp(next, { replace: false });
+  };
+
+  // 완료/종료 포함
+  const toggleIncludeEnded = () => {
+    const next = new URLSearchParams(sp);
+    includeEnded ? next.delete("includeEnded") : next.set("includeEnded", "1");
+    setSp(next, { replace: false });
+  };
 
   // 무한스크롤
   const sentinelRef = useRef<HTMLDivElement | null>(null);
@@ -130,13 +142,6 @@ const AuctionList = () => {
     return () => io.disconnect();
   }, [loadMore, loading, last]);
 
-  // 완료/종료 포함 토글
-  const toggleIncludeEnded = () => {
-    const next = new URLSearchParams(sp);
-    includeEnded ? next.delete("includeEnded") : next.set("includeEnded", "1");
-    setSp(next, { replace: false });
-  };
-
   // 정렬
   const onChangeSort = (v: "latest" | "price_asc" | "price_desc") => {
     const next = new URLSearchParams(sp);
@@ -147,7 +152,6 @@ const AuctionList = () => {
   const handleCardClick = (auctionId: number) =>
     navigate(`/auctions/${auctionId}`);
 
-  // 상단에 오는 거.. todo 고민해보고..
   const resultTitle = useMemo(() => {
     const hasCategory = !!(
       mainCategoryId ||
@@ -275,14 +279,14 @@ const AuctionList = () => {
                   <div
                     className="bg-purple absolute h-1 rounded-md"
                     style={{
-                      left: `${(tempMinPrice / MAX_PRICE) * 100}%`,
-                      right: `${100 - (tempMaxPrice / MAX_PRICE) * 100}%`,
+                      left: `${(priceCeil ? tempMinPrice / priceCeil : 0) * 100}%`,
+                      right: `${100 - (priceCeil ? (tempMaxPrice / priceCeil) * 100 : 0)}%`,
                     }}
                   />
                   <input
                     type="range"
                     min="0"
-                    max={MAX_PRICE}
+                    max={priceCeil}
                     step="1000"
                     value={tempMinPrice}
                     onChange={(e) => {
@@ -294,7 +298,7 @@ const AuctionList = () => {
                   <input
                     type="range"
                     min="0"
-                    max={MAX_PRICE}
+                    max={priceCeil}
                     step="1000"
                     value={tempMaxPrice}
                     onChange={(e) => {

@@ -23,6 +23,10 @@ export const useAuctionSearch = ({
   const [error, setError] = useState<string | null>(null);
   const [last, setLast] = useState(false);
 
+  // 최고가(가격 필터 상한)
+  const [topPrice, setTopPrice] = useState<number>(1_000_000);
+  const topAbortRef = useRef<AbortController | null>(null);
+
   const abortRef = useRef<AbortController | null>(null);
 
   // 로그인 상태 키
@@ -110,9 +114,54 @@ export const useAuctionSearch = ({
     authKey,
   ]);
 
+  // 가격 필터 외 동일 조건으로 최고가 1건 조회 -> topPrice
+  useEffect(() => {
+    const controller = new AbortController();
+    topAbortRef.current?.abort();
+    topAbortRef.current = controller;
+
+    (async () => {
+      try {
+        const res = await fetchAuctions({
+          searchKeyword: (searchKeyword ?? "").trim() || undefined,
+          mainCategoryId: mainCategoryId ?? undefined,
+          subCategoryId: subCategoryId ?? undefined,
+          includeEnded,
+          sortBy: "price_desc",
+          page: 0,
+          size: 1,
+        });
+
+        const top = res?.data?.[0];
+        const ceil = top
+          ? Math.max(1000, Number(top.currentPrice) || 0)
+          : 1_000_000;
+        setTopPrice(ceil);
+      } catch (e: any) {
+        const canceled =
+          e?.name === "CanceledError" || e?.code === "ERR_CANCELED";
+        if (!canceled) setTopPrice(1_000_000); // 실패 시 기본값 100만 원으로
+      }
+    })();
+
+    return () => controller.abort();
+  }, [searchKeyword, mainCategoryId, subCategoryId, includeEnded, authKey]);
+
   const loadMore = useCallback(() => {
     if (!loading && !last) setPage((p) => p + 1);
   }, [loading, last]);
 
-  return { items, loading, error, last, loadMore, page, setPage, setItems };
+  return {
+    items,
+    loading,
+    error,
+    last,
+    loadMore,
+    page,
+    setPage,
+    setItems,
+    topPrice,
+  };
 };
+
+// 훅에 데이터 책임 집중
