@@ -14,3 +14,8 @@ export interface AdminLoginResponse {
   grantType: "Bearer";
   accessTokenExpiresIn: number;
 }
+
+export interface AdminAlarmPostProps {
+  alarmType: string;
+  content: string;
+}

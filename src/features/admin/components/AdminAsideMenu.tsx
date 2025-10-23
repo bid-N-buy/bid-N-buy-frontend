@@ -1,12 +1,22 @@
-import React from "react";
+import React, { useState } from "react";
+import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
+import AdminAlarmPostModal from "./AdminAlertPostModal";
 import {
   LayoutDashboard,
   NotebookText,
   MessageCircleWarning,
+  Megaphone,
 } from "lucide-react";
 
 const AdminAsideMenu = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const modalRoot: HTMLElement | null = document.getElementById("modal-root");
+
+  if (!modalRoot) {
+    console.error("Portal root element '#modal-root' not found.");
+    return null;
+  }
   return (
     <aside className="flex h-screen w-16 flex-col justify-between border-e border-gray-100 bg-white">
       <div>
@@ -82,6 +92,25 @@ const AdminAsideMenu = () => {
                   </span>
                 </Link>
               </li>
+
+              <li>
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(true)}
+                  className="group relative flex justify-center rounded-sm px-3 py-1.5 hover:bg-gray-50"
+                >
+                  <Megaphone />
+
+                  <span className="invisible absolute start-full top-1/2 ms-4 w-18.5 -translate-y-1/2 rounded-sm bg-gray-900 px-2 py-1.5 text-xs font-medium text-white group-hover:visible">
+                    공지/경고 발송
+                  </span>
+                </button>
+              </li>
+              {isModalOpen &&
+                createPortal(
+                  <AdminAlarmPostModal onClose={() => setIsModalOpen(false)} />,
+                  modalRoot
+                )}
             </ul>
           </div>
         </nav>
