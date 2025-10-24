@@ -47,9 +47,8 @@ const ChatRoom = ({
 
     // Cleanup
     return () => {
-      if (clientRef.current && clientRef.current.connected) {
-        clientRef.current.deactivate();
-      }
+      clientRef.current?.deactivate();
+      clientRef.current = null;
     };
   }, [chatroomId, token]);
 
@@ -81,6 +80,11 @@ const ChatRoom = ({
 
   // 웹소켓 전체 로직
   const webSocketLogic = () => {
+    if (clientRef.current?.connected) {
+      console.log("재연결 방지");
+      return;
+    }
+
     // STOMP 클라이언트 인스턴스 생성
     const client = new Client({
       // SockJS 연결을 사용하기 위한 webSocketFactory 설정
@@ -97,6 +101,7 @@ const ChatRoom = ({
 
       onConnect: () => {
         setIsConnected(true);
+        console.log("✅ WebSocket Connected!");
 
         // 연결 성공 시 채팅방 구독
         const receivedDestination = `/topic/chat/room/${chatroomId}`;
@@ -107,7 +112,6 @@ const ChatRoom = ({
         });
 
         client.subscribe(readDestination, (readMessage) => {
-          console.log("읽음 처리 중"); // 🚨 이 로그가 찍혀야 실시간 반영이 시작됩니다.
           try {
             const readData = JSON.parse(readMessage.body);
             console.log("서버에서 받은 읽음 데이터:", readData);
@@ -353,7 +357,7 @@ const ChatRoom = ({
       <div
         ref={chatContainerRef}
         key={chatroomId}
-        className="h-[calc(100%-15.4rem)] w-[100%] overflow-x-hidden overflow-y-scroll"
+        className="h-[calc(100%-12.5rem)] w-[100%] overflow-x-hidden overflow-y-scroll"
       >
         {messages.length === 0 && (
           <div className="text-g300 flex h-[100%] items-center justify-center text-sm">

@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, type FormEvent } from "react";
 import type { ChatInputProps } from "../types/ChatType";
 import { Camera, X } from "lucide-react";
 
@@ -49,77 +49,77 @@ const ChatInput = ({
     }
   };
 
-  // 버튼 통합
-  const submitMessage = (e) => {
-    e.preventDefault(); // 폼 전송 방지
-
+  const submitMessage = (e: FormEvent) => {
+    e.preventDefault();
     if (file) {
       removeImage(); // 이미지 제거 및 input 초기화 함수
       handleSendImage(file);
     } else if (inputMessage.trim()) {
-      // 이미지가 없고 텍스트가 있을 때: 일반 메시지 전송
       sendMessage();
     }
   };
 
   return (
-    <div className="bg-white px-3 py-2">
-      <form className="w-full" onSubmit={submitMessage}>
-        <div
-          className={`border-purple relative block min-h-21 w-full rounded-md border-2 p-2 ${preview && `flex gap-2`}`}
-        >
-          {preview && (
-            <div className="relative w-[20%]">
-              <img className="w-full" src={preview} />
-              <button
-                type="button"
-                className="absolute top-0 right-0 bg-white"
-                onClick={removeImage}
-              >
-                <X size={16} />
-              </button>
-            </div>
-          )}
-          <textarea
-            name="chatMessage"
-            id="chatMessage"
-            placeholder={
-              preview ? "사진을 전송합니다." : "메시지를 입력하세요."
-            }
-            disabled={!isConnected || !!preview}
-            className={`h-16 ${preview ? `min-w-[80%]` : `w-full`} focus:outline-none`}
-            value={preview ? "" : inputMessage}
-            onChange={(e) => setInputMessage(e.target.value)}
-            onKeyDown={(e) =>
-              e.key === "Enter" &&
-              !e.nativeEvent.isComposing &&
-              e.preventDefault()
-            }
-            style={{ resize: "none" }}
-            required
-          />
-        </div>
-
-        <div className="mt-2 flex items-center justify-between">
-          <input
-            id="image"
-            type="file"
-            accept="image/*"
-            className="hidden"
-            ref={fileInputRef}
-            onChange={handleFileChange}
-          />
-          <button type="button" className="p-2" onClick={handleImageUpload}>
-            <Camera />
-          </button>
+    <div className="relative">
+      {preview && (
+        <div className="absolute -top-[5rem] ml-1 size-[20%]">
+          <img className="w-full" src={preview} />
           <button
-            type="submit"
-            className="bg-purple w-15 rounded-md py-2 text-white"
+            type="button"
+            className="absolute top-0 right-0 bg-white"
+            onClick={removeImage}
           >
-            전송
+            <X size={16} />
           </button>
         </div>
-      </form>
+      )}
+      <div className="bg-white px-3 py-2">
+        <form className="w-full" onSubmit={submitMessage}>
+          <div
+            className={`border-purple relative block w-full rounded-md border-2 p-2 ${preview && `flex gap-2`}`}
+          >
+            <input
+              type="text"
+              name="chatMessage"
+              id="chatMessage"
+              placeholder={
+                preview ? "사진을 전송합니다." : "메시지를 입력하세요."
+              }
+              disabled={!isConnected || !!preview}
+              className="w-full focus:outline-none"
+              value={preview ? "" : inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              // onKeyDown={(e) => e.key === "Enter" && !e.nativeEvent.isComposing}
+              style={{ resize: "none" }}
+              required
+            />
+          </div>
+
+          <div className="mt-2 flex items-center justify-between">
+            <input
+              id="image"
+              type="file"
+              accept="image/*"
+              className="hidden"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+            />
+            <button
+              type="button"
+              className="cursor-pointer p-2"
+              onClick={handleImageUpload}
+            >
+              <Camera />
+            </button>
+            <button
+              type="submit"
+              className="bg-purple w-15 rounded-md py-2 text-white"
+            >
+              전송
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };

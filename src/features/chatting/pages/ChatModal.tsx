@@ -16,6 +16,38 @@ import { X, ChevronLeft, EllipsisVertical } from "lucide-react";
 
 const ChatModal = ({ onClose }: ModalProps) => {
   const modalRef = useRef<HTMLDivElement>(null);
+  const token = useAuthStore((state) => state.accessToken);
+  const { showToast } = useToast();
+
+  // 채팅목록/채팅방 화면 상태관리
+  const { targetView, selectedChatroomId } = useChatModalStore(
+    useShallow((state) => ({
+      targetView: state.targetView,
+      selectedChatroomId: state.selectedChatroomId,
+    }))
+  );
+
+  const [currentView, setCurrentView] = useState<string>(targetView);
+
+  // chatlist 데이터
+  const listApi = useChatListApi();
+  type ChatListItem = (typeof listApi.chatList)[number]; // 불러와진 ChatListItemProps 중 원하는 요소만 사용
+  // 이동할 roomInfo(list에서 접근 시)
+  const [selectedRoomInfo, setSelectedRoomInfo] = useState<ChatListItem | null>(
+    null
+  );
+
+  // chatroomId 분기점: header에서 버튼 눌렀을 때 || 경매 상세 페이지에서 챗방 생성했을 때
+  const targetChatroomId = selectedRoomInfo?.chatroomId || selectedChatroomId;
+
+  // chatroom 데이터
+  const shouldEnableRoomApi =
+    currentView === "room" && listApi.chatList.length > 0;
+  const roomApi = useChatRoomApi(targetChatroomId!, shouldEnableRoomApi);
+
+  // chatroom에서 해당 채팅방 삭제 메뉴
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
   const [isAdOpen, setIsAdOpen] = useState(false); // 주소
   const [editing, setEditing] = useState<Address | null>(null);
   const [addrMock, setAddrMock] = useState<boolean>(false);
@@ -38,37 +70,6 @@ const ChatModal = ({ onClose }: ModalProps) => {
     console.log(data);
     onToggleModal(); // 주소창은 자동으로 사라지므로 모달만 꺼주면 된다.
   };
-
-  // 채팅목록/채팅방 화면 상태관리
-  const { targetView, selectedChatroomId } = useChatModalStore(
-    useShallow((state) => ({
-      targetView: state.targetView,
-      selectedChatroomId: state.selectedChatroomId,
-    }))
-  );
-  const [currentView, setCurrentView] = useState<string>(targetView);
-
-  // chatlist
-  const listApi = useChatListApi();
-  // 불러와진 ChatListItemProps 중 원하는 요소만 사용할 수 있게 처리
-  type ChatListItem = (typeof listApi.chatList)[number];
-  // 이동할 roomInfo(list에서 접근 시)
-  const [selectedRoomInfo, setSelectedRoomInfo] = useState<ChatListItem | null>(
-    null
-  );
-
-  // header에서 버튼 눌렀을 때 || 경매 상세 페이지에서 챗방 생성했을 때
-  const targetChatroomId = selectedRoomInfo?.chatroomId || selectedChatroomId;
-
-  // chatroom 상세 데이터
-  const shouldEnableRoomApi =
-    currentView === "room" && listApi.chatList.length > 0;
-  const roomApi = useChatRoomApi(targetChatroomId!, shouldEnableRoomApi);
-
-  // chatroom에서 해당 채팅방 삭제 메뉴
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { showToast } = useToast();
-  const token = useAuthStore((state) => state.accessToken);
 
   // modal창 닫기: 여백 누를 시 꺼지도록
   useEffect(() => {
