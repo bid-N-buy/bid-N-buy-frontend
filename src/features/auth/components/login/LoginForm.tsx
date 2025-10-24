@@ -110,7 +110,6 @@ const LoginForm: React.FC = () => {
       try {
         setLoading(true);
 
-        // ✅ Bearer 모드: 쿠키 인증 사용하지 않음 → withCredentials 생략/false
         const res = await api.post<LoginResponse | LegacyLoginResponse>(
           "/auth/login",
           { email: emailTrim, password: pwTrim },
@@ -118,13 +117,6 @@ const LoginForm: React.FC = () => {
             headers: { "Content-Type": "application/json" },
           }
         );
-
-        if (import.meta.env.DEV) {
-          console.debug("[login] axios response", {
-            status: res.status,
-            data: res.data,
-          });
-        }
 
         const data = res.data;
 
@@ -152,23 +144,12 @@ const LoginForm: React.FC = () => {
 
         const userId = resolveUserIdFrom(data, access);
 
-        // ✅ 반드시 refreshToken 저장! (reissue가 여기에 의존)
         setTokens(
           access,
           refresh ?? null,
           hasAnyProfile ? parsedProfile : undefined,
           userId
         );
-
-        if (import.meta.env.DEV) {
-          const snap = useAuthStore.getState();
-          console.debug("[auth] after login (store)", {
-            accessToken: !!snap.accessToken,
-            refreshToken: !!snap.refreshToken,
-            profile: snap.profile,
-            userId: snap.userId,
-          });
-        }
 
         const to =
           (location.state as any)?.from?.pathname ??
@@ -183,15 +164,6 @@ const LoginForm: React.FC = () => {
               ? "아이디 또는 비밀번호가 올바르지 않습니다."
               : "로그인에 실패했습니다.");
           setError(msg);
-
-          if (import.meta.env.DEV) {
-            console.error("[login] failed", {
-              url: err.config?.url,
-              method: err.config?.method,
-              status: err.response?.status,
-              data: err.response?.data,
-            });
-          }
         } else if (err instanceof Error) {
           setError(err.message);
         } else {
@@ -204,7 +176,7 @@ const LoginForm: React.FC = () => {
     [email, password, loading, location.state, navigate, setTokens]
   );
 
-  /** 소셜 로그인 시작 */
+  /** 소셜 로그인 */
   const startKakao = useCallback(() => {
     if (loading) return;
     window.location.assign(
@@ -218,7 +190,10 @@ const LoginForm: React.FC = () => {
   }, [loading]);
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3">
+    <form
+      onSubmit={handleSubmit}
+      className="m-auto  w-[350px] space-y-4"
+    >
       {/* 이메일 */}
       <input
         name="email"
@@ -227,7 +202,7 @@ const LoginForm: React.FC = () => {
         placeholder="이메일을 입력해 주세요"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
-        className="hover:border-purple w-full rounded-md border px-3 py-2"
+        className="hover:border-purple focus:border-purple h-[50px] w-full rounded-md border px-3 outline-none focus:border-2"
         disabled={loading}
         autoComplete="email"
         required
@@ -241,7 +216,7 @@ const LoginForm: React.FC = () => {
         placeholder="비밀번호를 입력해 주세요"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
-        className="hover:border-purple w-full rounded-md border px-3 py-2"
+        className="hover:border-purple focus:border-purple h-[50px] w-full rounded-md border px-3 outline-none focus:border-2"
         disabled={loading}
         autoComplete="current-password"
         required
@@ -252,8 +227,7 @@ const LoginForm: React.FC = () => {
       <button
         type="submit"
         disabled={loading}
-        className="bg-purple w-full rounded-md py-2 text-white disabled:opacity-60"
-        aria-busy={loading}
+        className="bg-purple hover:bg-deep-purple h-[50px] w-full rounded-md text-white transition disabled:opacity-60"
       >
         {loading ? "로그인 중..." : "로그인"}
       </button>
@@ -267,11 +241,11 @@ const LoginForm: React.FC = () => {
 
       {/* 링크 */}
       <div className="mt-[10px] flex justify-center gap-3 text-sm">
-        <Link to="/resetPassword" className="text-h9 hover:underline">
+        <Link to="/resetPassword" className="text-h8 hover:underline">
           비밀번호 찾기
         </Link>
         <span className="text-h9">|</span>
-        <Link to="/signup" className="text-h9 hover:underline">
+        <Link to="/signup" className="text-h8 hover:underline">
           회원가입
         </Link>
       </div>

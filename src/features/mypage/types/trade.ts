@@ -37,7 +37,7 @@ export type ApiPurchase = {
   itemName: string;
   seller?: string;
   thumbnail?: string | null;
-  status?: string; // 서버: BEFORE/SALE/COMPLETED/PROGRESS/FINISH ... 혹은 영어표시
+  status?: string; // BEFORE/SALE/COMPLETED/PROGRESS/FINISH ... 혹은 한글/영어표시
   startAt?: string; // ISO
   endAt?: string; // ISO
   // 호환을 위해 들어올 수 있는 추가 키들(무시/백업용)
@@ -59,13 +59,14 @@ export type ApiSale = {
   meAsSeller?: string; // 나(판매자)
   image?: string | null;
   itemImageUrl?: string | null; // /mypage/sales
-  status?: string; // BEFORE/SALE/... 또는 영어키
+  status?: string; // BEFORE/SALE/... 또는 한글/영문키
   startAt?: string;
   endAt?: string;
   startTime?: string; // /mypage/sales
   endTime?: string; // /mypage/sales
   finalPrice?: number; // /mypage/sales
   winnerNickname?: string; // /mypage/sales
+  buyerNickname?: string;
   statusText?: string; // /mypage/sales (예: "결제 대기 중 (진행 중)")
 };
 
@@ -76,34 +77,6 @@ export type SaleResponseItem = ApiSale;
 /* =========================
  *     Status Utilities
  * ========================= */
-
-// 서버 status → TradeStatus 안전 변환
-export const toStatus = (raw?: string): TradeStatus => {
-  if (!raw) return "FINISH";
-  const u = raw.trim().toUpperCase();
-  switch (u) {
-    case "BEFORE":
-    case "SALE":
-    case "COMPLETED":
-    case "PROGRESS":
-    case "FINISH":
-      return u;
-    // 영어 상태 등 들어오는 이질 값들 보정 (필요 시 확장)
-    case "WAIT_PAY":
-    case "WAITING_PAYMENT":
-      return "PROGRESS";
-    case "PAID":
-    case "WIN":
-      return "PROGRESS";
-    case "CLOSED":
-    case "CLOSE":
-    case "CANCELLED":
-    case "CANCELED":
-      return "FINISH";
-    default:
-      return "FINISH";
-  }
-};
 
 // 화면 표기 라벨(기본)
 export const STATUS_LABEL: Record<TradeStatus, string> = {
@@ -124,6 +97,57 @@ const STATUS_TEXT_MAP: Record<string, string> = {
   WIN: "낙찰",
   CANCELED: "취소됨",
   CANCELLED: "취소됨",
+  IN_PROGRESS: "진행 중",
+  RUNNING: "진행 중",
+  DONE: "거래 완료",
+};
+
+// 한/영/혼합 표기 정규화 → TradeStatus
+export const toStatus = (raw?: string, statusText?: string): TradeStatus => {
+  if (!raw && !statusText) return "FINISH";
+  const u = String(raw ?? statusText ?? "")
+    .trim()
+    .toUpperCase();
+
+  // 직접 매핑(한글/영문)
+  if (["BEFORE", "경매전", "경매 전", "READY", "NOT_STARTED"].includes(u))
+    return "BEFORE";
+  if (
+    [
+      "SALE",
+      "진행 중",
+      "IN_PROGRESS",
+      "RUNNING",
+      "ON_SALE",
+      "BIDDING",
+    ].includes(u)
+  )
+    return "SALE";
+  if (
+    [
+      "PROGRESS",
+      "결제 중",
+      "결재 중",
+      "PAYMENT",
+      "PAYMENT_PENDING",
+      "WAIT_PAY",
+      "WAITING_PAYMENT",
+      "PAID",
+    ].includes(u)
+  )
+    return "PROGRESS";
+  if (["COMPLETED", "경매 완료", "DONE", "FINISH"].includes(u))
+    return "COMPLETED";
+  if (["CLOSED", "CLOSE", "CANCELLED", "CANCELED", "종료", "만료"].includes(u))
+    return "FINISH";
+
+  // 괄호형 텍스트(예: "결제 대기 중 (진행 중)")에서 내부 상태 힌트 추출
+  if (/\(.*진행\s*중.*\)/.test(u) || /\(.*IN_PROGRESS.*\)/.test(u))
+    return "PROGRESS";
+  if (/결제\s*대기/.test(u)) return "PROGRESS";
+  if (/완료/.test(u)) return "COMPLETED";
+
+  return "FINISH";
 };
 
 // 종료시간 기반 보조 판정 (end가 과거면 종료 취급)
@@ -213,8 +237,9 @@ const pickEnd = (r: any): string | undefined =>
 const pickCounterpartyPurchase = (r: any): string | undefined =>
   r?.seller ?? r?.sellerNickname ?? r?.winnerNickname ?? undefined;
 
+// ⚠️ 판매에서는 상대방(구매자/낙찰자)을 우선적으로 표시
 const pickCounterpartySale = (r: any): string | undefined =>
-  r?.meAsSeller ?? r?.winnerNickname ?? r?.buyerNickname ?? undefined;
+  r?.winnerNickname ?? r?.buyerNickname ?? r?.meAsSeller ?? undefined;
 
 const pickPrice = (r: any): number | undefined =>
   typeof r?.finalPrice === "number"
@@ -232,15 +257,14 @@ const pickStatusTextKR = (
   if (statusText && String(statusText).trim()) return statusText;
   if (!status) return undefined;
   const key = String(status).trim().toUpperCase();
-  // 영어 키를 한글로 매핑
   if (STATUS_TEXT_MAP[key]) return STATUS_TEXT_MAP[key];
-  // 그 외에는 ENUM 라벨로 대체
+  // ENUM 라벨로 대체
   const s = toStatus(key);
   return STATUS_LABEL[s];
 };
 
 export const fromPurchase = (r: ApiPurchase): TradeItem => {
-  const status = toStatus(r.status);
+  const status = toStatus(r.status, r.statusText);
   return {
     id: String(r.id),
     title: r.itemName ?? r.title ?? "",
@@ -256,7 +280,7 @@ export const fromPurchase = (r: ApiPurchase): TradeItem => {
 
 export const fromSale = (r: ApiSale): TradeItem => {
   const id = typeof r.id === "number" ? r.id : (r.auctionId as number);
-  const status = toStatus(r.status);
+  const status = toStatus(r.status, r.statusText);
   return {
     id: String(id),
     title: r.title ?? "",
