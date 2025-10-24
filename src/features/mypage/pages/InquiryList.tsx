@@ -182,7 +182,7 @@ const InquiryList: React.FC = () => {
   }, [headers]);
 
   return (
-    <div className="mx-auto w-[788px] max-w-4xl p-4">
+    <div className="mx-auto min-h-[700px] w-[788px] max-w-4xl p-4">
       <div className="mb-6 flex items-center justify-between">
         <h2 className="text-2xl font-bold">1:1 문의 / 신고</h2>
 
