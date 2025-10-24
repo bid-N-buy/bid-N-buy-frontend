@@ -3,7 +3,6 @@ import { getToken } from "firebase/messaging";
 
 export const requestFcmToken = async (): Promise<string | null> => {
   try {
-    console.log("🔔 알림 권한 요청 중...");
     const permission = await Notification.requestPermission();
 
     if (permission === "granted") {
