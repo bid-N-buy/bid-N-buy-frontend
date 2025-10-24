@@ -17,6 +17,7 @@ type Props = {
   sellingPreview?: Item[]; // 미리보기 최대 3개
   onClickSold?: () => void; // "판매완료 보러가기" 버튼
   onClickSelling?: () => void; // "판매물품 보러가기" 버튼
+  onItemClick?: (id: string | number) => void; // ✅ 행 클릭(상세 이동)
 };
 
 const clamp = (n: number, min: number, max: number) =>
@@ -46,6 +47,7 @@ const ProfileDetails: React.FC<Props> = ({
   sellingPreview = [],
   onClickSold,
   onClickSelling,
+  onItemClick,
 }) => {
   const temp = clamp(Number.isFinite(temperature) ? temperature : 0, 0, 100);
   const knobLeft = `${temp}%`;
@@ -81,7 +83,7 @@ const ProfileDetails: React.FC<Props> = ({
       : sellingList.length;
 
   return (
-    <section className="mx-auto w-[646px] px-6 py-10 text-gray-900">
+    <section className="mx-auto min-h-[calc(100vh-200px)] w-[646px] px-6 py-10 text-gray-900">
       {/* 타이틀 */}
       <h1 className="mb-10 text-center text-xl font-bold">프로필</h1>
 
@@ -156,7 +158,8 @@ const ProfileDetails: React.FC<Props> = ({
         <ItemRowList
           items={soldList}
           emptyText="판매완료 물품이 없습니다."
-          onItemClick={() => onClickSold?.()} // 행 클릭 시에도 동일 동작
+          // ✅ 행 클릭 → 상세 이동 (컨테이너에서 /auctions/${id} 혹은 /mypage/sales/${id}로 라우팅)
+          onItemClick={(id) => onItemClick?.(id)}
         />
 
         {usingMockSold && (
@@ -187,7 +190,8 @@ const ProfileDetails: React.FC<Props> = ({
         <ItemRowList
           items={sellingList}
           emptyText="판매 중인 물품이 없습니다."
-          onItemClick={() => onClickSelling?.()} // 행 클릭 시에도 동일 동작
+          // ✅ 행 클릭 → 상세 이동 (보통 /auctions/${id})
+          onItemClick={(id) => onItemClick?.(id)}
         />
 
         {usingMockSelling && (
