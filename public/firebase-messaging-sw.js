@@ -20,7 +20,7 @@ messaging.onBackgroundMessage((payload) => {
   const notificationTitle = payload.notification?.title || "알림";
   const notificationOptions = {
     body: payload.notification?.body,
-    icon: "/firebase-logo.png", // 필요시 변경
+    icon: "src/assets/img/Bid&Buy.png", // 필요시 변경
     data: payload.data || {}, // 클릭 시 데이터 전달 가능
   };
 

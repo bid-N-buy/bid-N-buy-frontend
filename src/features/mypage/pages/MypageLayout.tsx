@@ -4,7 +4,7 @@ import { Outlet } from "react-router-dom";
 
 const MypageLayout = () => {
   return (
-    <div className="m-auto mt-[100px] flex min-h-[calc(100vh-300px)] w-[1095px] gap-[82px]">
+    <div className="m-auto mt-[100px] flex w-[1095px] gap-[82px]">
       {/* ✅ 사이드바는 항상 고정 */}
       <SideBar />
 

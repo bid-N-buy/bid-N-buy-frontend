@@ -1,4 +1,3 @@
-// src/features/mypage/pages/AccountSettings.tsx
 import React, {
   useCallback,
   useEffect,
@@ -13,6 +12,7 @@ import AddressDetails from "../components/myAddress/AddressDetails";
 import AddressEditorModal from "../components/myAddress/AddressEditorModal";
 import { useAddresses } from "../hooks/useAddresses";
 import type { Address, AddressDraft } from "../types/address";
+import Toast from "../../../shared/components/Toast";
 
 /* =======================
  *        Config
@@ -103,7 +103,7 @@ const AccountSettings: React.FC = () => {
     },
   ]);
 
-  // 메시지
+  // 메시지 (토스트)
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
@@ -293,7 +293,6 @@ const AccountSettings: React.FC = () => {
     try {
       setImgLoading(true);
       const form = new FormData();
-
       // ✅ 백엔드 @RequestPart("images")에 맞춤
       form.append("images", imgFile);
 
@@ -435,6 +434,24 @@ const AccountSettings: React.FC = () => {
 
   return (
     <div className="mx-auto w-full max-w-[720px]">
+      {/* 상단 토스트 */}
+      {msg && (
+        <Toast
+          message={msg}
+          type="success"
+          onClose={() => setMsg(null)}
+          duration={2200}
+        />
+      )}
+      {err && (
+        <Toast
+          message={err}
+          type="error"
+          onClose={() => setErr(null)}
+          duration={2800}
+        />
+      )}
+
       {/* 상단: 아바타 + 이름 + 이미지 변경 */}
       <div className="mb-8 flex items-center gap-4">
         <div className="relative h-[96px] w-[96px] overflow-hidden rounded-full bg-neutral-200">
@@ -660,18 +677,6 @@ const AccountSettings: React.FC = () => {
           탈퇴하기
         </button>
       </div>
-
-      {/* 메시지 */}
-      {msg && (
-        <p className="mt-2 rounded-md border border-green-200 bg-green-50 p-2 text-green-700">
-          {msg}
-        </p>
-      )}
-      {err && (
-        <p className="mt-2 rounded-md border border-red-200 bg-red-50 p-2 text-red-700">
-          {err}
-        </p>
-      )}
 
       {/* 탈퇴 모달 */}
       {deleteOpen && (

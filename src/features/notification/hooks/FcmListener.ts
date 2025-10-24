@@ -8,7 +8,6 @@ const FcmListener = () => {
 
   useEffect(() => {
     const unsubscribe = onMessage(messaging, (payload) => {
-      console.log("📩 FCM 포그라운드 메시지:", payload);
 
       const { notification, data } = payload;
       if (!data) return;
