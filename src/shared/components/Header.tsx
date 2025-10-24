@@ -243,10 +243,9 @@ const Header = () => {
                   aria-label="알림"
                   title="알림"
                 >
-                  <Bell />
                   {/* 안 읽은 알람이 있을때만 표시 */}
-                  {hasNew && <New />}
                   <Bell className="h-6 w-6" />
+                  {hasNew && <New />}
                 </button>
               </li>
               {isNotiOpen &&
