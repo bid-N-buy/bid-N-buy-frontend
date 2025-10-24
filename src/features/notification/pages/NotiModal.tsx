@@ -47,9 +47,22 @@ const NotiModal = ({ onClose, onDelete }: ModalProps) => {
   // state를 빈 배열로 시작
   const [notis, setNotis] = useState<NotiListProps[]>([]);
 
-
   // store에서 토큰 꺼내오기
   const accessToken = useAuthStore((state) => state.accessToken);
+
+  // 전체 삭제
+  const handleDeleteAll = async () => {
+    if (!accessToken) return;
+    try {
+      await api.delete("/notifications", {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      setNotis([]); // UI 반영
+      if (onDelete) onDelete(); // 부모 prop도 그대로 호출해서 기존 흐름 유지
+    } catch (err) {
+      console.error("전체 삭제 실패:", err);
+    }
+  };
 
   // (추가)모달 열릴 때 전체 읽음 처리
   useEffect(() => {
@@ -130,7 +143,7 @@ const NotiModal = ({ onClose, onDelete }: ModalProps) => {
         <p className="font-bold">알림목록</p>
         <div className="flex items-center gap-2">
           <button
-            onClick={onDelete}
+            onClick={handleDeleteAll}
             className="text-g300 cursor-pointer text-xs"
           >
             전체삭제
