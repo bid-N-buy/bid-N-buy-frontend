@@ -3,11 +3,11 @@ export interface NotiModalProps {
 }
 
 export interface NotiListProps {
-  notification_id: bigint;
-  user_id?: bigint;
+  notificationId: bigint;
+  userId?: bigint;
   type: string;
   content: string;
-  is_read: boolean;
-  created_at: string;
-  deleted_at: string;
+  read: boolean;
+  createdAt: string;
+  deletedAt: string | null;
 }

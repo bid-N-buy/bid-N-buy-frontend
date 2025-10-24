@@ -20,10 +20,14 @@ import ProfileDetailsContainer from "../features/mypage/pages/ProfileDetailsCont
 import InquiryReportForm from "../features/mypage/components/support/InquiryReportForm";
 import AdminAsideMenu from "../features/admin/components/AdminAsideMenu";
 import InquiryDetailPage from "../features/mypage/pages/InquiryDetailPage";
+import NotificationTestPage from "../features/notification/pages/NotificationTestPage";
+import FcmInitializer from "../features/notification/components/FcmInitializer";
+import FcmListener from "../features/notification/hooks/FcmListener";
 
 // 공통
 const Header = React.lazy(() => import("../shared/components/Header"));
 const Footer = React.lazy(() => import("../shared/components/Footer"));
+
 
 const LoginPage = React.lazy(
   () => import("../features/auth/pages/login/LoginPage")
@@ -99,6 +103,10 @@ function AdminGuestOnlyRoute() {
 function AppLayout() {
   return (
     <div className="min-h-screen bg-white">
+      {/* 로그인 상태 감지 후 FCM 등록 */}
+      <FcmInitializer />
+      {/* 포그라운드 알림 수신 */}
+      <FcmListener />
       <Suspense fallback={<div className="p-6">로딩 중…</div>}>
         <Header />
       </Suspense>
@@ -156,6 +164,7 @@ export default function App() {
 
           {/* 결제 관련 */}
           <Route path="/payment/bridge" element={<PaymentBridge />} />
+          <Route path="/notice" element={<NotificationTestPage />} />
 
           {/* 마이페이지 */}
           <Route element={<ProtectedRoute />}>
