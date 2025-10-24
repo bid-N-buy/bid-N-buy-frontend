@@ -51,6 +51,24 @@ const NotiModal = ({ onClose, onDelete }: ModalProps) => {
   // store에서 토큰 꺼내오기
   const accessToken = useAuthStore((state) => state.accessToken);
 
+  // (추가)모달 열릴 때 전체 읽음 처리
+  useEffect(() => {
+    const markAllAsRead = async () => {
+      if (!accessToken) return;
+      try {
+        await api.patch("/notifications/read-all", null, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        // 프론트에서도 상태 업데이트
+        setNotis((prev) => prev.map((n) => ({ ...n, read: true })));
+      } catch (err) {
+        console.error("전체 읽음 처리 실패:", err);
+      }
+    };
+
+    markAllAsRead();
+  }, [accessToken]); // 모달이 mount 될 때 실행됨
+
   // 알림 조회
   useEffect(() => {
     const fetchNotifications = async () => {
