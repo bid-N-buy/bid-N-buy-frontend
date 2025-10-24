@@ -84,7 +84,7 @@ export default function SaleList() {
 
   // ✅ 렌더: 원본 아이템을 그대로 전달 (TradeRowCompact가 하이브리드 대응)
   const renderList = (list: NormForFilter[]) => (
-    <ul>
+    <ul className="min-h-[800px]">
       {list.map(({ id, original }) => (
         <TradeRowCompact
           key={id}
@@ -98,7 +98,7 @@ export default function SaleList() {
   // 에러이면서 데이터가 정말 비어 있는 특수 케이스
   if (error && normalized.length === 0) {
     return (
-      <div className="p-4">
+      <div className="min-h-[800px] p-4">
         <h2 className="mb-3 text-lg font-semibold">판매 내역</h2>
         {renderList(
           (MOCK_SALES as any[]).map((it) => ({
@@ -113,8 +113,8 @@ export default function SaleList() {
   }
 
   return (
-    <div className="p-4">
-      <h2 className="mb-3 text-lg font-semibold">판매 내역</h2>
+    <div className="min-h-[800px] p-4">
+      <h2 className="text-lg font-semibold">판매 내역</h2>
 
       <StatusTriFilter
         value={filter}

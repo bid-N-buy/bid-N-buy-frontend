@@ -80,7 +80,7 @@ export default function PurchasesPage() {
 
   if (error && base.length === 0) {
     return (
-      <div className="p-4">
+      <div className="min-h-[800px] p-4">
         <h2 className="mb-3 text-lg font-semibold">구매 내역</h2>
         {renderList(MOCK_PURCHASES as TradeItem[])}
       </div>
@@ -88,7 +88,7 @@ export default function PurchasesPage() {
   }
 
   return (
-    <div className="p-4">
+    <div className="min-h-[800px] p-4">
       <h2 className="mb-3 text-lg font-semibold">구매 내역</h2>
 
       <StatusTriFilter
