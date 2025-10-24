@@ -16,6 +16,7 @@
     "@tosspayments/tosspayments-sdk": "^2.4.0",
     "@tosspayments/widget-sdk-react-native": "^1.5.1",
     "axios": "^1.12.2",
+    "firebase": "^12.4.0",
     "lucide-react": "^0.544.0",
     "nanoid": "^5.1.6",
     "react": "^19.1.1",

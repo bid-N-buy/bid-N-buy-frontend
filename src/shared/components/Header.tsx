@@ -12,8 +12,14 @@ import {
 import { useAuthInit } from "../../features/auth/hooks/UseAuthInit";
 import api from "../../shared/api/axiosInstance";
 import { useChatModalStore } from "../store/ChatModalStore";
+import { useNotiStore } from "../../features/notification/store/notiStore"; 
 
 const Header = () => {
+
+  // 알람 상태변경
+  const notis = useNotiStore((s) => s.notis);
+  const hasNew = notis.some((n) => !n.read); 
+
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -226,6 +232,8 @@ const Header = () => {
                   title="알림"
                 >
                   <Bell />
+                  {/* 안 읽은 알람이 있을때만 표시 */}
+                  {hasNew && <New />}
                 </button>
               </li>
               {isNotiOpen &&
