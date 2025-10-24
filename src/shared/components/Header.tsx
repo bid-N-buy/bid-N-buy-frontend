@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Search, Menu, MessageCircleMore, Bell, X } from "lucide-react";
+import { Search, Menu, MessageCircleMore, Bell, X, Plus } from "lucide-react";
 import New from "./New";
 import ChatModal from "../../features/chatting/pages/ChatModal";
 import NotiModal from "../../features/notification/pages/NotiModal";
@@ -13,6 +13,7 @@ import { useAuthInit } from "../../features/auth/hooks/UseAuthInit";
 import api from "../../shared/api/axiosInstance";
 import { useChatModalStore } from "../store/ChatModalStore";
 import { useNotiStore } from "../../features/notification/store/notiStore"; 
+import { useInitialUnreadCount } from "../hooks/useInitialUnreadCount";
 
 const Header = () => {
 
@@ -25,14 +26,15 @@ const Header = () => {
 
   const { ready } = useAuthInit();
 
-  // ✅ 프로필도 함께 가져오도록 수정
+  // 프로필도 함께 가져오도록 수정
   const accessToken = useAuthStore((s: AuthState) => s.accessToken);
   const profile = useAuthStore((s: AuthState) => s.profile);
   const setProfile = useAuthStore((s: AuthState) => s.setProfile);
   const userNickname = profile?.nickname ?? "User";
   const clearAuth = useAuthStore((s: AuthState) => s.clear);
 
-  const { isChatOpen, openChatList, onClose } = useChatModalStore();
+  const { isChatOpen, openChatList, onClose, totalUnreadCount } =
+    useChatModalStore();
 
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isNotiOpen, setIsNotiOpen] = useState<boolean>(false);
@@ -42,7 +44,9 @@ const Header = () => {
     [ready, accessToken]
   );
 
-  // ✅ 리프레시/로그인 완료 후, 프로필 없으면 한 번 불러오기
+  useInitialUnreadCount();
+
+  // 리프레시/로그인 완료 후, 프로필 없으면 한 번 불러오기
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -78,19 +82,9 @@ const Header = () => {
   const handleSearch = (e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault();
     const q = searchQuery.trim();
-    const next = ((): URLSearchParams => {
-      if (location.pathname.startsWith("/auctions")) {
-        const keep = new URLSearchParams(location.search);
-        keep.delete("page");
-        if (q) keep.set("searchKeyword", q);
-        else keep.delete("searchKeyword");
-        return keep;
-      }
-      const sp = new URLSearchParams();
-      if (q) sp.set("searchKeyword", q);
-      return sp;
-    })();
-    navigate(`/auctions?${next.toString()}`);
+    const sp = new URLSearchParams();
+    if (q) sp.set("searchKeyword", q);
+    navigate(`/auctions?${sp.toString()}`);
   };
 
   const clearSearch = () => {
@@ -118,13 +112,16 @@ const Header = () => {
     const mql: MediaQueryList = window.matchMedia(
       "screen and (max-width: 768px)"
     );
+
     const apply = (): void => {
       const small = mql.matches;
       document.body.style.overflow =
         (isChatOpen || isNotiOpen) && small ? "hidden" : "";
     };
+
     apply();
     mql.addEventListener("change", apply);
+
     return () => {
       mql.removeEventListener("change", apply);
       document.body.style.overflow = "";
@@ -132,6 +129,7 @@ const Header = () => {
   }, [isChatOpen, isNotiOpen]);
 
   const modalRoot: HTMLElement | null = document.getElementById("modal-root");
+
   if (!modalRoot) {
     console.error("Portal root element '#modal-root' not found.");
     return null;
@@ -152,7 +150,7 @@ const Header = () => {
           <input
             type="text"
             id="search"
-            placeholder="검색어를 입력해 주세요"
+            placeholder="상품명을 입력해 주세요"
             className="w-[90%] min-w-[120px] focus:outline-none lg:min-w-[250px]"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -200,33 +198,47 @@ const Header = () => {
           ) : isAuthed ? (
             <ul className="text-h7 flex items-center gap-4 text-nowrap">
               <li>
-                <Link to="/mypage">
+                <Link to="/mypage" className="cursor-pointer">
                   <span className="font-bold">{userNickname}</span>님
-                  환영합니다.
+                  환영합니다!
                 </Link>
               </li>
               <li>
-                <button onClick={handleLogout}>로그아웃</button>
+                <button
+                  onClick={handleLogout}
+                  className="hover:text-purple cursor-pointer transition-colors"
+                >
+                  로그아웃
+                </button>
               </li>
               <li>
-                <Link to="/mypage/inquiries">문의하기</Link>
+                <button>
+                  <Link
+                    to="/auctions/new"
+                    className="cursor-pointer"
+                    aria-label="경매 등록"
+                    title="경매 등록"
+                  >
+                    <Plus className="text-purple h-7 w-7" strokeWidth={2.5} />
+                  </Link>
+                </button>
               </li>
               <li>
                 <button
-                  className="relative"
+                  className="hover:text-purple relative cursor-pointer transition-colors"
                   onClick={openChatList}
                   aria-label="채팅"
                   title="채팅"
                 >
-                  <MessageCircleMore />
-                  <New />
+                  <MessageCircleMore className="mb-0.5 h-6 w-6" />
+                  {totalUnreadCount >= 1 && <New />}
                 </button>
               </li>
               {isChatOpen &&
                 createPortal(<ChatModal onClose={onClose} />, modalRoot)}
               <li>
                 <button
-                  className="relative"
+                  className="hover:text-purple relative cursor-pointer transition-colors"
                   onClick={() => setIsNotiOpen(true)}
                   aria-label="알림"
                   title="알림"
@@ -234,6 +246,7 @@ const Header = () => {
                   <Bell />
                   {/* 안 읽은 알람이 있을때만 표시 */}
                   {hasNew && <New />}
+                  <Bell className="h-6 w-6" />
                 </button>
               </li>
               {isNotiOpen &&
@@ -248,13 +261,28 @@ const Header = () => {
           ) : (
             <ul className="text-h7 flex gap-4 text-nowrap">
               <li>
-                <Link to="/login">로그인</Link>
+                <Link
+                  to="/login"
+                  className="hover:text-purple cursor-pointer transition-colors"
+                >
+                  로그인
+                </Link>
               </li>
               <li>
-                <Link to="/signup">회원가입</Link>
+                <Link
+                  to="/signup"
+                  className="hover:text-purple cursor-pointer transition-colors"
+                >
+                  회원가입
+                </Link>
               </li>
               <li>
-                <Link to="/mypage/inquiries">문의하기</Link>
+                <Link
+                  to="/mypage/inquiries"
+                  className="hover:text-purple cursor-pointer transition-colors"
+                >
+                  문의하기
+                </Link>
               </li>
             </ul>
           )}

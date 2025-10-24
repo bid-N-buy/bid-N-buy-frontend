@@ -63,7 +63,7 @@ const AddressModal: React.FC<Props> = ({ open, initial, onClose, onSave }) => {
         onClick={(e) => e.stopPropagation()}
       >
         <h3 className="text-[18px] font-semibold text-neutral-900">
-          {initial?.id ? "주소 수정" : "새 주소 추가"}
+          주소 입력
         </h3>
 
         {/* 우편번호 + 검색 */}

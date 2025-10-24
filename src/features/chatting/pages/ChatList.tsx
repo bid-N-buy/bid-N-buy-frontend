@@ -39,7 +39,7 @@ const ChatList = ({ chatList, onSelectRoom }: ChatListProps) => {
             </div>
           </div>
           {chat.unreadCount > 0 && (
-            <div className="bg-red rounded-full px-2 py-1 text-center text-xs text-white">
+            <div className="bg-red rounded-full px-2.5 py-1 text-center text-xs text-white">
               {chat.unreadCount}
             </div>
           )}

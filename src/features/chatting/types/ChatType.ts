@@ -1,11 +1,6 @@
 import type { AuctionDetail } from "../../auction/types/auctions";
 
 export const WS_URL = import.meta.env.VITE_WEBSOCKET_URL;
-export interface ModalProps {
-  isChatOpen?: boolean;
-  onClose: () => void;
-  onDelete?: () => void;
-}
 
 export interface ChatListItemProps {
   chatroomId: number;
@@ -17,7 +12,7 @@ export interface ChatListItemProps {
   counterpartProfileImageUrl: string | null;
   lastMessageTime: string;
   lastMessagePreview: string;
-  unis_readCount: number;
+  unreadCount: number;
 }
 
 export interface ChatListProps {
@@ -55,6 +50,11 @@ export interface ChatProductInfoProps {
     sellerId: number,
     currentPrice: number
   ) => void;
+  handleSendAddress: (
+    auctionId: number,
+    buyerId: number,
+    sellerId: number
+  ) => void;
 }
 
 export interface ChatMessageProps {
@@ -65,29 +65,23 @@ export interface ChatMessageProps {
   message: string;
   messageType: string;
   createdAt: string;
-  is_read: boolean;
+  read: boolean;
 }
 
 export type ChatMeProps = {
   msgInfo: Pick<
     ChatMessageProps,
-    "createdAt" | "message" | "is_read" | "messageType" | "imageUrl"
+    "createdAt" | "message" | "read" | "messageType" | "imageUrl"
   >;
   sellerId: number;
   currentPrice: number;
   auctionInfo: Pick<ChatListItemProps, "auctionImageUrl" | "auctionTitle">;
-  handleSendPaymentRequest: (
-    auctionId: number,
-    buyerId: number,
-    sellerId: number,
-    currentPrice: number
-  ) => void;
 };
 
 export type ChatYouProps = {
   msgInfo: Pick<
     ChatMessageProps,
-    "createdAt" | "message" | "is_read" | "messageType" | "imageUrl"
+    "createdAt" | "message" | "read" | "messageType" | "imageUrl"
   >;
   counterpartInfo: Pick<
     ChatListItemProps,
@@ -96,12 +90,6 @@ export type ChatYouProps = {
   sellerId: number;
   currentPrice: number;
   auctionInfo: Pick<ChatListItemProps, "auctionImageUrl" | "auctionTitle">;
-  handleSendPaymentRequest: (
-    auctionId: number,
-    buyerId: number,
-    sellerId: number,
-    currentPrice: number
-  ) => void;
 };
 
 export interface ChatInputProps {
@@ -116,5 +104,4 @@ export interface ChatAddressModalProps {
   postcode: string;
   address1: string;
   address2?: string;
-  isDefault: boolean;
 }

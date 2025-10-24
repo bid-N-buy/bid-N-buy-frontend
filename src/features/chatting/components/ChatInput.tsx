@@ -34,7 +34,7 @@ const ChatInput = ({
 
   // 버튼과 실제 인풋 간 연결
   const handleImageUpload = () => {
-    // 프로필 이미지를 클릭했을 때 숨겨진 file input 요소를 클릭하도록 연결
+    // 버튼을 클릭했을 때 숨겨진 file input 요소를 클릭하도록 연결
     fileInputRef.current?.click();
   };
 
@@ -80,18 +80,22 @@ const ChatInput = ({
               </button>
             </div>
           )}
-          <input
-            type="text"
+          <textarea
             name="chatMessage"
             id="chatMessage"
-            placeholder={preview ? "" : "메시지를 입력하세요."}
+            placeholder={
+              preview ? "사진을 전송합니다." : "메시지를 입력하세요."
+            }
             disabled={!isConnected || !!preview}
             className={`h-16 ${preview ? `min-w-[80%]` : `w-full`} focus:outline-none`}
-            value={inputMessage}
+            value={preview ? "" : inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
             onKeyDown={(e) =>
-              e.key === "Enter" && !e.nativeEvent.isComposing && sendMessage()
+              e.key === "Enter" &&
+              !e.nativeEvent.isComposing &&
+              e.preventDefault()
             }
+            style={{ resize: "none" }}
             required
           />
         </div>

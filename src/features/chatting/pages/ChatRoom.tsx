@@ -3,6 +3,8 @@ import api from "../../../shared/api/axiosInstance";
 import { Client, type IMessage } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 import { useAuthStore } from "../../auth/store/authStore";
+import { useChatModalStore } from "../../../shared/store/ChatModalStore";
+import { useChatListApi } from "../api/useChatList";
 import ChatProductInfo from "../components/ChatProductInfo";
 import ChatMe from "../components/ChatMe";
 import ChatYou from "../components/ChatYou";
@@ -31,6 +33,9 @@ const ChatRoom = ({
   const token = useAuthStore((state) => state.accessToken);
   const userId = useAuthStore.getState().userId;
 
+  const { markAsRead } = useChatModalStore();
+  const { refetchList } = useChatListApi();
+
   // 웹소켓 주소
   const WS_URL = import.meta.env.VITE_WEBSOCKET_URL;
 
@@ -56,12 +61,8 @@ const ChatRoom = ({
       console.log("메시지 기록이 없어 읽음 요청을 건너뜁니다.");
       return;
     }
-    const lastMessage = messages[messages.length - 1];
-    if (!lastMessage) {
-      return;
-    }
-    if (lastMessage.senderId !== userId) sendReadStatus();
-  }, [chatroomId, userId, isConnected, messages]);
+    sendReadStatus();
+  }, [chatroomId, userId, isConnected, messages.length]);
 
   // 이전 메시지 로드
   const fetchMessageHistory = async (chatroomId: number, token: string) => {
@@ -109,14 +110,31 @@ const ChatRoom = ({
           console.log("읽음 처리 중"); // 🚨 이 로그가 찍혀야 실시간 반영이 시작됩니다.
           try {
             const readData = JSON.parse(readMessage.body);
-            // 서버 알림을 받아 setMessages로 화면 갱신
-            setMessages((prevMessages) =>
-              prevMessages.map((msg) =>
-                msg.chatmessageId <= readData.lastReadMessageId
-                  ? { ...msg, read: true }
-                  : msg
-              )
-            );
+            console.log("서버에서 받은 읽음 데이터:", readData);
+
+            // 💡 [핵심 변수] 서버가 알려준 새로 읽음 처리된 메시지 개수
+            const countToUpdate = readData.updatedCount;
+
+            // 서버 알림을 받아 setMessages로 화면 갱신 (송신자 화면)
+            setMessages((prevMessages) => {
+              let messagesUpdated = 0; // 실제로 업데이트된 메시지 개수 카운터
+
+              // 1. 메시지 배열을 복사하고 역순으로 순회 (최신 메시지부터 처리)
+              return prevMessages
+                .slice()
+                .reverse()
+                .map((msg) => {
+                  // 2. [조건] 업데이트할 개수가 남아있고, 아직 읽지 않았으며, 상대방이 읽은 상태를 표시해야 하는 메시지(보통 내가 보낸 메시지)라면
+                  if (messagesUpdated < countToUpdate && !msg.read) {
+                    messagesUpdated++;
+                    // 3. 읽음 처리 후 리턴
+                    return { ...msg, read: true };
+                  }
+                  // 4. 나머지 메시지는 그대로 유지
+                  return msg;
+                })
+                .reverse(); // 5. 순서를 원래대로 되돌립니다.
+            });
           } catch (e) {
             console.error("읽음 상태 파싱 오류:", e);
           }
@@ -156,19 +174,34 @@ const ChatRoom = ({
       chatContainerRef.current!.scrollHeight;
   }, [messages]);
 
-  // [전송] 읽음 상태
-  const sendReadStatus = async () => {
-    if (!token || !chatroomId) return;
-    try {
-      await api.put(`/chat/${chatroomId}/read`, {
-        headers: {
-          Authorizations: `Bearer ${token}`,
-        },
-      });
-      console.log("채팅 읽음 상태 전송 완료");
-    } catch (error) {
-      console.error("읽음 상태 전송 실패:", error);
+  // [전송] 주소 입력 완료 알림
+  const handleSendAddress = (
+    auctionId: number,
+    buyerId: number,
+    sellerId: number
+  ) => {
+    const client = clientRef.current;
+
+    // 유효성 검사
+    if (!client || !client.connected) {
+      console.warn("연결 상태가 좋지 않습니다.");
+      return;
     }
+    const messageAddress = {
+      chatroomId: chatroomId,
+      auctionId: auctionId,
+      buyerId: buyerId,
+      senderId: sellerId,
+      message: "주소를 입력했습니다.",
+      messageType: "SYSTEM",
+    };
+
+    // 전송 실행
+    client.publish({
+      destination: `/app/chat/message`,
+      body: JSON.stringify(messageAddress),
+      headers: { "content-type": "application/json" },
+    });
   };
 
   // [전송] 거래 요청 메시지
@@ -214,11 +247,13 @@ const ChatRoom = ({
 
     // 받아올 url 정의
     let uploadedImageUrl: string;
+    const messageText = "사진을 보냈습니다.";
 
     try {
       // 폼 데이터로 전송(요청 파라미터)
       const formData = new FormData();
       formData.append("file", file);
+      formData.append("messageText", messageText);
 
       const url = await api.post(`/chat/${chatroomId}/image`, formData, {
         headers: {
@@ -237,7 +272,6 @@ const ChatRoom = ({
       chatroomId: chatroomId,
       senderId: userId,
       imageUrl: uploadedImageUrl,
-      message: "사진을 보냈습니다.",
       messageType: "IMAGE",
     };
 
@@ -275,19 +309,51 @@ const ChatRoom = ({
     setInputMessage("");
   };
 
+  // [전송] 읽음 상태
+  const sendReadStatus = async () => {
+    const lastMessage = messages[messages.length - 1];
+    const lastReadMessageId = lastMessage.chatmessageId;
+
+    if (
+      !token ||
+      !chatroomId ||
+      !lastMessage ||
+      lastMessage.senderId === userId
+    )
+      return;
+
+    try {
+      await api.put(
+        `/chat/${chatroomId}/read`,
+        { lastReadMessageId },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      markAsRead(chatroomId);
+      await refetchList();
+      console.log("채팅 읽음 상태 전송 및 채팅 목록 갱신 완료");
+    } catch (error) {
+      console.error("읽음 상태 전송 실패:", error);
+    }
+  };
+
   return (
     <>
       <ChatProductInfo
         auctionInfo={chatroomInfo}
+        sellerId={sellerId}
         currentPrice={productInfo.currentPrice}
         sellingStatus={productInfo.sellingStatus}
         handleSendPaymentRequest={handleSendPaymentRequest}
-        sellerId={sellerId}
+        handleSendAddress={handleSendAddress}
       />
       <div
         ref={chatContainerRef}
         key={chatroomId}
-        className="h-[calc(100%-15.15rem)] w-[100%] overflow-x-hidden overflow-y-scroll"
+        className="h-[calc(100%-15.4rem)] w-[100%] overflow-x-hidden overflow-y-scroll"
       >
         {messages.length === 0 && (
           <div className="text-g300 flex h-[100%] items-center justify-center text-sm">
@@ -302,7 +368,6 @@ const ChatRoom = ({
               msgInfo={msg}
               auctionInfo={chatroomInfo}
               currentPrice={productInfo.currentPrice}
-              handleSendPaymentRequest={handleSendPaymentRequest}
             />
           ) : (
             <ChatYou
@@ -312,7 +377,6 @@ const ChatRoom = ({
               counterpartInfo={chatroomInfo}
               auctionInfo={chatroomInfo}
               currentPrice={productInfo.currentPrice}
-              handleSendPaymentRequest={handleSendPaymentRequest}
             />
           )
         )}

@@ -15,7 +15,7 @@ const ChatYou = ({
   currentPrice,
   auctionInfo,
 }: ChatYouProps) => {
-  const { message, messageType, is_read, createdAt, imageUrl } = msgInfo;
+  const { message, messageType, read, createdAt, imageUrl } = msgInfo;
   const { counterpartNickname, counterpartProfileImageUrl } = counterpartInfo;
   const { auctionImageUrl, auctionTitle } = auctionInfo;
   const { userId, profile } = useAuthStore.getState();
@@ -80,7 +80,7 @@ const ChatYou = ({
         <div className="flex items-end">
           <p className="bg-g400 mr-2 max-w-65 rounded-md p-3">{message}</p>
           <div>
-            <p className="text-g300 text-xs">{is_read ? "읽음" : "전송됨"}</p>
+            <p className="text-g300 text-xs">{read ? "" : "읽지 않음"}</p>
             <p className="text-g300 text-xs">
               {new Date(createdAt).toLocaleTimeString()}
             </p>
@@ -121,7 +121,7 @@ const ChatYou = ({
             </div>
           </div>
           <div>
-            <p className="text-g300 text-xs">{is_read ? "읽음" : "전송됨"}</p>
+            <p className="text-g300 text-xs">{read ? "" : "읽지 않음"}</p>
             <p className="text-g300 text-xs">
               {new Date(createdAt).toLocaleTimeString()}
             </p>
@@ -141,10 +141,9 @@ const ChatYou = ({
               alt="전송된 이미지"
               className="max-w-full object-cover"
             />
-            <p className="hidden">{message}</p>
           </div>
           <div>
-            <p className="text-g300 text-xs">{is_read ? "읽음" : "전송됨"}</p>
+            <p className="text-g300 text-xs">{read ? "" : "읽지 않음"}</p>
             <p className="text-g300 text-xs">
               {new Date(createdAt).toLocaleTimeString()}
             </p>
@@ -160,7 +159,7 @@ const ChatYou = ({
         <div className="flex items-end">
           <p className="bg-g400 mr-2 max-w-65 rounded-md p-3">{message}</p>
           <div>
-            <p className="text-g300 text-xs">{is_read ? "읽음" : "전송됨"}</p>
+            <p className="text-g300 text-xs">{read ? "" : "읽지 않음"}</p>
             <p className="text-g300 text-xs">
               {new Date(createdAt).toLocaleTimeString()}
             </p>

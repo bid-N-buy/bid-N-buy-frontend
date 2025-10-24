@@ -1,9 +1,9 @@
-import api from "../../../shared/api/axiosInstance";
+import adminApi from "./adminAxiosInstance";
 
 // 거래글 삭제
-export const deleteAuction = async (
+export const adminDeleteAuction = async (
   auctionId: number
 ): Promise<{ message?: string }> => {
-  const res = await api.delete(`/auctions/admin/${auctionId}`);
+  const res = await adminApi.delete(`/auctions/admin/${auctionId}`);
   return res.data;
 };
