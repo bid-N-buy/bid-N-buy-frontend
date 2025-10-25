@@ -1,6 +1,5 @@
-// todo 시간 입력 fix.. 등
 import React, { useEffect, useState } from "react";
-import { Camera } from "lucide-react";
+import { Calendar, Camera } from "lucide-react";
 import { useAuctionFormStore } from "../store/auctionFormStore";
 import { createAuction } from "../api/auctions";
 import useToast from "../../../shared/hooks/useToast";
@@ -8,6 +7,8 @@ import { validateCreateAuction } from "../utils/validation";
 import Toast from "../../../shared/components/Toast";
 import { useNavigate } from "react-router-dom";
 import { useCategoryStore } from "../store/categoryStore";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 // 숫자 파싱
 const parseNum = (s: string) => {
@@ -21,13 +22,6 @@ const onlyNum = (e: React.KeyboardEvent<HTMLInputElement>) => {
     /[0-9]/.test(e.key) ||
     ["Backspace", "Delete", "ArrowLeft", "ArrowRight", "Tab"].includes(e.key);
   if (!ok) e.preventDefault();
-};
-
-// 날짜/시간 문자열 결합 -> Date
-const combineDateTime = (dateStr: string, timeStr: string) => {
-  if (!dateStr || !timeStr) return null;
-  // input[type=time]은 24시간 "HH:mm"
-  return new Date(`${dateStr}T${timeStr}:00`);
 };
 
 const AuctionForm = () => {
@@ -59,11 +53,8 @@ const AuctionForm = () => {
   // *****파일 원본 들고 있을 로컬 상태 추가
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
-  // UI 편의용 로컬 상태(텍스트 -> date/time 토글)
-  const [dateStart, setDateStart] = useState("");
-  const [timeStart, setTimeStart] = useState("");
-  const [dateEnd, setDateEnd] = useState("");
-  const [timeEnd, setTimeEnd] = useState("");
+  const [startDateTime, setStartDateTime] = useState<Date | null>(null);
+  const [endDateTime, setEndDateTime] = useState<Date | null>(null);
 
   const [loading, setLoading] = useState(false);
 
@@ -162,11 +153,8 @@ const AuctionForm = () => {
   const onClickSubmit = async () => {
     if (loading) return;
 
-    // 날짜/시간 결합
-    const sAt = combineDateTime(dateStart, timeStart);
-    const eAt = combineDateTime(dateEnd, timeEnd);
-    set("startAt", sAt);
-    set("endAt", eAt);
+    set("startAt", startDateTime);
+    set("endAt", endDateTime);
 
     try {
       setLoading(true);
@@ -422,32 +410,18 @@ const AuctionForm = () => {
               <label className="text-g100 mb-4 block text-base font-medium">
                 시작일시
               </label>
-              <div className="flex gap-[10px]">
-                {/* 날짜 */}
-                <div className="field flex-[3]">
-                  <input
-                    type="text"
-                    className="field-input"
-                    placeholder="YYYY - MM - DD"
-                    onFocus={(e) => (e.target.type = "date")}
-                    onBlur={(e) => !e.target.value && (e.target.type = "text")}
-                    value={dateStart}
-                    onChange={(e) => setDateStart(e.target.value)}
-                  />
-                </div>
-
-                {/* 시간 */}
-                <div className="field flex-[2]">
-                  <input
-                    type="text"
-                    className="field-input"
-                    placeholder="AM  00 : 00"
-                    onFocus={(e) => (e.target.type = "time")}
-                    onBlur={(e) => !e.target.value && (e.target.type = "text")}
-                    value={timeStart}
-                    onChange={(e) => setTimeStart(e.target.value)}
-                  />
-                </div>
+              <div className="field group hover:border-purple relative w-full cursor-pointer transition-colors">
+                <Calendar className="text-g300 group-hover:text-purple pointer-events-none absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 transition-colors" />
+                <DatePicker
+                  selected={startDateTime}
+                  onChange={(date) => setStartDateTime(date)}
+                  showTimeSelect
+                  timeIntervals={30}
+                  dateFormat="yyyy-MM-dd HH:mm"
+                  placeholderText="시작일시를 선택해 주세요"
+                  minDate={new Date()}
+                  className="w-full cursor-pointer bg-transparent pl-10 text-base focus:outline-none"
+                />
               </div>
             </div>
 
@@ -456,32 +430,18 @@ const AuctionForm = () => {
               <label className="text-g100 mb-4 block text-base font-medium">
                 마감일시
               </label>
-              <div className="flex gap-[10px]">
-                {/* 날짜 */}
-                <div className="field flex-[3]">
-                  <input
-                    type="text"
-                    className="field-input"
-                    placeholder="YYYY - MM - DD"
-                    onFocus={(e) => (e.target.type = "date")}
-                    onBlur={(e) => !e.target.value && (e.target.type = "text")}
-                    value={dateEnd}
-                    onChange={(e) => setDateEnd(e.target.value)}
-                  />
-                </div>
-
-                {/* 시간 */}
-                <div className="field flex-[2]">
-                  <input
-                    type="text"
-                    className="field-input"
-                    placeholder="AM  00 : 00"
-                    onFocus={(e) => (e.target.type = "time")}
-                    onBlur={(e) => !e.target.value && (e.target.type = "text")}
-                    value={timeEnd}
-                    onChange={(e) => setTimeEnd(e.target.value)}
-                  />
-                </div>
+              <div className="field group hover:border-purple relative w-full cursor-pointer transition-colors">
+                <Calendar className="text-g300 group-hover:text-purple pointer-events-none absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 transition-colors" />
+                <DatePicker
+                  selected={endDateTime}
+                  onChange={(date) => setEndDateTime(date)}
+                  showTimeSelect
+                  timeIntervals={30}
+                  dateFormat="yyyy-MM-dd HH:mm"
+                  placeholderText="마감일시를 선택해 주세요"
+                  minDate={startDateTime || new Date()}
+                  className="w-full cursor-pointer bg-transparent pl-10 text-base focus:outline-none"
+                />
               </div>
             </div>
           </div>
