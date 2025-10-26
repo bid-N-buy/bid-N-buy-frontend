@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from "react";
-import api from "../../../shared/api/axiosInstance";
+import adminApi from "../api/adminAxiosInstance";
 import { useAdminAuthStore } from "../store/adminStore";
 import useToast from "../../../shared/hooks/useToast";
 import type { ModalProps } from "../../../shared/types/CommonType";
@@ -18,16 +18,17 @@ const AdminAlertPostModal = ({ onClose }: ModalProps) => {
       showToast("토큰이 없습니다.", "error");
       return;
     }
+
+    console.log("전송 전 토큰:", adminToken);
     try {
-      await api.post(`/notifications`, {
-        headers: {
-          Authorization: `Bearer ${adminToken}`,
-        },
+      await adminApi.post(`/notifications`, content, {
         withCredentials: true,
       });
+      console.log("3. 요청 성공 후 토큰:", adminToken);
       showToast("알림이 발송되었습니다.", "success");
     } catch (error) {
       console.error("알림 발송 실패:", error);
+      console.log("3. 요청 실패 후 토큰:", adminToken);
       showToast("알림 발송에 실패했습니다.", "error");
       return;
     }

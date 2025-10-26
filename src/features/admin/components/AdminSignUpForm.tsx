@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { AxiosError } from "axios";
-import api from "../../../shared/api/axiosInstance";
+import adminApi from "../api/adminAxiosInstance";
 import { useNavigate } from "react-router-dom";
 import type { AdminProps } from "../types/AdminType";
 import { ChevronRight } from "lucide-react";
@@ -45,7 +45,7 @@ const AdminSignUpForm = () => {
     try {
       setLoadingSubmit(true);
 
-      const { data } = await api.post<AdminProps>("/admin/auth/signup", {
+      const { data } = await adminApi.post<AdminProps>("/admin/auth/signup", {
         email,
         password,
         nickname,

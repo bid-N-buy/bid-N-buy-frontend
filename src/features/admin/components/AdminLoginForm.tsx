@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from "react";
 import axios from "axios";
-import api from "../../../shared/api/axiosInstance";
+import adminApi from "../api/adminAxiosInstance";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAdminAuthStore, type AdminState } from "../store/adminStore";
 import type { AdminLoginResponse } from "../types/AdminType";
@@ -87,7 +87,7 @@ const AdminLoginForm = () => {
       try {
         setLoading(true);
 
-        const res = await api.post<AdminLoginResponse>(
+        const res = await adminApi.post<AdminLoginResponse>(
           "/admin/auth/login",
           { email: emailTrim, password: pwTrim },
           {
