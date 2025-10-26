@@ -22,10 +22,15 @@ export function validateCreateAuction(
   const et = new Date(p.endTime).getTime();
   if (!Number.isFinite(st) || !Number.isFinite(et)) {
     errs.push("시작/마감일시 형식이 올바르지 않습니다.");
-  } else if (!(st < et)) {
-    errs.push("마감일시는 시작일시보다 뒤여야 합니다.");
+  } else {
+    if (!(st < et)) {
+      errs.push("마감일시는 시작일시보다 뒤여야 합니다.");
+    }
+    const now = Date.now();
+    if (!(now < st)) {
+      errs.push("시작일시는 현재 시각 이후여야 합니다.");
+    }
   }
-  // todo 생성일시 < 시작일시 검증 추가
 
   if (imageCount < 1) errs.push("최소 1장 이미지를 등록해 주세요.");
   if (imageCount > maxImages)
