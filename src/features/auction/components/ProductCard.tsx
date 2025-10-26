@@ -76,7 +76,7 @@ const ProductCard = React.memo(function ProductCard({
 
         {/* 상태 배지 */}
         <div
-          className={`text-h8 absolute top-3 right-3 flex items-center justify-center rounded-2xl px-2 py-1 ${badgeClass}`}
+          className={`text-h8 absolute top-3 right-3 flex items-center justify-center rounded-2xl px-2.5 py-1 ${badgeClass}`}
           aria-label={`판매 상태: ${sellingStatus}`}
           style={{ letterSpacing: 0 }}
         >
@@ -85,17 +85,17 @@ const ProductCard = React.memo(function ProductCard({
       </div>
 
       {/* 정보 */}
-      <div className="mt-2 px-1">
-        <h3 className="text-g100 mb-1 line-clamp-2 text-base font-medium">
+      <div className="mt-2">
+        <h3 className="text-g100 mb-1 line-clamp-2 px-1.5 text-base font-medium">
           {title}
         </h3>
 
-        <p className="text-g100 text-h6 font-bold">
+        <p className="text-g100 text-h6 px-1.5 font-bold">
           현재 {currentPrice.toLocaleString()}원
         </p>
 
         <div className="flex items-end justify-between">
-          <span className="text-g300 text-base">{sellerNickname}</span>
+          <span className="text-g300 px-1.5 text-base">{sellerNickname}</span>
           {/* 찜 버튼 - 카드 클릭과 이벤트 충돌 방지 stopPropagation */}
           <div onClick={(e) => e.stopPropagation()}>
             <WishButton
