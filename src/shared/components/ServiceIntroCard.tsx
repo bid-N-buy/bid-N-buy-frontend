@@ -3,11 +3,11 @@ import { Zap, Shield, Ampersand } from "lucide-react";
 
 const ServiceIntroCard = () => {
   return (
-    <div className="bg-purple/7 flex min-h-[500px] flex-col rounded-3xl p-8">
+    <div className="bg-purple/6 flex min-h-[500px] flex-col rounded-3xl p-8">
       {/* 헤더 */}
       <div className="mb-8 grid grid-cols-[64px_1fr] items-center gap-3">
         <div className="flex justify-center">
-          <div className="bg-purple/12 flex h-14 w-14 items-center justify-center rounded-full">
+          <div className="bg-light-purple flex h-14 w-14 items-center justify-center rounded-full">
             <Ampersand className="text-purple h-7 w-7" />
           </div>
         </div>
