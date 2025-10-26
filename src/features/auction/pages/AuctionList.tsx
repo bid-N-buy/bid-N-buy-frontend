@@ -180,7 +180,7 @@ const AuctionList = () => {
   }, [searchKeyword, selectedCategory, mainCategoryId, subCategoryId]);
 
   return (
-    <div className="container py-10">
+    <div className="container pt-10 pb-20">
       <div className="grid grid-cols-[repeat(24,minmax(0,1fr))] gap-10">
         {/* 사이드바 */}
         <aside className="col-span-5">
@@ -323,16 +323,26 @@ const AuctionList = () => {
 
             {/* 완료/종료 포함 */}
             <div className="flex flex-col gap-4">
-              <button
-                onClick={toggleIncludeEnded}
-                className={`rounded-md px-4 py-2.5 text-base font-medium transition-colors ${
-                  includeEnded
-                    ? "bg-purple text-white"
-                    : "border-purple text-purple hover:bg-light-purple cursor-pointer border"
-                }`}
-              >
-                완료/종료 포함
-              </button>
+              <label className="group flex cursor-pointer items-center justify-between">
+                <span className="text-g100 group-hover:text-purple text-base font-semibold transition-colors">
+                  완료/종료 포함
+                </span>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={includeEnded}
+                  onClick={toggleIncludeEnded}
+                  className={`relative inline-flex h-6.5 w-10.5 items-center rounded-full transition-colors ${
+                    includeEnded ? "bg-purple" : "bg-g400"
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      includeEnded ? "translate-x-6" : "translate-x-1"
+                    }`}
+                  />
+                </button>
+              </label>
             </div>
           </div>
         </aside>
