@@ -6,14 +6,14 @@ interface WishButtonProps {
   auctionId: number;
   initial?: WishState;
   sellerId?: number;
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "lg";
 }
 
 const WishButton = ({
   auctionId,
   initial,
   sellerId,
-  size = "md",
+  size = "sm",
 }: WishButtonProps) => {
   const { liked, wishCount, loading, toggle } = useWish({
     auctionId,
@@ -23,9 +23,8 @@ const WishButton = ({
 
   // 사이즈별
   const config = {
-    sm: { icon: 20, text: "text-xs", wrap: "min-w-10 p-1 gap-0.5" },
-    md: { icon: 26, text: "text-sm", wrap: "min-w-12 p-1.5 gap-1" },
-    lg: { icon: 32, text: "text-base", wrap: "min-w-14 p-2 gap-1.5" },
+    sm: { icon: 22, text: "text-xs", wrap: "min-w-10 p-0.5 gap-0.5" },
+    lg: { icon: 35, text: "text-base", wrap: "min-w-14 p-0.5 gap-1" },
   }[size];
 
   return (

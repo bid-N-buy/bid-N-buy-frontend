@@ -12,14 +12,13 @@ import {
 import { useAuthInit } from "../../features/auth/hooks/UseAuthInit";
 import api from "../../shared/api/axiosInstance";
 import { useChatModalStore } from "../store/ChatModalStore";
-import { useNotiStore } from "../../features/notification/store/notiStore"; 
+import { useNotiStore } from "../../features/notification/store/notiStore";
 import { useInitialUnreadCount } from "../hooks/useInitialUnreadCount";
 
 const Header = () => {
-
   // 알람 상태변경
   const notis = useNotiStore((s) => s.notis);
-  const hasNew = notis.some((n) => !n.read); 
+  const hasNew = notis.some((n) => !n.read);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -196,14 +195,14 @@ const Header = () => {
               <li className="bg-g500 h-4 w-16 animate-pulse" />
             </ul>
           ) : isAuthed ? (
-            <ul className="text-h7 flex items-center gap-4 text-nowrap">
-              <li>
+            <ul className="text-h7 flex items-center text-nowrap">
+              <li className="mr-3.5">
                 <Link to="/mypage" className="cursor-pointer">
                   <span className="font-bold">{userNickname}</span>님
                   환영합니다!
                 </Link>
               </li>
-              <li>
+              <li className="mr-3.5">
                 <button
                   onClick={handleLogout}
                   className="hover:text-purple cursor-pointer transition-colors"
@@ -211,19 +210,15 @@ const Header = () => {
                   로그아웃
                 </button>
               </li>
-              <li>
-                <button>
-                  <Link
-                    to="/auctions/new"
-                    className="cursor-pointer"
-                    aria-label="경매 등록"
-                    title="경매 등록"
-                  >
-                    <Plus className="text-purple h-7 w-7" strokeWidth={2.5} />
-                  </Link>
-                </button>
+              <li className="mr-5.5">
+                <Link
+                  to="/auctions/new"
+                  className="text-purple hover:text-deep-purple cursor-pointer font-bold transition-colors"
+                >
+                  경매등록
+                </Link>
               </li>
-              <li>
+              <li className="mr-3.5">
                 <button
                   className="hover:text-purple relative cursor-pointer transition-colors"
                   onClick={openChatList}
