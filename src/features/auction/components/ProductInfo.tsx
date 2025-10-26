@@ -351,6 +351,7 @@ const ProductInfo = ({
               <WishButton
                 auctionId={auctionId}
                 initial={{ liked, wishCount: wishCount ?? 0 }}
+                sellerId={sellerId}
                 size="lg"
               />
               {/* </div> */}

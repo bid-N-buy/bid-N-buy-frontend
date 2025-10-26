@@ -26,6 +26,7 @@ const ProductCard = React.memo(function ProductCard({
     currentPrice,
     mainImageUrl,
     sellingStatus,
+    sellerId,
     sellerNickname,
     wishCount,
     liked = false,
@@ -100,6 +101,7 @@ const ProductCard = React.memo(function ProductCard({
             <WishButton
               auctionId={auctionId}
               initial={{ liked, wishCount: wishCount ?? 0 }}
+              sellerId={sellerId}
               size="sm"
             />
           </div>
