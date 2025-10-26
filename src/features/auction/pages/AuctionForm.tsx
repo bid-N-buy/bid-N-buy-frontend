@@ -16,7 +16,7 @@ const parseNum = (s: string) => {
   return Number.isFinite(n) ? n : null;
 };
 
-// 숫자 입력 가드(타이핑 중 실수 방지) - 체크
+// 숫자 입력 가드(타이핑 중 실수 방지)
 const onlyNum = (e: React.KeyboardEvent<HTMLInputElement>) => {
   const ok =
     /[0-9]/.test(e.key) ||
@@ -50,7 +50,7 @@ const AuctionForm = () => {
   const loadTop = useCategoryStore((s) => s.loadTop);
   const loadSubs = useCategoryStore((s) => s.loadSubs);
 
-  // *****파일 원본 들고 있을 로컬 상태 추가
+  // 파일 원본 들고 있을 로컬 상태 추가
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
   const [startDateTime, setStartDateTime] = useState<Date | null>(null);
@@ -98,7 +98,7 @@ const AuctionForm = () => {
     set("categoryId", val ? Number(val) : null);
   };
 
-  // *****파일 선택 핸들러 - 수정
+  // 파일 선택 핸들러 - 체크
   const onFilesSelected = (files: File[]) => {
     const room = Math.max(0, 10 - images.length);
     const taking = files.slice(0, room);
@@ -117,7 +117,7 @@ const AuctionForm = () => {
     setSelectedFiles((prev) => [...prev, ...taking]);
   };
 
-  // *****추가) 인덱스 i 이미지를 첫 번째로 옮길 때, 파일 배열도 같이 이동
+  // 인덱스 i 이미지를 첫 번째로 옮길 때, 파일 배열도 같이 이동
   const moveFileToFront = (i: number) => {
     setSelectedFiles((prev) => {
       if (i < 0 || i >= prev.length) return prev;
@@ -126,7 +126,7 @@ const AuctionForm = () => {
       next.unshift(hit);
       return next;
     });
-    moveImageToFront(i); // 스토어의 프리뷰 순서도 변경
+    moveImageToFront(i); // 스토어 프리뷰 순서도 변경
   };
 
   // blob URL 메모리 누수 방지(삭제/리셋 시 revoke)
@@ -179,7 +179,17 @@ const AuctionForm = () => {
         endTime: payload.endTime!,
       };
 
-      await createAuction(form, selectedFiles);
+      const res = await createAuction(form, selectedFiles);
+      const id = res?.auctionId;
+
+      if (typeof id !== "number") {
+        showToast("등록되었습니다.", "success");
+        revokeAll();
+        reset();
+        setSelectedFiles([]);
+        navigate("/auctions", { replace: true });
+        return;
+      }
 
       showToast("등록되었습니다.", "success");
 
@@ -187,7 +197,7 @@ const AuctionForm = () => {
       reset();
       setSelectedFiles([]);
 
-      navigate("/auctions", { replace: true }); // todo 추후 경로 수정
+      navigate(`/auctions/${id}`, { replace: true });
     } catch (err: any) {
       const msg =
         err?.message ?? err?.response?.data?.message ?? "등록에 실패했습니다.";
