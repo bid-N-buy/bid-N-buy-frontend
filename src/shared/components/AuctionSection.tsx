@@ -18,7 +18,7 @@ type Props = {
 };
 
 const AuctionSection = ({
-  title = "경매 중인 상품",
+  title = "최신 경매 상품",
   size = 10,
   params,
   moreLink = "/auctions",
@@ -48,7 +48,7 @@ const AuctionSection = ({
           [];
         setItems(list as AuctionItem[]);
       } catch (e: any) {
-        setError(e?.message ?? "목록을 불러오지 못했습니다.");
+        setError(e?.message ?? "경매 목록을 불러오지 못했습니다.");
       } finally {
         setLoading(false);
       }
@@ -66,7 +66,7 @@ const AuctionSection = ({
           {moreLink && (
             <button
               onClick={() => navigate(moreLink)}
-              className="text-g300 hover:text-purple text-[15px] transition-colors"
+              className="text-g300 hover:text-purple text-h7 transition-colors"
             >
               전체보기
             </button>
@@ -99,7 +99,7 @@ const AuctionSection = ({
         {/* 빈 상태 */}
         {!loading && !error && items.length === 0 && (
           <div className="bg-g500 text-g300 flex min-h-[500px] w-full items-center justify-center rounded-3xl">
-            현재 진행 중인 경매가 없습니다.
+            현재 진행 중이거나 진행 예정인 경매가 없습니다.
           </div>
         )}
 
@@ -107,7 +107,7 @@ const AuctionSection = ({
         {!loading && !error && items.length > 0 && (
           <div
             className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4 md:gap-8 lg:grid-cols-5"
-            aria-label="경매 중인 상품 목록"
+            aria-label="경매 목록"
           >
             {items.map((it) => (
               <ProductCard
