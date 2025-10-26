@@ -5,11 +5,21 @@ import type { WishState } from "../types/wish";
 interface WishButtonProps {
   auctionId: number;
   initial?: WishState;
+  sellerId?: number;
   size?: "sm" | "md" | "lg";
 }
 
-const WishButton = ({ auctionId, initial, size = "md" }: WishButtonProps) => {
-  const { liked, wishCount, loading, toggle } = useWish({ auctionId, initial });
+const WishButton = ({
+  auctionId,
+  initial,
+  sellerId,
+  size = "md",
+}: WishButtonProps) => {
+  const { liked, wishCount, loading, toggle } = useWish({
+    auctionId,
+    initial,
+    sellerId,
+  });
 
   // 사이즈별
   const config = {
@@ -26,7 +36,7 @@ const WishButton = ({ auctionId, initial, size = "md" }: WishButtonProps) => {
       aria-busy={loading}
       disabled={loading}
       onClick={toggle}
-      className={`group inline-flex flex-col items-center justify-center ${config.wrap} hover:bg-g500/40 focus-visible:ring-purple rounded-2xl transition focus:outline-none focus-visible:ring-2 disabled:opacity-60`}
+      className={`group inline-flex flex-col items-center justify-center ${config.wrap} focus-visible:ring-purple rounded-2xl transition focus:outline-none focus-visible:ring-2 disabled:opacity-60`}
     >
       <Heart
         size={config.icon}

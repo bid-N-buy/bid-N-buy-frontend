@@ -1,4 +1,3 @@
-// export type ImageType = "PRODUCT";
 export type ImageType = "MAIN" | "PRODUCT";
 
 export interface AuctionImage {
@@ -64,9 +63,11 @@ export interface AuctionItem {
   auctionId: number;
   title: string;
   currentPrice: number;
+  createdAt: string;
   endTime: string;
   mainImageUrl: string | null;
   sellingStatus: "시작전" | "진행중" | "완료" | "종료";
+  sellerId?: number;
   sellerNickname: string;
   wishCount: number;
   liked?: boolean; // 추가 예정이라 optional
