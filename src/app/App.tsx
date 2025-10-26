@@ -23,11 +23,13 @@ import InquiryDetailPage from "../features/mypage/pages/InquiryDetailPage";
 import NotificationTestPage from "../features/notification/pages/NotificationTestPage";
 import FcmInitializer from "../features/notification/components/FcmInitializer";
 import FcmListener from "../features/notification/hooks/FcmListener";
+import AdminAuctionPost from "../features/admin/pages/AdminAuctionPost";
+import AdminInquiryPost from "../features/admin/pages/AdminInquiryPost";
+import AdminUserPost from "../features/admin/pages/AdminUserPost";
 
 // 공통
 const Header = React.lazy(() => import("../shared/components/Header"));
 const Footer = React.lazy(() => import("../shared/components/Footer"));
-
 
 const LoginPage = React.lazy(
   () => import("../features/auth/pages/login/LoginPage")
@@ -215,8 +217,11 @@ export default function App() {
             <Route element={<AdminLayout />}>
               <Route index element={<AdminDashboard />} />
               <Route path="inquiries" element={<AdminInquiryList />} />
+              <Route path="inquiries/board/:i" element={<AdminInquiryPost />} />
               <Route path="users" element={<AdminUserList />} />
+              <Route path="users/board/:i" element={<AdminUserPost />} />
               <Route path="auctions" element={<AdminAuctionList />} />
+              <Route path="auctions/board/:i" element={<AdminAuctionPost />} />
             </Route>
           </Route>
         </Route>

@@ -1,7 +1,12 @@
 import React from "react";
+import AdminBoardTable from "../components/AdminBoardTable";
 
 const AdminAuctionList = () => {
-  return <div></div>;
+  return (
+    <div>
+      <AdminBoardTable />
+    </div>
+  );
 };
 
 export default AdminAuctionList;
