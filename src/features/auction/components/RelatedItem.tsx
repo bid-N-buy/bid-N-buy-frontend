@@ -61,7 +61,7 @@ const RelatedItem = ({
 
   return (
     <section
-      className="flex flex-col gap-3.5 px-1.5 sm:px-3 lg:gap-6"
+      className="flex flex-col gap-3.5 px-1.5 pb-10 sm:px-3 md:pb-15 lg:gap-6"
       aria-label="연관 상품"
     >
       <span className="text-g100 text-h5 sm:text-h4 font-bold">

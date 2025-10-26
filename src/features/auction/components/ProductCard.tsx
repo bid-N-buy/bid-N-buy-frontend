@@ -38,8 +38,7 @@ const ProductCard = React.memo(function ProductCard({
     [mainImageUrl]
   );
 
-  const status = sellingStatus;
-  const badgeClass = STATUS_STYLE[status] ?? "bg-purple text-white";
+  const badgeClass = STATUS_STYLE[sellingStatus] ?? "bg-purple text-white";
 
   const onKey = (e: KeyboardEvent<HTMLDivElement>) => {
     if (e.key === "Enter" || e.key === " ") {
@@ -63,7 +62,7 @@ const ProductCard = React.memo(function ProductCard({
           <img
             src={src}
             alt={title}
-            className="aspect-square w-full rounded-2xl object-cover"
+            className="aspect-square w-full rounded-3xl object-cover"
             loading="lazy"
             decoding="async"
             onError={() => setImgError(true)}
@@ -76,31 +75,31 @@ const ProductCard = React.memo(function ProductCard({
 
         {/* 상태 배지 */}
         <div
-          className={`absolute top-2 right-2 rounded px-2 py-1 text-xs ${badgeClass}`}
-          aria-label={`판매 상태: ${status}`}
+          className={`text-h8 absolute top-3 right-3 flex items-center justify-center rounded-2xl px-2 py-1 ${badgeClass}`}
+          aria-label={`판매 상태: ${sellingStatus}`}
+          style={{ letterSpacing: 0 }}
         >
-          {status}
+          {sellingStatus}
         </div>
       </div>
 
       {/* 정보 */}
-      <div className="mt-2">
-        <h3 className="text-g100 mb-1 line-clamp-2 text-sm font-medium">
+      <div className="mt-2 px-1">
+        <h3 className="text-g100 mb-1 line-clamp-2 text-base font-medium">
           {title}
         </h3>
-        <p className="text-g100 text-base font-bold">
+
+        <p className="text-g100 text-h6 font-bold">
           현재 {currentPrice.toLocaleString()}원
         </p>
+
         <div className="flex items-end justify-between">
           <span className="text-g300 text-base">{sellerNickname}</span>
           {/* 찜 버튼 - 카드 클릭과 이벤트 충돌 방지 stopPropagation */}
           <div onClick={(e) => e.stopPropagation()}>
             <WishButton
               auctionId={auctionId}
-              initial={{
-                liked,
-                wishCount: wishCount ?? 0,
-              }}
+              initial={{ liked, wishCount: wishCount ?? 0 }}
               size="sm"
             />
           </div>
