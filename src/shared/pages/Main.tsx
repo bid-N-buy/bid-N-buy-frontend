@@ -55,13 +55,13 @@ const Main = () => {
                     <button
                       key={c.categoryId}
                       onClick={() => handleCategoryClick(c.categoryId)}
-                      className="flex min-w-[96px] flex-col items-center gap-3 transition-opacity hover:opacity-80"
+                      className="group flex min-w-[96px] flex-col items-center gap-3 transition-all"
                       aria-label={`${c.categoryName} 카테고리로 이동`}
                     >
-                      <div className="bg-g500 hover:bg-purple/10 flex h-[90px] w-[90px] items-center justify-center rounded-full transition-colors">
-                        <Icon className="text-g300 h-10 w-10" />
+                      <div className="group-hover:bg-light-purple flex h-[90px] w-[90px] items-center justify-center rounded-full bg-white shadow-[0_0_15px_rgba(0,0,0,0.09)] transition-all group-hover:shadow-[0_0_20px_rgba(0,0,0,0.12)]">
+                        <Icon className="text-purple h-10 w-10 transition-transform group-hover:scale-110" />
                       </div>
-                      <span className="text-g100 text-[15px] font-medium">
+                      <span className="text-g100 group-hover:text-purple text-h7 font-medium transition-colors">
                         {c.categoryName}
                       </span>
                     </button>
@@ -71,7 +71,7 @@ const Main = () => {
         </div>
       </section>
 
-      <AuctionSection title="경매 중인 상품" size={10} moreLink="/auctions" />
+      <AuctionSection title="최신 경매 상품" size={10} moreLink="/auctions" />
 
       {/* 보류 영역 */}
       <section className="pb-[60px]">
