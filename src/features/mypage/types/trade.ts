@@ -33,24 +33,26 @@ export type TradeItem = {
 
 // 구매 탭 API 예시
 export type ApiPurchase = {
-  id: number;
-  itemName: string;
+  auctionId?: number; // ✅ 실제 응답에 있음
+  id?: number; // 혹시 다른 API에서 id로 올 수도 있으니까 유지
+  title?: string; // ✅ 실제 응답
+  itemName?: string; // 예전/다른 API 호환
   seller?: string;
+  sellerNickname?: string; // ✅ 실제 응답
   thumbnail?: string | null;
-  status?: string; // BEFORE/SALE/COMPLETED/PROGRESS/FINISH ... 혹은 한글/영어표시
-  startAt?: string; // ISO
-  endAt?: string; // ISO
-  // 호환을 위해 들어올 수 있는 추가 키들(무시/백업용)
-  title?: string;
   image?: string | null;
-  itemImageUrl?: string | null;
+  itemImageUrl?: string | null; // ✅ 실제 응답
+  status?: string; // "결제 대기 중 (진행 중)"
+  statusText?: string; // 혹시 따로 줄 수도 있으니 유지
+  startAt?: string;
   startTime?: string;
-  endTime?: string;
+  endAt?: string;
+  endTime?: string; // ✅ 실제 응답
   finalPrice?: number;
   winnerNickname?: string;
-  statusText?: string;
+  currentPrice?: number;
+  price?: number;
 };
-
 // 판매 탭 API 예시 (/mypage/sales 샘플 포함)
 export type ApiSale = {
   id?: number; // 일부 API는 id
@@ -264,16 +266,25 @@ const pickStatusTextKR = (
 };
 
 export const fromPurchase = (r: ApiPurchase): TradeItem => {
+  // id 우선순위: auctionId -> id
+  const rawId =
+    typeof r.auctionId === "number"
+      ? r.auctionId
+      : typeof r.id === "number"
+        ? r.id
+        : undefined;
+
   const status = toStatus(r.status, r.statusText);
+
   return {
-    id: String(r.id),
-    title: r.itemName ?? r.title ?? "",
+    id: String(rawId ?? ""), // 빈 문자열이라도 최소 string 보장
+    title: r.title ?? r.itemName ?? "",
     thumbUrl: pickThumb(r),
     status,
-    statusText: pickStatusTextKR(r.status, (r as any).statusText),
-    counterparty: pickCounterpartyPurchase(r),
-    auctionStart: pickStart(r),
-    auctionEnd: pickEnd(r),
+    statusText: pickStatusTextKR(r.status, r.statusText),
+    counterparty: pickCounterpartyPurchase(r), // sellerNickname 등
+    auctionStart: pickStart(r), // startAt/startTime (없으면 undefined)
+    auctionEnd: pickEnd(r), // endAt/endTime
     price: pickPrice(r),
   };
 };

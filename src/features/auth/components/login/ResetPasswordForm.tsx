@@ -180,7 +180,7 @@ export default function ResetPassword() {
   };
 
   return (
-    <div className="mx-auto w-[420px]">
+    <div className="mx-auto my-[200px] w-[420px]">
       {/* 헤더 */}
       <h1 className="mt-2 mb-6 text-center text-2xl font-bold">
         {step === "request" ? "비밀번호 재발급" : "비밀번호 변경"}

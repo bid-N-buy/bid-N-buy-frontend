@@ -8,20 +8,45 @@ import React, {
 import { useNavigate } from "react-router-dom";
 import api from "../../../shared/api/axiosInstance";
 import { useAuthStore, type AuthState } from "../../auth/store/authStore";
-import AddressDetails from "../components/myAddress/AddressDetails";
-import AddressEditorModal from "../components/myAddress/AddressEditorModal";
-import { useAddresses } from "../hooks/useAddresses";
-import type { Address, AddressDraft } from "../types/address";
 import Toast from "../../../shared/components/Toast";
 
+import AddressDetails from "../components/myAddress/AddressDetails";
+import AddressEditorModal, {
+  type AddressDraft,
+} from "../components/myAddress/AddressEditorModal";
+
+import BankAccountDetails from "../components/bankAccount/BankAccountDetails";
+import BankAccountEditorModal, {
+  type BankAccountDraft,
+} from "../components/bankAccount/BankAccountEditorModal";
+
 /* =======================
- *        Config
+ * 타입
  * ======================= */
+
 type PasswordForm = {
   currentPassword: string;
   newPassword: string;
   newPassword2: string;
 };
+
+export type Address = {
+  name: string;
+  phoneNumber: string;
+  zonecode: string;
+  address: string;
+  detailAddress: string;
+};
+
+export type BankAccount = {
+  bankName: string;
+  accountNumber: string;
+  accountHolder: string;
+};
+
+/* =======================
+ * 상수 / 유틸
+ * ======================= */
 
 const MAX_IMG_MB = 5;
 
@@ -40,9 +65,14 @@ function makeAbsolute(u?: string | null): string | null {
   }
 }
 
+/* =======================
+ * 메인 AccountSettings
+ * ======================= */
+
 const AccountSettings: React.FC = () => {
   const navigate = useNavigate();
 
+  // auth store
   const profile = useAuthStore((s: AuthState) => s.profile);
   const setProfile = useAuthStore((s: AuthState) => s.setProfile);
   const clearAuth = useAuthStore((s: any) => s.clear);
@@ -76,32 +106,19 @@ const AccountSettings: React.FC = () => {
   const [delPw, setDelPw] = useState("");
   const [delLoading, setDelLoading] = useState(false);
 
-  // 주소(실서버 훅)
-  const {
-    addresses,
-    loading: addrLoading,
-    error: addrError,
-    add,
-    update,
-    remove,
-  } = useAddresses();
+  // 단일 주소 상태
+  const [mainAddress, setMainAddress] = useState<Address | null>(null);
+  const [addrLoading, setAddrLoading] = useState<boolean>(true);
+  const [addrSaving, setAddrSaving] = useState<boolean>(false);
+  const [addrError, setAddrError] = useState<any>(null);
+  const [addrOpen, setAddrOpen] = useState<boolean>(false); // 주소 모달
 
-  // 주소(목업 전환)
-  const [addrOpen, setAddrOpen] = useState<boolean>(false);
-  const [editing, setEditing] = useState<Address | null>(null);
-  const [addrMock, setAddrMock] = useState<boolean>(false);
-  const [addressesMock, setAddressesMock] = useState<Address[]>([
-    {
-      addressId: 1,
-      name: "홍길동",
-      phoneNumber: "010-1234-5678",
-      zonecode: "04524",
-      address: "서울 중구 세종대로 110",
-      detailAddress: "1층",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-  ]);
+  // 단일 계좌 상태
+  const [bankAccount, setBankAccount] = useState<BankAccount | null>(null);
+  const [bankLoading, setBankLoading] = useState<boolean>(true);
+  const [bankSaving, setBankSaving] = useState<boolean>(false);
+  const [bankError, setBankError] = useState<any>(null);
+  const [bankOpen, setBankOpen] = useState<boolean>(false); // 계좌 모달
 
   // 메시지 (토스트)
   const [msg, setMsg] = useState<string | null>(null);
@@ -126,7 +143,7 @@ const AccountSettings: React.FC = () => {
     }, 2200);
   };
 
-  /** userId 복구: /auth/me → /users/me → /mypage 중 첫 성공 */
+  /** userId 복구 */
   const resolveUserId = useCallback(async (): Promise<number | null> => {
     let uid = useAuthStore.getState().userId;
     if (uid) return uid;
@@ -156,18 +173,20 @@ const AccountSettings: React.FC = () => {
     return uid ?? null;
   }, [setUserId]);
 
-  /** 첫 로드: 프로필/이미지 + userId 복구 */
+  /** 첫 로드: 프로필/이미지 + 주소 + 계좌 */
   const onceRef = useRef(false);
   useEffect(() => {
     if (onceRef.current) return;
     onceRef.current = true;
 
     (async () => {
+      // 1. 기본 프로필
       try {
         const { data } = await api.get("/mypage");
         const nick = data?.nickname ?? "NickName";
         const email = data?.email ?? "";
         setNickname(nick);
+
         if (!profile || profile.nickname !== nick || profile.email !== email) {
           setProfile?.({ nickname: nick, email });
         }
@@ -178,35 +197,95 @@ const AccountSettings: React.FC = () => {
         );
       }
 
-      // userId 확보 후 프로필 이미지 조회
+      // 2. userId 확보 후 프로필 이미지
       const uid = (await resolveUserId()) ?? userIdFromStore;
-      if (!uid) {
+      if (uid) {
+        try {
+          const { data } = await api.get(`/auth/${uid}/profile`);
+          const raw = data?.profileImageUrl ?? null;
+          const abs = makeAbsolute(raw) ?? DEFAULT_AVATAR;
+          const bust = `${abs}${abs.includes("?") ? "&" : "?"}v=${Date.now()}`;
+          setCurrentImageUrl(bust);
+        } catch {
+          setCurrentImageUrl(DEFAULT_AVATAR);
+        }
+      } else {
         setCurrentImageUrl(DEFAULT_AVATAR);
-        return;
       }
 
+      // 3. 주소 불러오기
       try {
-        const { data } = await api.get(`/auth/${uid}/profile`);
-        const raw = data?.profileImageUrl ?? null;
-        const abs = makeAbsolute(raw) ?? DEFAULT_AVATAR;
-        // ✅ 초기 로딩에도 캐시버스터
-        const bust = `${abs}${abs.includes("?") ? "&" : "?"}v=${Date.now()}`;
-        setCurrentImageUrl(bust);
-      } catch {
-        setCurrentImageUrl(DEFAULT_AVATAR);
+        setAddrLoading(true);
+
+        const res = await api.get("/address", {
+          withCredentials: true,
+          validateStatus: (s) => s >= 200 && s < 500,
+        });
+
+        console.log("[address:res]", res.status, res.data);
+        const data = res.data;
+
+        // 서버 응답 모양 다 커버: 배열 / 단일 / data 래핑
+        const rawAddr = Array.isArray(data)
+          ? data[0]
+          : data?.name
+            ? data
+            : data?.data
+              ? data.data
+              : data?.address
+                ? data.address
+                : null;
+
+        console.log("[address:parsed]", rawAddr);
+
+        if (rawAddr) {
+          setMainAddress({
+            name: rawAddr.name ?? "",
+            phoneNumber: rawAddr.phoneNumber ?? "",
+            zonecode: rawAddr.zonecode ?? "",
+            address: rawAddr.address ?? "",
+            detailAddress: rawAddr.detailAddress ?? "",
+          });
+        } else {
+          setMainAddress(null);
+        }
+
+        setAddrError(null);
+      } catch (e: any) {
+        console.log("[address:error]", e?.response?.status, e?.response?.data);
+        setAddrError(e?.response ?? e);
+      } finally {
+        setAddrLoading(false);
+      }
+
+      // 4. 계좌 불러오기
+      try {
+        setBankLoading(true);
+        const { data } = await api.get("/bank-account", {
+          validateStatus: (s) => s >= 200 && s < 500,
+        });
+
+        const payload = data?.bankName ? data : data?.data ? data.data : null;
+
+        if (payload) {
+          setBankAccount({
+            bankName: payload.bankName ?? "",
+            accountNumber: payload.accountNumber ?? "",
+            accountHolder: payload.accountHolder ?? "",
+          });
+        } else {
+          setBankAccount(null);
+        }
+
+        setBankError(null);
+      } catch (e: any) {
+        setBankError(e?.response ?? e);
+      } finally {
+        setBankLoading(false);
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  /** 주소 훅 에러 → 401이면 목업 전환 */
-  useEffect(() => {
-    const unauthorized =
-      (addrError as any)?.status === 401 ||
-      (addrError as any)?.code === 401 ||
-      (addrError as any)?.message?.includes?.("Unauthorized");
-    if (unauthorized) setAddrMock(true);
-  }, [addrError]);
 
   /* ========== 닉네임 변경 ========== */
   const submitNickname = async () => {
@@ -220,10 +299,14 @@ const AccountSettings: React.FC = () => {
 
     try {
       setNickLoading(true);
-      const { data } = await api.put(`/auth/${uid}/nickname`, { nickname: v });
+      const { data } = await api.put(`/auth/${uid}/nickname`, {
+        nickname: v,
+      });
+
       if (!profile || profile.nickname !== v) {
         setProfile({ nickname: v, email: profile?.email });
       }
+
       toast(data?.message ?? "닉네임이 변경되었습니다.", null);
       setIsEditName(false);
     } catch (e: any) {
@@ -255,6 +338,7 @@ const AccountSettings: React.FC = () => {
         currentPassword,
         newPassword,
       });
+
       toast(data?.message ?? "비밀번호가 변경되었습니다.", null);
       setPw({ currentPassword: "", newPassword: "", newPassword2: "" });
     } catch (e: any) {
@@ -276,7 +360,9 @@ const AccountSettings: React.FC = () => {
     if (!f) return;
     if (f.size > MAX_IMG_MB * 1024 * 1024)
       return toast(null, `이미지 용량은 최대 ${MAX_IMG_MB}MB까지 가능합니다.`);
+
     if (imgPreview) URL.revokeObjectURL(imgPreview);
+
     setImgFile(f);
     setImgPreview(URL.createObjectURL(f));
   };
@@ -286,34 +372,35 @@ const AccountSettings: React.FC = () => {
     if (!imgFile) return toast(null, "변경할 이미지를 먼저 선택하세요.");
     if (!uid) return toast(null, "userId를 확인할 수 없습니다.");
 
-    // 업로드 동안 낙관적 프리뷰 적용
     const optimisticUrl = URL.createObjectURL(imgFile);
     setCurrentImageUrl(optimisticUrl);
 
     try {
       setImgLoading(true);
+
       const form = new FormData();
-      // ✅ 백엔드 @RequestPart("images")에 맞춤
       form.append("images", imgFile);
 
       const { data } = await api.put(`/auth/${uid}/profile`, form, {
         xsrfCookieName: "XSRF-TOKEN",
         xsrfHeaderName: "X-XSRF-TOKEN",
         withCredentials: true,
-        transformRequest: [(body) => body], // Content-Type 자동
+        transformRequest: [(body) => body], // 그대로 전송해서 multipart 유지
       });
 
       const raw = data?.profileImageUrl ?? data?.imageUrl ?? data?.url ?? null;
+
       let next = raw;
       if (!next) {
         const r = await api.get(`/auth/${uid}/profile`);
         next = r?.data?.profileImageUrl ?? null;
       }
+
       const abs = makeAbsolute(next) ?? DEFAULT_AVATAR;
       const bust = `${abs}${abs.includes("?") ? "&" : "?"}v=${Date.now()}`;
+
       setCurrentImageUrl(bust);
 
-      // 임시 객체 URL 해제
       URL.revokeObjectURL(optimisticUrl);
 
       setProfile?.({
@@ -323,21 +410,15 @@ const AccountSettings: React.FC = () => {
 
       toast("프로필 이미지가 변경되었습니다.", null);
     } catch (e: any) {
-      // 실패 시 임시 프리뷰 해제 및 기본 이미지로 롤백(선택)
       URL.revokeObjectURL(optimisticUrl);
       setCurrentImageUrl(DEFAULT_AVATAR);
 
-      if (import.meta.env.DEV) {
-        console.debug("[upload:error]", {
-          status: e?.response?.status,
-          data: e?.response?.data,
-        });
-      }
       const m =
         e?.response?.data?.message ||
         e?.response?.data?.error ||
         e?.message ||
         "이미지 업로드/변경에 실패했습니다.";
+
       toast(null, m);
     } finally {
       setImgLoading(false);
@@ -356,11 +437,13 @@ const AccountSettings: React.FC = () => {
 
     try {
       setDelLoading(true);
+
       const { data } = await api.delete(`/auth/user/${uid}`, {
         data: { password: delPw },
         headers: { "Content-Type": "application/json" },
         withCredentials: true,
       });
+
       toast(data?.message ?? "사용자 삭제 완료", null);
       clearAuth?.();
       navigate("/login", { replace: true });
@@ -376,53 +459,97 @@ const AccountSettings: React.FC = () => {
     }
   };
 
-  /* ===== 주소: 목업 add/update/remove (서버 스펙 일치) ===== */
-  const addMock = useCallback(async (draft: AddressDraft) => {
-    setAddressesMock((prev) => {
-      const nextId = (prev.at(-1)?.addressId ?? 0) + 1;
-      const now = new Date().toISOString();
-      return [
-        ...prev,
-        {
-          addressId: nextId,
-          name: draft.name,
-          phoneNumber: draft.phoneNumber,
-          zonecode: draft.zonecode,
-          address: draft.address,
-          detailAddress: draft.detailAddress ?? "",
-          createdAt: now,
-          updatedAt: now,
-        },
-      ];
-    });
-  }, []);
+  /* ========== 주소 저장 ========== */
+  const handleSaveAddress = async (draft: AddressDraft) => {
+    if (!draft.name.trim()) return toast(null, "수령인 이름을 입력하세요.");
+    if (!draft.phoneNumber.trim()) return toast(null, "전화번호를 입력하세요.");
+    if (!draft.zonecode.trim()) return toast(null, "우편번호를 입력하세요.");
+    if (!draft.address.trim()) return toast(null, "주소를 입력하세요.");
 
-  const updateMock = useCallback(
-    async (id: number, patch: Partial<AddressDraft>) => {
-      setAddressesMock((prev) =>
-        prev.map((a) =>
-          a.addressId === id
-            ? {
-                ...a,
-                ...patch,
-                detailAddress:
-                  patch.detailAddress !== undefined
-                    ? patch.detailAddress
-                    : a.detailAddress,
-                updatedAt: new Date().toISOString(),
-              }
-            : a
-        )
-      );
-    },
-    []
-  );
+    try {
+      setAddrSaving(true);
 
-  const removeMock = useCallback(async (id: number) => {
-    setAddressesMock((prev) => prev.filter((a) => a.addressId !== id));
-  }, []);
+      const body = {
+        name: draft.name,
+        phoneNumber: draft.phoneNumber,
+        zonecode: draft.zonecode,
+        address: draft.address,
+        detailAddress: draft.detailAddress ?? "",
+      };
 
-  /* design tokens */
+      const { data } = await api.post("/address", body, {
+        withCredentials: true,
+      });
+
+      setMainAddress({
+        name: body.name,
+        phoneNumber: body.phoneNumber,
+        zonecode: body.zonecode,
+        address: body.address,
+        detailAddress: body.detailAddress,
+      });
+
+      toast(data?.message ?? "주소가 저장되었습니다.", null);
+      setAddrOpen(false);
+    } catch (e: any) {
+      const m =
+        e?.response?.data?.message ??
+        e?.response?.data?.error ??
+        "주소 정보를 저장하지 못했습니다.";
+      toast(null, m);
+    } finally {
+      setAddrSaving(false);
+    }
+  };
+
+  /* ========== 계좌 저장 ========== */
+  const handleSaveBank = async (draft: BankAccountDraft) => {
+    if (!draft.bankName.trim()) {
+      toast(null, "은행명을 입력하세요.");
+      return;
+    }
+    if (!draft.accountNumber.trim()) {
+      toast(null, "계좌번호를 입력하세요.");
+      return;
+    }
+    if (!draft.accountHolder.trim()) {
+      toast(null, "예금주를 입력하세요.");
+      return;
+    }
+
+    try {
+      setBankSaving(true);
+
+      const body = {
+        bankName: draft.bankName,
+        accountNumber: draft.accountNumber,
+        accountHolder: draft.accountHolder,
+      };
+
+      const { data } = await api.post("/bank-account", body, {
+        withCredentials: true,
+      });
+
+      setBankAccount({
+        bankName: body.bankName,
+        accountNumber: body.accountNumber,
+        accountHolder: body.accountHolder,
+      });
+
+      toast(data?.message ?? "계좌 정보가 저장되었습니다.", null);
+      setBankOpen(false);
+    } catch (e: any) {
+      const m =
+        e?.response?.data?.message ??
+        e?.response?.data?.error ??
+        "계좌 정보를 저장하지 못했습니다.";
+      toast(null, m);
+    } finally {
+      setBankSaving(false);
+    }
+  };
+
+  /* 디자인 토큰 */
   const lineInput =
     "w-full rounded-none border-0 border-b border-neutral-300 bg-transparent px-0 py-[10px] text-[15px] placeholder:text-neutral-400 focus:border-neutral-800 focus:ring-0";
   const ghostBtn =
@@ -464,14 +591,17 @@ const AccountSettings: React.FC = () => {
             }}
           />
         </div>
+
         <div className="flex flex-col">
           <div className="text-[20px] font-semibold text-neutral-900">
             {profile?.nickname ?? "NickName"}
           </div>
+
           <div className="mt-2">
             <button type="button" onClick={onPickImage} className={ghostBtn}>
               이미지 변경
             </button>
+
             <input
               ref={fileRef}
               type="file"
@@ -479,6 +609,7 @@ const AccountSettings: React.FC = () => {
               className="hidden"
               onChange={onFileChange}
             />
+
             {imgFile && (
               <button
                 type="button"
@@ -507,11 +638,13 @@ const AccountSettings: React.FC = () => {
           <div className="mb-1 text-[13px] font-semibold text-neutral-800">
             닉네임
           </div>
+
           {!isEditName ? (
             <div className="flex items-center justify-between">
               <span className="text-[15px] text-neutral-900">
                 {profile?.nickname ?? "NickName"}
               </span>
+
               <button
                 type="button"
                 onClick={() => setIsEditName(true)}
@@ -528,6 +661,7 @@ const AccountSettings: React.FC = () => {
                 onChange={(e) => setNickname(e.target.value)}
                 placeholder="닉네임을 입력하세요"
               />
+
               <button
                 type="button"
                 onClick={() => {
@@ -538,6 +672,7 @@ const AccountSettings: React.FC = () => {
               >
                 취소
               </button>
+
               <button
                 type="button"
                 onClick={submitNickname}
@@ -623,6 +758,7 @@ const AccountSettings: React.FC = () => {
                 }}
               />
             </div>
+
             <button
               type="button"
               onClick={submitPassword}
@@ -636,34 +772,63 @@ const AccountSettings: React.FC = () => {
         </div>
       </section>
 
-      {/* 주소 */}
+      {/* 주소 (단일) */}
       <section className="mb-10">
         <div className="mb-3 flex items-center justify-between">
           <h5 className="text-[16px] font-bold text-neutral-900">주소</h5>
-          <button
+
+          {/* <button
             type="button"
             className="rounded-full bg-purple-600 px-3 py-[6px] text-[13px] text-white hover:opacity-90"
             onClick={() => {
-              setEditing(null);
               setAddrOpen(true);
             }}
           >
-            새 주소 추가
-          </button>
+            {mainAddress ? "수정" : "등록"}
+          </button> */}
         </div>
 
-        {addrError && !addrMock && (
+        {addrError && !mainAddress && (
           <p className="mb-2 text-sm text-rose-600">{String(addrError)}</p>
         )}
 
         <AddressDetails
-          addresses={addrMock ? addressesMock : (addresses ?? [])}
-          loading={addrMock ? false : addrLoading}
-          onEdit={(addr) => {
-            setEditing(addr);
+          address={mainAddress}
+          loading={addrLoading}
+          error={addrError}
+          onEdit={() => {
             setAddrOpen(true);
           }}
-          onDelete={addrMock ? removeMock : remove}
+        />
+      </section>
+
+      {/* 정산 계좌 (단일) */}
+      <section className="mb-10">
+        <div className="mb-3 flex items-center justify-between">
+          <h5 className="text-[16px] font-bold text-neutral-900">정산 계좌</h5>
+
+          {/* <button
+            type="button"
+            className="rounded-full bg-purple-600 px-3 py-[6px] text-[13px] text-white hover:opacity-90"
+            onClick={() => {
+              setBankOpen(true);
+            }}
+          >
+            {bankAccount ? "수정" : "등록"}
+          </button> */}
+        </div>
+
+        {bankError && !bankAccount && (
+          <p className="mb-2 text-sm text-rose-600">{String(bankError)}</p>
+        )}
+
+        <BankAccountDetails
+          account={bankAccount}
+          loading={bankLoading}
+          error={bankError}
+          onEdit={() => {
+            setBankOpen(true);
+          }}
         />
       </section>
 
@@ -693,6 +858,7 @@ const AccountSettings: React.FC = () => {
             <h3 className="text-[18px] font-semibold text-neutral-900">
               정말 탈퇴하시겠어요?
             </h3>
+
             <p className="mt-1 text-sm text-neutral-600">
               계정과 거래/기록이 삭제될 수 있어요. 확인을 위해 비밀번호를 입력해
               주세요.
@@ -719,6 +885,7 @@ const AccountSettings: React.FC = () => {
               >
                 취소
               </button>
+
               <button
                 type="button"
                 className={dangerBtn}
@@ -733,30 +900,26 @@ const AccountSettings: React.FC = () => {
         </div>
       )}
 
-      {/* 주소 편집 모달 */}
+      {/* 주소 모달 */}
       <AddressEditorModal
         open={addrOpen}
-        initial={editing}
+        initial={mainAddress}
+        saving={addrSaving}
         onClose={() => {
           setAddrOpen(false);
-          setEditing(null);
         }}
-        onSave={async (draft) => {
-          const payload: AddressDraft = {
-            name: draft.name.trim(),
-            phoneNumber: draft.phoneNumber.trim(),
-            zonecode: draft.zonecode.trim(),
-            address: draft.address.trim(),
-            detailAddress: (draft.detailAddress ?? "").trim(),
-          };
+        onSave={handleSaveAddress}
+      />
 
-          if ((draft as any).addressId) {
-            const id = (draft as any).addressId as number;
-            await (addrMock ? updateMock(id, payload) : update(id, payload));
-          } else {
-            await (addrMock ? addMock(payload) : add(payload));
-          }
+      {/* 계좌 모달 */}
+      <BankAccountEditorModal
+        open={bankOpen}
+        initial={bankAccount}
+        saving={bankSaving}
+        onClose={() => {
+          setBankOpen(false);
         }}
+        onSave={handleSaveBank}
       />
     </div>
   );

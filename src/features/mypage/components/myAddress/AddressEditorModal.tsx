@@ -1,11 +1,12 @@
 // AddressEditorModal.tsx
 import React, { useEffect, useState } from "react";
-import PostcodeSearchButton from "./PostcodeSearchButton"; // 경로 확인
+import PostcodeSearchButton from "./PostcodeSearchButton";
 import type { Address, AddressDraft } from "../../types/address";
 
 type Props = {
   open: boolean;
   initial: Address | null;
+  saving: boolean; // <- 부모에서 내려오는 API 저장 중 상태
   onClose: () => void;
   onSave: (
     draft: AddressDraft | (AddressDraft & { addressId?: number })
@@ -18,10 +19,11 @@ const lineInput =
 const AddressEditorModal: React.FC<Props> = ({
   open,
   initial,
+  saving,
   onClose,
   onSave,
 }) => {
-  // 서버 스펙 기반 상태
+  // 폼 상태
   const [name, setName] = useState(initial?.name ?? "");
   const [phoneNumber, setPhoneNumber] = useState(initial?.phoneNumber ?? "");
   const [zonecode, setZonecode] = useState(initial?.zonecode ?? "");
@@ -29,8 +31,11 @@ const AddressEditorModal: React.FC<Props> = ({
   const [detailAddress, setDetailAddress] = useState(
     initial?.detailAddress ?? ""
   );
+
+  // 로컬 "지금 제출 중" 상태 (중복 클릭 방지용)
   const [submitting, setSubmitting] = useState(false);
 
+  // 모달이 새로 열릴 때마다 initial 값으로 리셋
   useEffect(() => {
     if (!open) return;
     setName(initial?.name ?? "");
@@ -38,11 +43,13 @@ const AddressEditorModal: React.FC<Props> = ({
     setZonecode(initial?.zonecode ?? "");
     setAddress(initial?.address ?? "");
     setDetailAddress(initial?.detailAddress ?? "");
+    setSubmitting(false); // 새로 열릴 땐 항상 false로 초기화
   }, [open, initial]);
 
   if (!open) return null;
 
   const handleSave = async () => {
+    // 필수값 체크
     if (
       !name.trim() ||
       !phoneNumber.trim() ||
@@ -53,17 +60,27 @@ const AddressEditorModal: React.FC<Props> = ({
       return;
     }
 
+    // 중복 클릭 방지
+    if (submitting || saving) return;
+
     setSubmitting(true);
-    await onSave({
+
+    // 부모에 올릴 payload
+    const payload = {
       ...(initial?.addressId ? { addressId: initial.addressId } : {}),
       name: name.trim(),
       phoneNumber: phoneNumber.trim(),
       zonecode: zonecode.trim(),
       address: address.trim(),
       detailAddress: detailAddress.trim(),
-    });
-    setSubmitting(false);
-    onClose();
+    };
+
+    try {
+      await onSave(payload);
+      onClose(); // 성공하면 모달 닫기
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -121,7 +138,7 @@ const AddressEditorModal: React.FC<Props> = ({
             onSelected={(v) => {
               setZonecode(v.zonecode);
               setAddress(v.address);
-              // 건물명이 있으면 상세주소 초기값으로 제안
+              // 건물명 있으면 상세주소 초기값으로 추천
               if (v.buildingName && !detailAddress) {
                 setDetailAddress(v.buildingName);
               }
@@ -154,21 +171,24 @@ const AddressEditorModal: React.FC<Props> = ({
           placeholder="동/호수, 건물명 등"
         />
 
+        {/* 액션 버튼들 */}
         <div className="mt-5 flex justify-end gap-2">
           <button
             type="button"
             className="rounded-md border px-3 py-[6px] text-[13px]"
             onClick={onClose}
+            disabled={submitting || saving}
           >
             취소
           </button>
+
           <button
             type="button"
             className="rounded-md bg-purple-600 px-3 py-[6px] text-[13px] text-white hover:opacity-90 disabled:opacity-60"
             onClick={handleSave}
-            disabled={submitting}
+            disabled={submitting || saving}
           >
-            {submitting ? "저장 중…" : "저장"}
+            {submitting || saving ? "저장 중…" : "저장"}
           </button>
         </div>
       </div>
