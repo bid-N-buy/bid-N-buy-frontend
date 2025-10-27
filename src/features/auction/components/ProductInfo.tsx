@@ -35,7 +35,6 @@ export interface ProductInfoProps {
   liked?: boolean;
 
   isSeller?: boolean;
-  onShareClick?: () => void;
   onDeleteClick?: () => void;
 
   onAfterBid?: (next: { currentPrice?: number }) => void;
@@ -59,7 +58,6 @@ const ProductInfo = ({
   wishCount,
   liked = false,
   isSeller = false,
-  onShareClick,
   onDeleteClick,
   onAfterBid,
 }: ProductInfoProps) => {
@@ -86,6 +84,29 @@ const ProductInfo = ({
     document.addEventListener("mousedown", onDocMouseDown);
     return () => document.removeEventListener("mousedown", onDocMouseDown);
   }, [isMenuOpen]);
+
+  // 공유
+  const handleShare = async () => {
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: title,
+          url: window.location.href,
+        });
+        showToast("링크를 공유합니다.", "success");
+      } else {
+        // Web Share API 미지원 시 링크 복사
+        await navigator.clipboard.writeText(window.location.href);
+        showToast("링크가 복사되었습니다.", "success");
+      }
+    } catch (err: any) {
+      if (err.name !== "AbortError") {
+        showToast("공유에 실패했습니다.", "error");
+      }
+    } finally {
+      setIsMenuOpen(false);
+    }
+  };
 
   // 삭제
   const handleDeleteAuction = useCallback(async () => {
@@ -240,10 +261,7 @@ const ProductInfo = ({
                     className="border-g400 absolute top-full right-0 z-10 mt-2 w-18 rounded-md border bg-white shadow-lg"
                   >
                     <button
-                      onClick={() => {
-                        onShareClick?.();
-                        setIsMenuOpen(false);
-                      }}
+                      onClick={handleShare}
                       className="text-g100 hover:bg-g500 w-full px-3.5 py-2.5 text-center text-base transition-colors md:py-2.5"
                       role="menuitem"
                     >
