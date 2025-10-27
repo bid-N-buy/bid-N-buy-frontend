@@ -422,3 +422,9 @@
 .react-datepicker__navigation:hover .react-datepicker__navigation-icon::before {
   border-color: var(--color-purple);
 }
+
+/* 관리자 테이블 */
+table th,
+td {
+  padding: 0.5rem;
+}

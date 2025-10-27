@@ -34,7 +34,7 @@ export interface AdminState {
 
 export const useAdminAuthStore = create<AdminState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       accessToken: null,
       refreshToken: null,
       // profile: null,

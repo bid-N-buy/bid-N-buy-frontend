@@ -217,11 +217,11 @@ export default function App() {
             <Route element={<AdminLayout />}>
               <Route index element={<AdminDashboard />} />
               <Route path="inquiries" element={<AdminInquiryList />} />
-              <Route path="inquiries/board/:i" element={<AdminInquiryPost />} />
+              <Route path="inquiries/:id" element={<AdminInquiryPost />} />
               <Route path="users" element={<AdminUserList />} />
-              <Route path="users/board/:i" element={<AdminUserPost />} />
+              <Route path="users/:id" element={<AdminUserPost />} />
               <Route path="auctions" element={<AdminAuctionList />} />
-              <Route path="auctions/board/:i" element={<AdminAuctionPost />} />
+              <Route path="auctions/:id" element={<AdminAuctionPost />} />
             </Route>
           </Route>
         </Route>
