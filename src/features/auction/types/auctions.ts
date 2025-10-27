@@ -42,7 +42,7 @@ export interface AuctionDetail {
   sellerId: number;
   sellerNickname: string;
   sellerProfileImageUrl: string | null;
-  sellerTemperature: number;
+  sellerTemperature: number | null;
   sellingStatus: string;
   wishCount: number;
   liked?: boolean; // 추가 예정이라 optional

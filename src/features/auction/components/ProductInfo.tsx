@@ -310,11 +310,14 @@ const ProductInfo = ({
                     {sellerNickname}
                   </span>
                 )}
-                {typeof sellerTemperature === "number" && (
+                {/* {typeof sellerTemperature === "number" && (
                   <span className="text-g300 text-h8 sm:text-h7 lg:text-h6 whitespace-nowrap md:text-base">
                     {sellerTemperature}°C
                   </span>
-                )}
+                )} */}
+                <span className="text-g300 text-h8 sm:text-h7 lg:text-h6 whitespace-nowrap md:text-base">
+                  {sellerTemperature ?? 0}°C
+                </span>
               </div>
             </div>
           )}
