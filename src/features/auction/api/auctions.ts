@@ -85,6 +85,7 @@ export type FetchAuctionsParams = {
   sortBy?: SortBy;
   page?: number;
   size?: number;
+  email?: string;
 };
 
 export const fetchAuctions = async (

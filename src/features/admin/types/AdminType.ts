@@ -22,11 +22,12 @@ export interface AdminAlarmPostProps {
   content: string;
 }
 
-export interface AdminManageAuction {
-  // 실제 경매 상품 목록 배열
-  data: AuctionItem[];
+export interface AdminPagination<T> extends PageProps {
+  // 모든 목록 데이터는 'data' 필드에 담겨 있습니다.
+  data: T[];
+}
 
-  // 페이징 정보
+export interface PageProps {
   totalPages: number;
   totalElements: number;
   currentPage: number;
@@ -45,35 +46,7 @@ export interface AdminManageUser {
   suspendedUntil: string | null; // 정지 기간이 없을 수 있으므로 null 허용
   suspended: boolean;
 }
-
-interface Sort {
-  empty: boolean;
-  sorted: boolean;
-  unsorted: boolean;
-}
-
-interface PageableInfo {
-  pageNumber: number;
-  pageSize: number;
-  sort: Sort;
-  offset: number;
-  paged: boolean;
-  unpaged: boolean;
-}
-
-export interface ManageUserProps {
-  content: AdminManageUser[]; // 실제 사용자 객체 목록 배열
-  pageable: PageableInfo; // 페이지 처리 정보
-  totalPages: number;
-  totalElements: number;
-  last: boolean;
-  size: number;
-  number: number;
-  sort: Sort; // 최상위의 Sort 정보 (pageable.sort와 중복되지만 API가 제공)
-  numberOfElements: number;
-  first: boolean;
-  empty: boolean;
-}
+export type ManageUserProps = AdminPagination<AdminManageUser>;
 
 export interface AdminManageInquiry {
   inquiriesId: number;
@@ -85,3 +58,5 @@ export interface AdminManageInquiry {
   userEmail: string;
   userNickname: string;
 }
+
+export type ManageInquiryProps = AdminPagination<AdminManageInquiry>;

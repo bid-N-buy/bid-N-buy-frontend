@@ -127,7 +127,9 @@ function AdminLayout() {
     <div className="min-h-screen bg-white">
       <main className="relative flex">
         <AdminAsideMenu />
-        <Outlet />
+        <article className="w-full p-10">
+          <Outlet />
+        </article>
       </main>
       <Suspense fallback={null}>
         <Footer />

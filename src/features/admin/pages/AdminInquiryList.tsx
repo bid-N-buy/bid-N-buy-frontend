@@ -1,35 +1,41 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import adminApi from "../api/adminAxiosInstance";
-import type { AdminManageInquiry } from "../types/AdminType";
+import type {
+  AdminManageInquiry,
+  ManageInquiryProps,
+} from "../types/AdminType";
 import { formatDate } from "../../../shared/utils/datetime";
 
 const AdmininquiryList = () => {
-  const [inquiryList, setinquiryList] = useState<AdminManageInquiry[]>([]);
-  const getinquiryList = async () => {
+  const [inquiryList, setInquiryList] = useState<AdminManageInquiry[]>([]);
+  const [pages, setPages] = useState<ManageInquiryProps>();
+  const getInquiryList = async (page: number) => {
     try {
-      const inquiries = (await adminApi.get("/admin/inquiries")).data.content;
-      console.log(inquiries);
-      setinquiryList(inquiries);
+      const inquiries = (await adminApi.get(`/admin/inquiries?page=${page}`))
+        .data;
+      const pageInfo: ManageInquiryProps = inquiries;
+      setInquiryList(inquiries.data);
+      setPages(pageInfo);
     } catch (error) {
-      setinquiryList([]);
+      setInquiryList([]);
       console.error("데이터 불러오기 실패:", error);
     }
   };
 
   useEffect(() => {
-    getinquiryList();
+    getInquiryList(0);
   }, []);
 
   return (
-    <div className="w-full p-10">
-      <h2 className="mb-4 font-bold">회원 관리</h2>
+    <div>
+      <h2 className="mb-4 font-bold">문의/신고 현황</h2>
       <div></div>
-      <table className="w-full text-center">
+      <table className="mb-10 w-full text-center">
         <colgroup>
           <col width={"5%"} />
-          <col width={"45%"} />
           <col width={"15%"} />
+          <col width={"45%"} />
           <col width={"15%"} />
           <col width={"10%"} />
           <col width={"10%"} />
@@ -38,7 +44,7 @@ const AdmininquiryList = () => {
           <tr>
             <th>No.</th>
             <th>문의 유형</th>
-            <th>아이디(이메일)</th>
+            <th>제목</th>
             <th>닉네임</th>
             <th>작성일시</th>
             <th>답변상태</th>
@@ -61,6 +67,14 @@ const AdmininquiryList = () => {
           ))}
         </tbody>
       </table>
+      {pages && (
+        <div className="mt-10 text-center">
+          <span className="text-purple font-bold">
+            {pages?.currentPage + 1}
+          </span>{" "}
+          /{pages?.totalPages}
+        </div>
+      )}
     </div>
   );
 };
