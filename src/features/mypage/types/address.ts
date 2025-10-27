@@ -1,6 +1,6 @@
 /** 서버 스펙 기반 Address 타입 */
 export type Address = {
-  addressId: number; // id → addressId
+  addressId?: number; // id → addressId
   name: string; // receiver → name
   phoneNumber: string; // phone → phoneNumber
   zonecode: string; // postcode → zonecode
@@ -15,3 +15,4 @@ export type AddressDraft = Omit<
   Address,
   "addressId" | "createdAt" | "updatedAt"
 >;
+a;

@@ -1,5 +1,5 @@
 // src/features/mypage/hooks/useProfile.ts
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import api from "../../../shared/api/axiosInstance";
 import { useAuthStore } from "../../auth/store/authStore";
 
@@ -24,28 +24,36 @@ type Options = {
 export function useProfile(userId?: number | string, opts: Options = {}) {
   const { enabled = true, endpoint } = opts;
 
-  // ✅ 하이드레이션/토큰 준비 확인
+  // Zustand persist 여부와 상관없이 안전 가드
   const accessToken = useAuthStore((s) => s.accessToken);
-  const hasHydrated = (useAuthStore as any).persist?.hasHydrated?.() ?? true;
+  const hasHydratedSafe =
+    (useAuthStore as any).persist?.hasHydrated?.() ?? true;
 
-  // ✅ 요청 URL 결정을 함수로 뽑기
-  const resolveUrl = (): string => {
+  /**
+   * 실제로 호출할 URL 계산
+   *
+   * 우선순위:
+   * 1) endpoint가 문자열이면 그대로 사용
+   * 2) endpoint가 함수면 userId를 넣어서 사용 (userId 없으면 "/mypage")
+   * 3) 둘 다 없으면 userId ? `/auth/${userId}` : "/mypage"
+   */
+  const url = useMemo(() => {
     if (typeof endpoint === "string") return endpoint;
-    if (typeof endpoint === "function") return endpoint(userId!);
-    // endpoint 미지정 시 기본값:
-    // - userId 없으면 현재 로그인 사용자용 "/mypage"
-    // - userId 있으면 백업 경로로 "/auth/{userId}"
+    if (typeof endpoint === "function") {
+      if (userId === undefined || userId === null) return "/mypage";
+      return endpoint(userId);
+    }
     return userId ? `/auth/${userId}` : `/mypage`;
-  };
+  }, [endpoint, userId]);
 
-  // ✅ 실제로 요청 보낼지 결정 (userId 없어도 /mypage는 가능해야 함)
-  const shouldFetch = enabled && hasHydrated;
+  // 실제로 요청할지 여부
+  const shouldFetch = enabled && hasHydratedSafe;
 
   const [data, setData] = useState<ProfileDto | null>(null);
   const [loading, setLoading] = useState<boolean>(shouldFetch);
   const [error, setError] = useState<unknown>(null);
 
-  // refetch 트리거
+  // refetch용 tick
   const [tick, setTick] = useState(0);
   const refetch = useCallback(() => setTick((t) => t + 1), []);
 
@@ -63,12 +71,10 @@ export function useProfile(userId?: number | string, opts: Options = {}) {
         setLoading(true);
         setError(null);
 
-        const url = resolveUrl();
-
+        // axiosInstance 사용. 인터셉터가 자동으로 토큰 붙이겠지만
+        // 혹시 인터셉터보다 먼저 실행될 타이밍 대비해서 headers에 한 번 더 넣어줌.
         const res = await api.get(url, {
           signal: ctrl.signal,
-          // 4xx는 catch로 던지되, 401/403은 인터셉터 충돌 없이 표시만
-          validateStatus: (s) => s >= 200 && s < 500,
           headers: accessToken
             ? { Authorization: `Bearer ${accessToken}` }
             : {},
@@ -76,29 +82,61 @@ export function useProfile(userId?: number | string, opts: Options = {}) {
 
         if (!alive) return;
 
-        if (res.status === 401 || res.status === 403) {
-          setError({ status: res.status, message: "세션 만료 또는 권한 없음" });
-          setData(null);
-          return;
-        }
+        const raw = res.data ?? {};
 
-        const d = res.data ?? {};
-        // 🔁 키 매핑: /mypage 명세 우선 + 백업 키들 허용
+        console.log("[useProfile] response from", url, raw);
+
+        // -------------------------------
+        // 🔥 온도 매핑 로직 (여기가 핵심 변경점)
+        // -------------------------------
+        // 서버가 temperature 또는 user_temperature 같은 값을 안 내려주거나
+        // null을 내려주는 경우가 있어서 fallbackTemp를 넣어서 보여줄 거야.
+        // 이 fallbackTemp는 '일단 화면에 보여줄 기본 신뢰도' 같은 느낌.
+        const fallbackTemp = 72.5; // <- 원하는 기본값으로 조정 가능
+
+        // 서버에서 올 법한 키들 전부 훑어서 후보로 사용
+        const tempCandidate =
+          raw.temperature ??
+          raw.user_temperature ??
+          raw.userTemperature ??
+          raw.userTemperatureScore ??
+          raw.userTemp ??
+          fallbackTemp;
+
+        // 숫자 변환 + 클램프(0~100)
+        let tempNum = Number(tempCandidate);
+        if (!Number.isFinite(tempNum)) tempNum = fallbackTemp;
+        if (tempNum < 0) tempNum = 0;
+        if (tempNum > 100) tempNum = 100;
+
         const mapped: ProfileDto = {
-          nickname: d.nickname ?? "NickName",
-          email: d.email ?? "",
+          nickname: raw.nickname ?? "NickName",
+          email: raw.email ?? raw.userEmail ?? "",
           avatarUrl:
-            d.profileImageUrl ?? d.imageUrl ?? d.profile_image_url ?? "",
-          temperature:
-            typeof d.temperature === "number" && Number.isFinite(d.temperature)
-              ? d.temperature
-              : 0, // null/NaN 방어: 0으로 보정
+            raw.avatarUrl ??
+            raw.profileImageUrl ??
+            raw.profile_image_url ??
+            raw.imageUrl ??
+            "",
+          temperature: tempNum,
         };
+
+        console.log("[useProfile] mapped profile", mapped);
 
         setData(mapped);
       } catch (e: any) {
         if (!alive || e?.name === "CanceledError") return;
-        setError(e);
+
+        // axiosInstance가 401에서 리프레시를 이미 시도할 수 있으므로
+        // 여기선 그냥 에러 저장만.
+        setError(
+          e?.response?.status
+            ? {
+                status: e.response.status,
+                message: e.response?.data?.message ?? "요청 실패",
+              }
+            : e
+        );
         setData(null);
       } finally {
         if (alive) setLoading(false);
@@ -109,8 +147,7 @@ export function useProfile(userId?: number | string, opts: Options = {}) {
       alive = false;
       ctrl.abort();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, enabled, hasHydrated, accessToken, tick, endpoint]);
+  }, [shouldFetch, url, accessToken, tick]);
 
   return { data, loading, error, refetch };
 }

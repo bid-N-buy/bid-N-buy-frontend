@@ -3,6 +3,7 @@ import React, { useMemo, useState } from "react";
 import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthStore, type AuthState } from "../../../auth/store/authStore";
+import Toast from "../../../../shared/components/Toast";
 
 type Mode = "inquiry" | "report";
 
@@ -18,15 +19,10 @@ type InquiryResp = {
   message: string;
 };
 
-type ReportResp = {
-  success: boolean;
-  message: string;
-  data?: unknown;
-};
+type ReportResp = { success: boolean; message: string; data?: unknown };
 
 const BASE = import.meta.env.VITE_BACKEND_ADDRESS ?? "http://localhost:8080";
 
-/** ✅ App 라우팅에 맞춘 절대 경로 */
 const modeToPath = (m: Mode) =>
   m === "inquiry"
     ? "/mypage/support/inquiries/new"
@@ -35,17 +31,6 @@ const modeToPath = (m: Mode) =>
 const pathToMode = (p: string): Mode =>
   p.includes("/reports") ? "report" : "inquiry";
 
-/** ✅ 폼 상태: 주문번호 제거, 공통으로 title/content 사용 */
-type FormState = {
-  title: string;
-  content: string;
-};
-
-const initialState: FormState = {
-  title: "",
-  content: "",
-};
-
 const InquiryReportForm: React.FC = () => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -53,16 +38,25 @@ const InquiryReportForm: React.FC = () => {
 
   const mode: Mode = useMemo(() => pathToMode(pathname), [pathname]);
 
-  const [form, setForm] = useState<FormState>(initialState);
+  const [form, setForm] = useState({ title: "", content: "" });
   const [loading, setLoading] = useState(false);
+
+  // toast state
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
+  const toast = (ok: string | null, error: string | null, ms = 2200) => {
+    setMsg(ok);
+    setErr(error);
+    window.setTimeout(() => {
+      setMsg(null);
+      setErr(null);
+    }, ms);
+  };
+
   const switchTab = (next: Mode) => {
     if (next === mode) return;
-    setForm(initialState);
-    setMsg(null);
-    setErr(null);
+    setForm({ title: "", content: "" });
     navigate(modeToPath(next), { replace: false });
   };
 
@@ -82,14 +76,8 @@ const InquiryReportForm: React.FC = () => {
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setMsg(null);
-    setErr(null);
-
     const v = validate();
-    if (v) {
-      setErr(v);
-      return;
-    }
+    if (v) return toast(null, v);
 
     setLoading(true);
     try {
@@ -97,149 +85,192 @@ const InquiryReportForm: React.FC = () => {
         Authorization: `Bearer ${accessToken}`,
         "Content-Type": "application/json",
       };
+      const payload = {
+        title: form.title.trim(),
+        content: form.content.trim(),
+      };
 
       if (mode === "inquiry") {
-        const payload = {
-          title: form.title.trim(),
-          content: form.content.trim(),
-        };
         const { data } = await axios.post<InquiryResp>(
           `${BASE}/inquiries`,
           payload,
           { headers }
         );
-        setMsg(data?.message ?? "문의가 등록되었습니다.");
-        // 필요 시 상세 페이지로 이동:
-        // navigate(`/mypage/support/inquiries/${data.data?.inquiriesId}`);
+        toast(data?.message ?? "문의가 등록되었습니다.", null);
       } else {
-        // ✅ 신고도 제목과 내용만 전송
-        const payload = {
-          title: form.title.trim(),
-          content: form.content.trim(),
-        };
         const { data } = await axios.post<ReportResp>(
           `${BASE}/reports`,
           payload,
           { headers }
         );
-        setMsg(data?.message ?? "신고가 접수되었습니다.");
-        // 필요 시 목록으로 이동:
-        // navigate("/mypage/support");
+        toast(data?.message ?? "신고가 접수되었습니다.", null);
       }
 
-      setForm(initialState);
+      setForm({ title: "", content: "" });
     } catch (e: any) {
       const m =
         e?.response?.data?.message ||
         e?.response?.data?.error ||
         e?.message ||
         "요청 처리 중 오류가 발생했습니다.";
-      setErr(m);
+      toast(null, m, 2800);
     } finally {
       setLoading(false);
     }
   };
 
+  const isInquiry = mode === "inquiry";
+
   return (
-    <div className="mx-auto w-[788px] max-w-4xl p-4">
-      <div className="mb-6">
-        <h2 className="mb-4 font-bold">1:1 문의 / 신고</h2>
+    <>
+      {/* 토스트 */}
+      {msg && (
+        <Toast
+          message={msg}
+          type="success"
+          onClose={() => setMsg(null)}
+          duration={2200}
+        />
+      )}
+      {err && (
+        <Toast
+          message={err}
+          type="error"
+          onClose={() => setErr(null)}
+          duration={2800}
+        />
+      )}
 
-        <div className="border-g400 flex gap-2 border-b">
-          <button
-            type="button"
-            onClick={() => switchTab("inquiry")}
-            className={[
-              "px-4 py-2 text-sm font-medium transition-colors",
-              mode === "inquiry"
-                ? "border-purple text-purple border-b-2"
-                : "text-g200 hover:text-g100",
-            ].join(" ")}
-          >
-            문의 작성
-          </button>
-          <button
-            type="button"
-            onClick={() => switchTab("report")}
-            className={[
-              "px-4 py-2 text-sm font-medium transition-colors",
-              mode === "report"
-                ? "border-purple text-purple border-b-2"
-                : "text-g200 hover:text-g100",
-            ].join(" ")}
-          >
-            신고 접수
-          </button>
+      <div className="mx-auto w-[788px] max-w-4xl p-4">
+        {/* 헤더 / 탭 */}
+        <div className="mb-6">
+          <h2 className="mb-4 text-xl font-bold text-neutral-900">
+            1:1 문의 / 신고
+          </h2>
+
+          <div className="flex gap-2 border-b border-neutral-300">
+            <button
+              type="button"
+              onClick={() => switchTab("inquiry")}
+              className={[
+                "px-4 py-2 text-sm font-medium transition-colors",
+                isInquiry
+                  ? "border-b-2 border-purple-600 text-purple-600"
+                  : "text-neutral-400 hover:text-neutral-700",
+              ].join(" ")}
+            >
+              문의 작성
+            </button>
+            <button
+              type="button"
+              onClick={() => switchTab("report")}
+              className={[
+                "px-4 py-2 text-sm font-medium transition-colors",
+                !isInquiry
+                  ? "border-b-2 border-purple-600 text-purple-600"
+                  : "text-neutral-400 hover:text-neutral-700",
+              ].join(" ")}
+            >
+              신고 접수
+            </button>
+          </div>
         </div>
-      </div>
 
-      <form onSubmit={onSubmit} className="space-y-4">
-        <label className="block">
-          <span className="text-g200 mb-1 block text-sm">제목</span>
-          <div className="field">
+        {/* 폼 카드 */}
+        <form
+          onSubmit={onSubmit}
+          className="rounded-lg border border-neutral-200 bg-white p-5 shadow-sm"
+        >
+          {/* 안내 영역 */}
+          <div className="mb-5 rounded-md bg-neutral-50 p-4 text-[13px] leading-5 text-neutral-600">
+            {isInquiry ? (
+              <>
+                <div className="font-semibold text-neutral-800">
+                  문의 내용 안내
+                </div>
+                <div className="mt-1">
+                  서비스 이용 중 궁금하신 점을 자세히 적어주시면 빠르게
+                  도와드릴게요.
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="font-semibold text-neutral-800">
+                  신고 접수 안내
+                </div>
+                <div className="mt-1">
+                  사기 의심 / 부적절한 이용 사례 등 신고 사유를 구체적으로
+                  작성해 주세요.
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* 제목 */}
+          <label className="mb-4 block">
+            <span className="mb-1 block text-sm font-medium text-neutral-800">
+              제목<span className="text-purple-600">*</span>
+            </span>
             <input
               name="title"
               value={form.title}
               onChange={onChange}
               placeholder="제목을 입력하세요"
-              className="field-input"
               maxLength={100}
+              className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-[14px] text-neutral-900 placeholder:text-neutral-400 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 focus:outline-none"
+              disabled={loading}
             />
-          </div>
-        </label>
+            <div className="mt-1 text-right text-[12px] text-neutral-400">
+              {form.title.length}/100
+            </div>
+          </label>
 
-        <label className="block">
-          <span className="text-g200 mb-1 block text-sm">내용</span>
-          <div className="field">
+          {/* 내용 */}
+          <label className="mb-6 block">
+            <span className="mb-1 block text-sm font-medium text-neutral-800">
+              {isInquiry ? "문의 내용" : "신고 내용"}
+              <span className="text-purple-600">*</span>
+            </span>
             <textarea
               name="content"
               value={form.content}
               onChange={onChange}
               placeholder={
-                mode === "inquiry"
+                isInquiry
                   ? "문의하실 내용을 입력하세요."
                   : "신고 사유 및 상세 내용을 입력하세요."
               }
               rows={8}
-              className="field-input resize-y"
+              className="w-full resize-y rounded-md border border-neutral-300 bg-white px-3 py-2 text-[14px] leading-6 text-neutral-900 placeholder:text-neutral-400 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 focus:outline-none"
+              disabled={loading}
             />
-          </div>
-        </label>
+            <div className="mt-1 text-right text-[12px] text-neutral-400">
+              최소 10자 이상 입력해 주세요.
+            </div>
+          </label>
 
-        {err && (
-          <div className="bg-red/10 text-red rounded-md px-3 py-2 text-sm">
-            {err}
-          </div>
-        )}
-        {msg && (
-          <div className="bg-green/10 text-green rounded-md px-3 py-2 text-sm">
-            {msg}
-          </div>
-        )}
+          {/* 버튼 영역 */}
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              type="button"
+              onClick={() => setForm({ title: "", content: "" })}
+              className="rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-50 disabled:opacity-60"
+              disabled={loading}
+            >
+              초기화
+            </button>
 
-        <div className="flex justify-end gap-2 pt-2">
-          <button
-            type="button"
-            onClick={() => setForm(initialState)}
-            className="border-g400 text-g200 hover:bg-g500/50 rounded-md border px-4 py-2"
-            disabled={loading}
-          >
-            초기화
-          </button>
-          <button
-            type="submit"
-            disabled={loading}
-            className="bg-purple hover:bg-deep-purple rounded-md px-4 py-2 font-medium text-white transition-colors disabled:opacity-60"
-          >
-            {loading
-              ? "전송 중..."
-              : mode === "inquiry"
-                ? "문의 등록"
-                : "신고 접수"}
-          </button>
-        </div>
-      </form>
-    </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="rounded-md bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 focus:ring-2 focus:ring-purple-300 focus:outline-none disabled:opacity-60"
+            >
+              {loading ? "전송 중..." : isInquiry ? "문의 등록" : "신고 접수"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </>
   );
 };
 
