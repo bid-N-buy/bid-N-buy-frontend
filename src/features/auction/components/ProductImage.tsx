@@ -102,12 +102,20 @@ const ProductImage = ({
     return (
       <div
         aria-label="상품 이미지"
-        className="aspect-[645/500] w-full overflow-hidden rounded-3xl"
+        className="relative aspect-[645/500] w-full overflow-hidden rounded-3xl"
       >
+        {/* 배경 */}
+        <img
+          src={imageList[0]}
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover opacity-30 blur-3xl brightness-110"
+          aria-hidden="true"
+        />
+        {/* 이미지 */}
         <img
           src={imageList[0]}
           alt="상품 이미지"
-          className="h-full w-full object-cover"
+          className="relative h-full w-full object-contain"
         />
       </div>
     );
@@ -133,13 +141,22 @@ const ProductImage = ({
         {imageList.map((src, i) => (
           <div
             key={i}
-            className="h-full w-full shrink-0"
+            className="relative h-full w-full shrink-0"
             aria-current={i === index ? "true" : "false"}
           >
+            {/* 배경 */}
+            <img
+              src={src}
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover opacity-30 blur-3xl brightness-110"
+              draggable={false}
+              aria-hidden="true"
+            />
+            {/* 이미지 */}
             <img
               src={src}
               alt={`상품 이미지 ${i + 1}`}
-              className="h-full w-full object-cover"
+              className="relative h-full w-full object-contain"
               draggable={false}
             />
           </div>
