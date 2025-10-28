@@ -1,6 +1,6 @@
 import React from "react";
 import type { NotiModalProps } from "../types/NotiType";
-import { formatTime } from "../../../shared/hooks/useCommon";
+import { formatTime } from "../../../shared/utils/datetime";
 import { Bell, Megaphone, TriangleAlert } from "lucide-react";
 
 const notiList = ({ notis }: NotiModalProps) => {
