@@ -1,7 +1,7 @@
 import React from "react";
 import type { ChatListProps } from "../types/ChatType";
 import Avatar from "../../../shared/components/Avatar";
-import { formatTime } from "../../../shared/hooks/useCommon";
+import { formatTime } from "../../../shared/utils/datetime";
 
 const ChatList = ({ chatList, onSelectRoom }: ChatListProps) => {
   return (

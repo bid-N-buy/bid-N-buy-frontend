@@ -116,14 +116,6 @@ const AdminLoginForm = () => {
           );
         }
 
-        // const parsedProfile = {
-        //   nickname: (data as any).nickname ?? undefined,
-        //   email: (data as any).email ?? undefined,
-        // };
-        // const hasAnyProfile =
-        //   typeof parsedProfile.nickname !== "undefined" ||
-        //   typeof parsedProfile.email !== "undefined";
-
         const adminId = resolveAdminIdFrom(access);
 
         setTokens(

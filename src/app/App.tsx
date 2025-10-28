@@ -25,7 +25,7 @@ import FcmInitializer from "../features/notification/components/FcmInitializer";
 import FcmListener from "../features/notification/hooks/FcmListener";
 import AdminAuctionPost from "../features/admin/pages/AdminAuctionPost";
 import AdminInquiryPost from "../features/admin/pages/AdminInquiryPost";
-import AdminUserPost from "../features/admin/pages/AdminUserPost";
+import AdminUserDetail from "../features/admin/pages/AdminUserDetail";
 
 // 공통
 const Header = React.lazy(() => import("../shared/components/Header"));
@@ -125,15 +125,13 @@ function AppLayout() {
 function AdminLayout() {
   return (
     <div className="min-h-screen bg-white">
+      <FcmInitializer />
       <main className="relative flex">
         <AdminAsideMenu />
-        <article className="w-full p-10">
+        <section className="w-full p-10">
           <Outlet />
-        </article>
+        </section>
       </main>
-      <Suspense fallback={null}>
-        <Footer />
-      </Suspense>
     </div>
   );
 }
@@ -221,7 +219,7 @@ export default function App() {
               <Route path="inquiries" element={<AdminInquiryList />} />
               <Route path="inquiries/:id" element={<AdminInquiryPost />} />
               <Route path="users" element={<AdminUserList />} />
-              <Route path="users/:id" element={<AdminUserPost />} />
+              <Route path="users/:id" element={<AdminUserDetail />} />
               <Route path="auctions" element={<AdminAuctionList />} />
               <Route path="auctions/:id" element={<AdminAuctionPost />} />
             </Route>

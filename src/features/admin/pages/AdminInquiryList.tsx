@@ -6,6 +6,7 @@ import type {
   ManageInquiryProps,
 } from "../types/AdminType";
 import { formatDate } from "../../../shared/utils/datetime";
+import { StatusBadge } from "../../mypage/components/support/DetailCard";
 
 const AdmininquiryList = () => {
   const [inquiryList, setInquiryList] = useState<AdminManageInquiry[]>([]);
@@ -34,16 +35,16 @@ const AdmininquiryList = () => {
       <table className="mb-10 w-full text-center">
         <colgroup>
           <col width={"5%"} />
-          <col width={"15%"} />
+          <col width={"10%"} />
           <col width={"45%"} />
           <col width={"15%"} />
-          <col width={"10%"} />
+          <col width={"15%"} />
           <col width={"10%"} />
         </colgroup>
         <thead className="border-deep-purple text-deep-purple bg-light-purple border-b">
           <tr>
             <th>No.</th>
-            <th>문의 유형</th>
+            <th>유형</th>
             <th>제목</th>
             <th>닉네임</th>
             <th>작성일시</th>
@@ -54,7 +55,7 @@ const AdmininquiryList = () => {
           {inquiryList.map((item, i) => (
             <tr key={item.inquiriesId} className="border-b border-gray-300">
               <td>{i + 1}</td>
-              <td>{item.type}</td>
+              <td>{item.type === "REPORT" ? "신고" : "문의"}</td>
               <td className="text-left">
                 <Link to={`/admin/inquiries/${item.inquiriesId}`}>
                   {item.title}
@@ -62,17 +63,17 @@ const AdmininquiryList = () => {
               </td>
               <td>{item.userNickname}</td>
               <td>{formatDate(item.createdAt)}</td>
-              <td>{item.status}</td>
+              <td>
+                <StatusBadge status={item.status} />
+              </td>
             </tr>
           ))}
         </tbody>
       </table>
       {pages && (
         <div className="mt-10 text-center">
-          <span className="text-purple font-bold">
-            {pages?.currentPage + 1}
-          </span>{" "}
-          /{pages?.totalPages}
+          <span className="text-purple font-bold">{pages.currentPage + 1}</span>
+          <span> / {pages.totalPages}</span>
         </div>
       )}
     </div>
