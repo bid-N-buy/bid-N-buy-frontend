@@ -1,3 +1,5 @@
+import type { AuctionItem } from "../../auction/types/auctions";
+
 export interface AdminProps {
   adminId: number;
   email: string;
@@ -14,6 +16,17 @@ export interface AdminLoginResponse {
   grantType: "Bearer";
   accessTokenExpiresIn: number;
 }
+
+/* 리스트용 */
+export type AdminUserListProps = {
+  userList: AdminManageUser[];
+};
+export type AdminInquiryListProps = {
+  inquiryList: AdminManageInquiry[];
+};
+export type AdminAuctionListProps = {
+  auctions: AuctionItem[];
+};
 
 export interface AdminAlarmPostProps {
   alarmType: string;

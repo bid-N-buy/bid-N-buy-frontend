@@ -111,12 +111,9 @@ const AdminUserDetail = () => {
 
       <h6 className="mt-4 font-bold">징계 내역</h6>
       <div className="mt-2 gap-4 rounded-md border border-neutral-200 bg-white p-5">
-        {/* 배열이 비어있는 경우를 대비하여 조건부 렌더링 */}
         {user.penaltyHistory && user.penaltyHistory.length > 0 ? (
-          // 배열의 각 항목을 맵핑하여 <tr>, <div> 등 유효한 JSX 요소를 반환
           <ul>
             {user.penaltyHistory.map((penalty) => (
-              // 💡 [필수] 배열을 맵핑할 때는 반드시 key prop을 추가해야 합니다.
               <li key={penalty.penaltyId}>
                 <p>
                   <strong>유형:</strong> {penalty.type} ({penalty.points}점)
@@ -151,7 +148,6 @@ const AdminUserDetail = () => {
       </div>
       <h6 className="mt-4 font-bold">거래 관련 정보</h6>
       <div className="mt-2 gap-4 rounded-md border border-neutral-200 bg-white p-5">
-        {/* 배열이 비어있는 경우를 대비하여 조건부 렌더링 */}
         {user.auctionCount > 0 ? (
           <ul>
             <li>

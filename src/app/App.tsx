@@ -79,14 +79,14 @@ const AdminSignUpPage = React.lazy(
 const AdminDashboard = React.lazy(
   () => import("../features/admin/pages/AdminDashboard")
 );
-const AdminInquiryList = React.lazy(
-  () => import("../features/admin/pages/AdminInquiryList")
+const AdminInquiryBoard = React.lazy(
+  () => import("../features/admin/pages/AdminInquiryBoard")
 );
-const AdminUserList = React.lazy(
-  () => import("../features/admin/pages/AdminUserList")
+const AdminUserBoard = React.lazy(
+  () => import("../features/admin/pages/AdminUserBoard")
 );
-const AdminAuctionList = React.lazy(
-  () => import("../features/admin/pages/AdminAuctionList")
+const AdminAuctionBoard = React.lazy(
+  () => import("../features/admin/pages/AdminAuctionBoard")
 );
 
 // 관리자 가드(임의) - 에러로 약간 수정
@@ -216,11 +216,11 @@ export default function App() {
           <Route element={<AdminProtectedRoute />}>
             <Route element={<AdminLayout />}>
               <Route index element={<AdminDashboard />} />
-              <Route path="inquiries" element={<AdminInquiryList />} />
+              <Route path="inquiries" element={<AdminInquiryBoard />} />
               <Route path="inquiries/:id" element={<AdminInquiryPost />} />
-              <Route path="users" element={<AdminUserList />} />
+              <Route path="users" element={<AdminUserBoard />} />
               <Route path="users/:id" element={<AdminUserDetail />} />
-              <Route path="auctions" element={<AdminAuctionList />} />
+              <Route path="auctions" element={<AdminAuctionBoard />} />
               <Route path="auctions/:id" element={<AdminAuctionPost />} />
             </Route>
           </Route>
