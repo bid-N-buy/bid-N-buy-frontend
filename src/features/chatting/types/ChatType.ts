@@ -78,21 +78,21 @@ export type ChatMeProps = {
   auctionInfo: Pick<ChatListItemProps, "auctionImageUrl" | "auctionTitle">;
 };
 
-export type ChatYouProps = {
-  msgInfo: Pick<
-    ChatMessageProps,
-    "createdAt" | "message" | "read" | "messageType" | "imageUrl"
-  >;
-  counterpartInfo: Pick<
-    ChatListItemProps,
-    "counterpartNickname" | "counterpartProfileImageUrl"
-  >;
-  sellerId: number;
-  currentPrice: number;
-  auctionInfo: Pick<ChatListItemProps, "auctionImageUrl" | "auctionTitle">;
-};
+  export type ChatYouProps = {
+    msgInfo: Pick<
+      ChatMessageProps,
+      "createdAt" | "message" | "read" | "messageType" | "imageUrl"
+    >;
+    counterpartInfo: Pick<
+      ChatListItemProps,
+      "counterpartNickname" | "counterpartProfileImageUrl"
+    >;
+    sellerId: number;
+    currentPrice: number;
+    auctionInfo: Pick<ChatListItemProps, "auctionId" | "auctionImageUrl" | "auctionTitle">;
+  };
 
-export interface ChatInputProps {
+  export interface ChatInputProps {
   isConnected: boolean;
   inputMessage: string;
   setInputMessage: (message: string) => void;
