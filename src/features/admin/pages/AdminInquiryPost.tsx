@@ -3,17 +3,21 @@ import { useNavigate, useParams } from "react-router-dom";
 import adminApi from "../api/adminAxiosInstance";
 import { formatDate } from "../../../shared/utils/datetime";
 import { StatusBadge } from "../../mypage/components/support/DetailCard";
-import type { AdminInquiryAnswer, AdminInquiryPost } from "../types/AdminType";
+import type {
+  AdminInquiryAnswer,
+  AdminInquiryPostProps,
+} from "../types/AdminType";
+import Toast from "../../../shared/components/Toast";
 import useToast from "../../../shared/hooks/useToast";
 
 const AdminInquiryPost = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const [inquiry, setInquiry] = useState<AdminInquiryPost | null>(null);
+  const [inquiry, setInquiry] = useState<AdminInquiryPostProps | null>(null);
 
   const [form, setForm] = useState({ title: "", content: "" });
   const [loading, setLoading] = useState(false);
-  const { showToast } = useToast();
+  const { toast, showToast, hideToast } = useToast();
 
   const getInquiry = async () => {
     try {
@@ -73,9 +77,6 @@ const AdminInquiryPost = () => {
     if (!id) return;
     getInquiry();
   }, [id]);
-
-  // const hasAnswer = inquiry!.requestTitle || inquiry!.requestContent;
-  console.log(inquiry);
 
   if (!inquiry) {
     return null;
@@ -206,6 +207,10 @@ const AdminInquiryPost = () => {
             </button>
           </div>
         </form>
+      )}
+
+      {toast.isVisible && (
+        <Toast message={toast.message} type={toast.type} onClose={hideToast} />
       )}
     </div>
   );

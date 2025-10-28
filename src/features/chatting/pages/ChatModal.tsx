@@ -4,6 +4,7 @@ import { useShallow } from "zustand/shallow";
 import { useAuthStore } from "../../auth/store/authStore";
 import { useChatListApi } from "../api/useChatList";
 import { useChatRoomApi } from "../api/useChatRoom";
+import Toast from "../../../shared/components/Toast";
 import useToast from "../../../shared/hooks/useToast";
 import type { ModalProps } from "../../../shared/types/CommonType";
 import { useChatModalStore } from "../../../shared/store/ChatModalStore";
@@ -17,7 +18,7 @@ import { X, ChevronLeft, EllipsisVertical } from "lucide-react";
 const ChatModal = ({ onClose }: ModalProps) => {
   const modalRef = useRef<HTMLDivElement>(null);
   const token = useAuthStore((state) => state.accessToken);
-  const { showToast } = useToast();
+  const { toast, showToast, hideToast } = useToast();
 
   // 채팅목록/채팅방 화면 상태관리
   const { targetView, selectedChatroomId } = useChatModalStore(
@@ -115,108 +116,116 @@ const ChatModal = ({ onClose }: ModalProps) => {
   };
 
   return (
-    <div
-      className="border-g500 fixed inset-0 z-51 h-full w-full rounded-md border-1 bg-white text-wrap shadow-lg md:absolute md:inset-auto md:top-[72px] md:right-8 md:h-150 md:w-100"
-      ref={modalRef}
-    >
-      <div className="border-purple flex flex-shrink-0 items-center justify-between border-b p-4">
-        {/* 5. 현재 뷰에 따라 제목 및 돌아가기 버튼 표시 */}
-        {currentView === "list" ? (
-          <>
-            <p className="font-bold">채팅목록</p>
-            <button onClick={onClose} aria-label="채팅 모달 닫기">
-              <X />
-            </button>
-          </>
-        ) : (
-          <>
-            <button
-              onClick={handleGoToList}
-              className="font-bold text-purple-600"
-              aria-label="채팅목록으로 가기"
-            >
-              <ChevronLeft />
-            </button>
-            <p>
-              {selectedRoomInfo?.counterpartNickname ||
-                roomApi!.chatRoom?.chatroomInfo.counterpartNickname ||
-                "사용자"}
-            </p>
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              aria-label="더보기"
-            >
-              <EllipsisVertical className="text-g200 relative" />
-            </button>
-            {isMenuOpen && (
-              <div className="border-g400 absolute top-10 right-3 mt-2 w-32 rounded-md border bg-white shadow-lg">
-                <button
-                  onClick={() => {
-                    handleDeleteRoom(targetChatroomId!);
-                  }}
-                  className="text-red hover:bg-g500 w-full px-4 py-2.5 text-left text-base transition-colors md:py-3"
-                >
-                  채팅방 삭제
-                </button>
-              </div>
-            )}
-          </>
-        )}
-      </div>
-      {isAdOpen && (
-        <AddressModal
-          open={isAdOpen}
-          initial={editing}
-          onClose={() => {
-            setIsAdOpen(false);
-            setEditing(null);
-          }}
-          onSave={async (draft) => {
-            const payload: AddressDraft = {
-              zonecode: draft.zonecode.trim(),
-              address: draft.address.trim(),
-              detailAddress: (draft.detailAddress ?? "").trim(),
-            };
+    <>
+      <div
+        className="border-g500 fixed inset-0 z-51 h-full w-full rounded-md border-1 bg-white text-wrap shadow-lg md:absolute md:inset-auto md:top-[72px] md:right-8 md:h-150 md:w-100"
+        ref={modalRef}
+      >
+        <div className="border-purple flex flex-shrink-0 items-center justify-between border-b p-4">
+          {/* 5. 현재 뷰에 따라 제목 및 돌아가기 버튼 표시 */}
+          {currentView === "list" ? (
+            <>
+              <p className="font-bold">채팅목록</p>
+              <button onClick={onClose} aria-label="채팅 모달 닫기">
+                <X />
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={handleGoToList}
+                className="font-bold text-purple-600"
+                aria-label="채팅목록으로 가기"
+              >
+                <ChevronLeft />
+              </button>
+              <p>
+                {selectedRoomInfo?.counterpartNickname ||
+                  roomApi!.chatRoom?.chatroomInfo.counterpartNickname ||
+                  "사용자"}
+              </p>
+              <button
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                aria-label="더보기"
+              >
+                <EllipsisVertical className="text-g200 relative" />
+              </button>
+              {isMenuOpen && (
+                <div className="border-g400 absolute top-10 right-3 mt-2 w-32 rounded-md border bg-white shadow-lg">
+                  <button
+                    onClick={() => {
+                      handleDeleteRoom(targetChatroomId!);
+                    }}
+                    className="text-red hover:bg-g500 w-full px-4 py-2.5 text-left text-base transition-colors md:py-3"
+                  >
+                    채팅방 삭제
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+        {isAdOpen && (
+          <AddressModal
+            open={isAdOpen}
+            initial={editing}
+            onClose={() => {
+              setIsAdOpen(false);
+              setEditing(null);
+            }}
+            onSave={async (draft) => {
+              const payload: AddressDraft = {
+                zonecode: draft.zonecode.trim(),
+                address: draft.address.trim(),
+                detailAddress: (draft.detailAddress ?? "").trim(),
+              };
 
-            if ((draft as any).addressId) {
-              const id = (draft as any).addressId as number;
-              await (addrMock ? updateMock(id, payload) : update(id, payload));
-            } else {
-              await (addrMock ? addMock(payload) : add(payload));
-            }
-          }}
-        />
-      )}
-      <div className="h-[calc(100%-59px)] overflow-x-hidden overflow-y-auto">
-        {currentView === "list" && (
-          <ChatList
-            chatList={listApi.chatList}
-            onSelectRoom={handleSelectRoom}
+              if ((draft as any).addressId) {
+                const id = (draft as any).addressId as number;
+                await (addrMock
+                  ? updateMock(id, payload)
+                  : update(id, payload));
+              } else {
+                await (addrMock ? addMock(payload) : add(payload));
+              }
+            }}
           />
         )}
-        {listApi.isLoading && (
-          <p className="flex-column flex h-[100%] items-center justify-center p-4 text-center">
-            채팅 목록 로딩 중...
-          </p>
-        )}
-        {listApi.error && (
-          <p className="flex-column flex h-[100%] items-center justify-center p-4 text-red-500">
-            {listApi.error}
-          </p>
-        )}
-        {currentView === "room" && roomApi.isLoading && (
-          <p>채팅방 정보 로딩 중...</p>
-        )}
-        {currentView === "room" && !roomApi.isLoading && roomApi.chatRoom && (
-          <ChatRoom
-            chatroomId={targetChatroomId!}
-            sellerId={roomApi.chatRoom.sellerId}
-            chatroomInfo={selectedRoomInfo || roomApi.chatRoom.chatroomInfo}
-            productInfo={roomApi.chatRoom.productInfo}
-          />
-        )}
+        <div className="h-[calc(100%-59px)] overflow-x-hidden overflow-y-auto">
+          {currentView === "list" && (
+            <ChatList
+              chatList={listApi.chatList}
+              onSelectRoom={handleSelectRoom}
+            />
+          )}
+          {listApi.isLoading && (
+            <p className="flex-column flex h-[100%] items-center justify-center p-4 text-center">
+              채팅 목록 로딩 중...
+            </p>
+          )}
+          {listApi.error && (
+            <p className="flex-column flex h-[100%] items-center justify-center p-4 text-red-500">
+              {listApi.error}
+            </p>
+          )}
+          {currentView === "room" && roomApi.isLoading && (
+            <p>채팅방 정보 로딩 중...</p>
+          )}
+          {currentView === "room" && !roomApi.isLoading && roomApi.chatRoom && (
+            <ChatRoom
+              chatroomId={targetChatroomId!}
+              sellerId={roomApi.chatRoom.sellerId}
+              chatroomInfo={selectedRoomInfo || roomApi.chatRoom.chatroomInfo}
+              productInfo={roomApi.chatRoom.productInfo}
+            />
+          )}
+        </div>
       </div>
-    </div>
+
+      {toast.isVisible && (
+        <Toast message={toast.message} type={toast.type} onClose={hideToast} />
+      )}
+    </>
   );
 };
 

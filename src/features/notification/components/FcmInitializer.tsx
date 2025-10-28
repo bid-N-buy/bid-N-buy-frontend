@@ -4,16 +4,18 @@ import { getToken } from "firebase/messaging";
 import { messaging } from "../../../shared/firebase-config"; // firebase 초기화 한 곳
 import api from "../../../shared/api/axiosInstance";
 import { useAuthStore } from "../../auth/store/authStore";
+import { useAdminAuthStore } from "../../admin/store/adminStore";
 
 const FcmInitializer = () => {
   const accessToken = useAuthStore((s) => s.accessToken);
+  const adminId = useAdminAuthStore((s) => s.adminId);
   const userId = useAuthStore((s) => s.userId);
 
   const [banner, setBanner] = useState<string | null>(null);
 
   useEffect(() => {
     // 로그인 상태일 때만 실행
-    if (!accessToken || !userId) return;
+    if (!accessToken || !userId || !adminId) return;
 
     const registerFcm = async () => {
       try {
@@ -21,8 +23,11 @@ const FcmInitializer = () => {
 
         // case 1: 이미 차단됨
         if (Notification.permission === "denied") {
+          console.warn(
+            "🚫 알림 권한이 차단됨. 브라우저 설정에서 직접 허용해야 합니다."
+          );
           setBanner(
-            "🚫 알림 권한이 차단되어 있습니다. 브라우저 설정에서 직접 허용해야 알림을 받을 수 있습니다. (주소창 왼쪽 🔒 아이콘 → 알림 → 허용)"
+            "알림 권한이 차단되어 있습니다. 크롬 주소창 왼쪽 🔒 아이콘 → 알림 → 허용으로 바꿔주세요."
           );
           return;
         }
@@ -73,12 +78,9 @@ const FcmInitializer = () => {
   return (
     <>
       {banner && (
-        <div className="fixed top-0 left-0 w-full bg-yellow-500 text-black text-center py-2 px-4 z-50 shadow-md">
-          <span className="font-medium">{banner}</span>
-          <button
-            className="ml-4 underline"
-            onClick={() => setBanner(null)}
-          >
+        <div className="fixed top-0 left-0 z-50 w-full bg-red-500 px-4 py-2 text-center text-white">
+          <span>{banner}</span>
+          <button className="ml-4 underline" onClick={() => setBanner(null)}>
             닫기
           </button>
         </div>

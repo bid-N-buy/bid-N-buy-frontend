@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { createPortal } from "react-dom";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import adminApi from "../api/adminAxiosInstance";
 import AdminAlarmPostModal from "./AdminAlertPostModal";
 import {
   LayoutDashboard,
@@ -8,10 +9,27 @@ import {
   MessageCircleWarning,
   Megaphone,
 } from "lucide-react";
+import { useAdminAuthStore } from "../store/adminStore";
 
 const AdminAsideMenu = () => {
+  const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const clearAuth = useAdminAuthStore((s) => s.clear);
+
   const modalRoot: HTMLElement | null = document.getElementById("modal-root");
+
+  const Logout = async () => {
+    try {
+      await adminApi.post("/admin/auth/logout", null, {
+        withCredentials: true,
+      });
+    } catch {
+      // 서버 실패해도 로컬 정리는 진행
+    } finally {
+      clearAuth();
+      navigate("/admin/login", { replace: true });
+    }
+  };
 
   if (!modalRoot) {
     console.error("Portal root element '#modal-root' not found.");
@@ -117,8 +135,8 @@ const AdminAsideMenu = () => {
       </div>
 
       <div className="sticky inset-x-0 bottom-0 border-t border-gray-100 bg-white p-2">
-        <Link
-          to="/admin/login"
+        <button
+          onClick={Logout}
           className="group relative flex w-full justify-center rounded-lg px-2 py-1.5 text-sm hover:bg-gray-50"
         >
           <svg
@@ -139,7 +157,7 @@ const AdminAsideMenu = () => {
           <span className="invisible absolute start-full top-1/2 ms-4 -translate-y-1/2 rounded-sm bg-gray-900 px-2 py-1.5 text-xs font-medium text-white group-hover:visible">
             Logout
           </span>
-        </Link>
+        </button>
       </div>
     </aside>
   );

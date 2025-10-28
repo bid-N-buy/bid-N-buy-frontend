@@ -38,12 +38,34 @@ export interface AdminManageUser {
   userId: number;
   email: string;
   nickname: string;
-  createdAt: string; // ISO 8601 형식 문자열
+  createdAt: string;
   penaltyPoints: number;
   activityStatus: string;
-  suspendedUntil: string | null; // 정지 기간이 없을 수 있으므로 null 허용
+  suspendedUntil: string | null;
   suspended: boolean;
 }
+
+export interface PenaltyHistoryItem {
+  penaltyId: number;
+  type: string;
+  points: number;
+  createdAt: string;
+  active: boolean;
+}
+
+export interface UserDetailProps extends AdminManageUser {
+  profileImageUrl: string | null;
+  updatedAt: string;
+  activityStatus: string;
+  suspensionCount: number;
+  banCount: number;
+  penaltyHistory: PenaltyHistoryItem[];
+  auctionCount: number;
+  userType: string | null;
+  userTemperature: number | null;
+  deletedAt: string | null;
+}
+
 export type ManageUserProps = AdminPagination<AdminManageUser>;
 
 export interface AdminManageInquiry {
@@ -57,7 +79,7 @@ export interface AdminManageInquiry {
   userNickname: string;
 }
 
-export interface AdminInquiryPost extends AdminManageInquiry {
+export interface AdminInquiryPostProps extends AdminManageInquiry {
   content: string;
   updatedAt: string;
   adminId: number;
@@ -65,6 +87,9 @@ export interface AdminInquiryPost extends AdminManageInquiry {
   requestContent: string;
 }
 
-export type AdminInquiryAnswer = Pick<AdminInquiryPost, "title" | "content">;
+export type AdminInquiryAnswer = Pick<
+  AdminInquiryPostProps,
+  "title" | "content"
+>;
 
 export type ManageInquiryProps = AdminPagination<AdminManageInquiry>;
