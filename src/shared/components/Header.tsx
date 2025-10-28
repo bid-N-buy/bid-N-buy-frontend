@@ -165,7 +165,12 @@ const Header = () => {
               <X />
             </button>
           )}
-          <button type="submit" aria-label="검색" title="검색">
+          <button
+            type="submit"
+            aria-label="검색"
+            title="검색"
+            className="cursor-pointer"
+          >
             <Search color="#8322bf" />
           </button>
         </form>

@@ -55,7 +55,7 @@ const Main = () => {
                     <button
                       key={c.categoryId}
                       onClick={() => handleCategoryClick(c.categoryId)}
-                      className="group flex min-w-[96px] flex-col items-center gap-3 transition-all"
+                      className="group flex min-w-[96px] cursor-pointer flex-col items-center gap-3 transition-all"
                       aria-label={`${c.categoryName} 카테고리로 이동`}
                     >
                       <div className="group-hover:bg-light-purple flex h-[90px] w-[90px] items-center justify-center rounded-full bg-white shadow-[0_0_15px_rgba(0,0,0,0.09)] transition-all group-hover:shadow-[0_0_20px_rgba(0,0,0,0.12)]">
