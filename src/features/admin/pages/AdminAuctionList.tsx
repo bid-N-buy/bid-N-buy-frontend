@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import type { AuctionItem, AuctionsRes } from "../../auction/types/auctions";
+import { formatDate } from "../../../shared/utils/datetime";
 import {
   fetchAuctions,
   type FetchAuctionsParams,
 } from "../../auction/api/auctions";
-import { formatTime } from "../../../shared/utils/datetime";
 
 type Props = {
   params?: Omit<FetchAuctionsParams, "size" | "page">;
@@ -78,7 +78,7 @@ const AdminAuctionList = ({ params }: Props) => {
             <th>No.</th>
             <th>대표 이미지</th>
             <th>제목</th>
-            <th>등록일</th>
+            <th>등록일시</th>
             <th>진행 상태</th>
           </tr>
         </thead>
@@ -98,7 +98,7 @@ const AdminAuctionList = ({ params }: Props) => {
                   {item.title}
                 </Link>
               </td>
-              <td>{formatTime(item.createdAt)}</td>
+              <td>{formatDate(item.createdAt)}</td>
               <td>{item.sellingStatus}</td>
             </tr>
           ))}

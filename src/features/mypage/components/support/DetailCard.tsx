@@ -33,7 +33,7 @@ function fmtDate(iso?: string) {
   }
 }
 
-function StatusBadge({ status }: { status?: string }) {
+export const StatusBadge = ({ status }: { status?: string }) => {
   if (!status) {
     return (
       <span className="inline-flex items-center rounded-full border border-neutral-300 px-2 py-[2px] text-[11px] font-medium text-neutral-500">
@@ -65,7 +65,7 @@ function StatusBadge({ status }: { status?: string }) {
   }
 
   return <span className={`${clsWrap} ${clsColor}`}>{s}</span>;
-}
+};
 
 const DetailCard: React.FC<Props> = ({
   category,

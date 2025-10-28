@@ -1,5 +1,3 @@
-import type { AuctionItem } from "../../auction/types/auctions";
-
 export interface AdminProps {
   adminId: number;
   email: string;
@@ -58,5 +56,15 @@ export interface AdminManageInquiry {
   userEmail: string;
   userNickname: string;
 }
+
+export interface AdminInquiryPost extends AdminManageInquiry {
+  content: string;
+  updatedAt: string;
+  adminId: number;
+  requestTitle: string;
+  requestContent: string;
+}
+
+export type AdminInquiryAnswer = Pick<AdminInquiryPost, "title" | "content">;
 
 export type ManageInquiryProps = AdminPagination<AdminManageInquiry>;
