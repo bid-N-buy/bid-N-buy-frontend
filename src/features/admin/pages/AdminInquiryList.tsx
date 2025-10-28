@@ -69,10 +69,8 @@ const AdmininquiryList = () => {
       </table>
       {pages && (
         <div className="mt-10 text-center">
-          <span className="text-purple font-bold">
-            {pages?.currentPage + 1}
-          </span>{" "}
-          /{pages?.totalPages}
+          <span className="text-purple font-bold">{pages.currentPage + 1}</span>
+          <span> / {pages.totalPages}</span>
         </div>
       )}
     </div>
