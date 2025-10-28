@@ -34,6 +34,7 @@ export default function PaymentBridge() {
         paymentKey,
         orderId,
         amount: Number(amount),
+        auctionId: searchParams.get("auctionId"),
       })
       .then(() => {
         console.log("결제 성공");

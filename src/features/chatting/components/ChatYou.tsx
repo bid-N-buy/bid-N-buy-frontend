@@ -17,7 +17,7 @@ const ChatYou = ({
 }: ChatYouProps) => {
   const { message, messageType, read, createdAt, imageUrl } = msgInfo;
   const { counterpartNickname, counterpartProfileImageUrl } = counterpartInfo;
-  const { auctionImageUrl, auctionTitle } = auctionInfo;
+  const { auctionImageUrl, auctionTitle, auctionId } = auctionInfo;
   const { userId, profile } = useAuthStore.getState();
 
   // 결제 실행 함수
@@ -36,7 +36,7 @@ const ChatYou = ({
         body: JSON.stringify({
           sellerId,
           buyerId: userId,
-          type: "ESCROW",
+          type: "ESCROW"
         }),
       });
 
@@ -62,8 +62,8 @@ const ChatYou = ({
         amount: { currency: "KRW", value: currentPrice },
         orderId: merchantOrderId,
         orderName: auctionTitle,
-        successUrl: window.location.origin + "/payment/bridge",
-        failUrl: window.location.origin + "/payment/bridge",
+        successUrl: `${window.location.origin}/payment/bridge?auctionId=${auctionId}`,
+        failUrl: `${window.location.origin}/payment/bridge?auctionId=${auctionId}`,
         customerEmail: profile?.email,
         customerName: profile?.nickname,
       });
