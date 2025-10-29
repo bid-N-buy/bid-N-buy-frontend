@@ -3,20 +3,163 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../../../shared/api/axiosInstance";
 
-// ✅ 공통 타입/유틸을 한 군데에서만 import해서 중복 제거
-//    (경로는 너가 만든 공통 모듈 경로로 맞춰줘)
-//    예: "../../mypage/types/trade" 에 우리가 합친 유틸이 있다고 가정
 import type { TradeItem, TradeStatus } from "../../mypage/types/trade";
 import {
-  // 공통 유틸들 (앞서 내가 만들어 준 파일 기준)
-  toStatus as toStdStatus,
+  fromPurchase,
+  fromSale,
   STATUS_LABEL,
-  compareTradeItems,
-} from "../../mypage/types/trade";
+} from "../../mypage/utils/tradeMappers";
+
+import { compareTradeItems } from "../../mypage/utils/tradeStatus";
+/* =========================
+ *        Types
+ * ========================= */
+
+/**
+ * /me/trades?type=BUY or SELL 에서 내려오는 원본
+ * (실제 백엔드 응답 스키마 기준으로 맞춰줘도 돼.
+ *  아래 필드들은 네가 보여준 코드 기준으로 유추한 값들이라서
+ *  일부 백엔드 필드명이 다르면 거기에 맞게만 바꿔주면 돼.)
+ */
+type RawTrade = {
+  id?: number | string;
+  auctionId?: number | string;
+
+  title?: string;
+  itemName?: string;
+
+  // 상태 관련
+  status?: string; // 예: "진행중", "BEFORE", "결제 대기 중 (진행 중)" 등
+  statusText?: string; // 혹시 서버에서 라벨 따로 주면
+
+  // 시간 관련
+  startAt?: string;
+  startTime?: string;
+  createdAt?: string; // 과거 코드에서 fallback으로 쓰던 값
+  endAt?: string; // 마감 시간
+  endTime?: string;
+
+  // 이미지
+  thumbnailUrl?: string;
+  mainImageUrl?: string;
+  image?: string;
+  itemImageUrl?: string;
+
+  // 금액
+  price?: number;
+  currentPrice?: number;
+  finalPrice?: number;
+
+  // 상대방 닉네임 관련(구매/판매에서 다르게 올 수 있음)
+  sellerNickname?: string;
+  buyerNickname?: string;
+  winnerNickname?: string;
+};
+
+/**
+ * 백엔드 응답에서 BUY / SELL을 불러오는 함수들
+ */
+async function fetchSummary(): Promise<Summary> {
+  const { data } = await api.get<Summary>("/me/trades/summary");
+  return data;
+}
+
+async function fetchTrades(type: "BUY" | "SELL"): Promise<RawTrade[]> {
+  const { data } = await api.get<RawTrade[]>("/me/trades", {
+    params: { type },
+  });
+  return data;
+}
 
 /* =========================
- *        Utils (local)
+ *    Raw -> ApiPurchase / ApiSale 변환
+ * =========================
+ *
+ * 여기서 하는 일:
+ * - /me/trades 응답(RawTrade)을 우리가 이미 갖고 있는
+ *   fromPurchase / fromSale 에 맞는 형태로 재구성해준다.
+ *
+ * 주의: 아래 매핑은 네 백엔드 실제 필드 이름에 맞게 조정 가능.
+ * 지금은 네가 보여준 코드 기준으로 reasonable하게 맵핑해둔 상태.
+ */
+
+// RawTrade -> ApiPurchase 호환 객체
+function toApiPurchaseShape(r: RawTrade) {
+  return {
+    // id류
+    auctionId: r.auctionId ?? r.id,
+    id: r.id,
+
+    // 타이틀류
+    title: r.title ?? r.itemName,
+    itemName: r.itemName,
+
+    // 이미지류 (fromPurchase에서 itemImageUrl 등을 본다)
+    itemImageUrl:
+      r.itemImageUrl ?? r.thumbnailUrl ?? r.mainImageUrl ?? r.image ?? null,
+
+    // 상태 정보
+    status: r.status,
+    statusText: r.statusText ?? r.status,
+
+    // 시간 정보
+    startAt: r.startAt ?? r.startTime,
+    startTime: r.startTime ?? r.startAt,
+    endAt: r.endAt ?? r.endTime ?? r.createdAt,
+    endTime: r.endTime ?? r.endAt ?? r.createdAt,
+
+    // 가격
+    finalPrice: r.finalPrice ?? r.currentPrice ?? r.price ?? undefined,
+    currentPrice: r.currentPrice,
+    price: r.price,
+
+    // 판매자(구매 내역에서 counterparty는 보통 판매자)
+    sellerNickname: r.sellerNickname,
+    seller: r.sellerNickname, // 혹시 fromPurchase 쪽에서 seller를 우선 보도록 했다면
+  };
+}
+
+// RawTrade -> ApiSale 호환 객체
+function toApiSaleShape(r: RawTrade) {
+  return {
+    // id류
+    auctionId: r.auctionId ?? r.id,
+    id: r.id,
+
+    // 타이틀류
+    title: r.title ?? r.itemName,
+    itemName: r.itemName,
+
+    // 이미지류 (fromSale에서 itemImageUrl 등을 본다)
+    itemImageUrl:
+      r.itemImageUrl ?? r.thumbnailUrl ?? r.mainImageUrl ?? r.image ?? null,
+
+    // 상태 정보
+    status: r.status,
+    statusText: r.statusText ?? r.status,
+
+    // 시간 정보
+    startAt: r.startAt ?? r.startTime,
+    startTime: r.startTime ?? r.startAt,
+    endAt: r.endAt ?? r.endTime ?? r.createdAt,
+    endTime: r.endTime ?? r.endAt ?? r.createdAt,
+
+    // 금액
+    finalPrice: r.finalPrice ?? r.currentPrice ?? r.price ?? undefined,
+    currentPrice: r.currentPrice,
+    price: r.price,
+
+    // 구매자/낙찰자 정보 (판매 내역의 counterparty)
+    buyerNickname: r.buyerNickname,
+    winnerNickname: r.winnerNickname,
+  };
+}
+
+/* =========================
+ *   Summary / Skeleton / Row / Section
  * ========================= */
+
+type Summary = { completedSalesCount: number; activeSalesCount: number };
 
 // 날짜 포맷
 const formatDate = (iso?: string) => {
@@ -33,77 +176,17 @@ const formatDate = (iso?: string) => {
 const currency = (n?: number | null) =>
   typeof n === "number" ? `${n.toLocaleString()}원` : "";
 
-// ✅ 배지 색상은 화면 톤에 맞춰 이 파일에서만 유지
+// 상태 배지 색상
 const STATUS_BADGE: Record<TradeStatus, string> = {
   BEFORE: "border-neutral-200 bg-neutral-50 text-neutral-700",
   SALE: "border-emerald-200 bg-emerald-50 text-emerald-700",
   PROGRESS: "border-blue-200 bg-blue-50 text-blue-700",
   COMPLETED: "border-neutral-200 bg-neutral-50 text-neutral-700",
   FINISH: "border-neutral-200 bg-neutral-50 text-neutral-500",
+  UNKNOWN: "border-neutral-200 bg-neutral-50 text-neutral-500",
 };
 
-/* =========================
- *        Types
- * ========================= */
-type RawTrade = {
-  id?: number | string;
-  auctionId?: number | string;
-  title?: string;
-  itemName?: string;
-  status?: string;
-  createdAt?: string;
-  endAt?: string; // ✅ 백엔드가 endAt을 주면 얘를 우선 사용
-  thumbnailUrl?: string;
-  mainImageUrl?: string;
-  image?: string;
-  price?: number;
-  currentPrice?: number;
-  finalPrice?: number;
-};
-
-/** 서버 → 표준 모델 매핑 */
-const fromRaw = (r: RawTrade): TradeItem => {
-  const id = String(r.id ?? r.auctionId ?? "");
-  const price =
-    Number(r.price ?? r.currentPrice ?? r.finalPrice ?? 0) || undefined;
-
-  // ✅ 상태는 공통 유틸로 정규화 (여기서 별도 로직 만들지 않음)
-  const status = toStdStatus(r.status);
-
-  // ✅ 종료 시각: endAt 우선, 없으면 createdAt(임시) — 실제 스키마에 맞춰 바꿔줘
-  const auctionEnd = r.endAt ?? r.createdAt;
-
-  return {
-    id,
-    title: r.title ?? r.itemName ?? "제목 없음",
-    thumbUrl: r.thumbnailUrl ?? r.mainImageUrl ?? r.image ?? null,
-    price,
-    status,
-    statusText: STATUS_LABEL[status],
-    auctionStart: undefined,
-    auctionEnd,
-  };
-};
-
-/* =========================
- *        API
- * ========================= */
-// type Summary = { completedSalesCount: number; activeSalesCount: number };
-
-async function fetchSummary(): Promise<Summary> {
-  const { data } = await api.get<Summary>("/me/trades/summary");
-  return data;
-}
-async function fetchTrades(type: "BUY" | "SELL"): Promise<RawTrade[]> {
-  const { data } = await api.get<RawTrade[]>("/me/trades", {
-    params: { type },
-  });
-  return data;
-}
-
-/* =========================
- *      Skeleton & Row
- * ========================= */
+// 뼈대
 const RowSkeleton: React.FC = () => (
   <li className="flex animate-pulse gap-3 py-4">
     <div className="h-14 w-14 shrink-0 rounded bg-neutral-200" />
@@ -118,6 +201,7 @@ const RowSkeleton: React.FC = () => (
   </li>
 );
 
+// 한 줄 렌더
 const TradeRow: React.FC<{
   item: TradeItem;
   onClick?: (id: string) => void;
@@ -156,10 +240,10 @@ const TradeRow: React.FC<{
         <span
           className={[
             "inline-block rounded border px-2 py-0.5 text-[11px]",
-            STATUS_BADGE[item.status],
+            STATUS_BADGE[item.status] ?? STATUS_BADGE.UNKNOWN,
           ].join(" ")}
         >
-          {item.statusText ?? STATUS_LABEL[item.status]}
+          {item.statusText ?? STATUS_LABEL[item.status] ?? "상태 미정"}
         </span>
         <div className="mt-2 text-[12px] text-neutral-500">
           {formatDate(item.auctionEnd)}
@@ -169,9 +253,7 @@ const TradeRow: React.FC<{
   );
 };
 
-/* =========================
- *        Section
- * ========================= */
+// 섹션(구매 내역 / 판매 내역)
 const Section: React.FC<{
   title: string;
   items: TradeItem[] | null;
@@ -187,7 +269,7 @@ const Section: React.FC<{
   emptyText = "내역이 없습니다.",
   onRowClick,
 }) => {
-  // ✅ 로딩 끝나면 공통 정렬(compareTradeItems) 적용
+  // 로딩이 끝나면 진행중 우선 정렬(compareTradeItems)
   const sorted = useMemo(
     () => (!loading && items ? [...items].sort(compareTradeItems) : items),
     [items, loading]
@@ -224,11 +306,7 @@ const Section: React.FC<{
   );
 };
 
-/* =========================
- *         Summary
- * ========================= */
-type Summary = { completedSalesCount: number; activeSalesCount: number };
-
+// 상단 Summary 바
 const SummaryBar: React.FC<{ summary: Summary | null; loading: boolean }> = ({
   summary,
   loading,
@@ -293,6 +371,7 @@ const TradeHistoryPage: React.FC = () => {
   useEffect(() => {
     let alive = true;
 
+    // 요약
     (async () => {
       try {
         setSumLoading(true);
@@ -305,11 +384,17 @@ const TradeHistoryPage: React.FC = () => {
       }
     })();
 
+    // 구매 내역
     (async () => {
       try {
         setBuyLoading(true);
-        const list = await fetchTrades("BUY");
-        if (alive) setBuyItems((list ?? []).map(fromRaw));
+        const rawList = await fetchTrades("BUY");
+
+        // RawTrade[] -> ApiPurchase 형식 -> fromPurchase -> TradeItem[]
+        const normalizedPurchaseLike = rawList.map(toApiPurchaseShape);
+        const finalItems = normalizedPurchaseLike.map(fromPurchase);
+
+        if (alive) setBuyItems(finalItems);
       } catch (e: any) {
         if (alive) setBuyError(e?.message ?? "구매 내역을 불러오지 못했어요.");
       } finally {
@@ -317,11 +402,17 @@ const TradeHistoryPage: React.FC = () => {
       }
     })();
 
+    // 판매 내역
     (async () => {
       try {
         setSellLoading(true);
-        const list = await fetchTrades("SELL");
-        if (alive) setSellItems((list ?? []).map(fromRaw));
+        const rawList = await fetchTrades("SELL");
+
+        // RawTrade[] -> ApiSale 형식 -> fromSale -> TradeItem[]
+        const normalizedSaleLike = rawList.map(toApiSaleShape);
+        const finalItems = normalizedSaleLike.map(fromSale);
+
+        if (alive) setSellItems(finalItems);
       } catch (e: any) {
         if (alive) setSellError(e?.message ?? "판매 내역을 불러오지 못했어요.");
       } finally {
@@ -358,6 +449,7 @@ const TradeHistoryPage: React.FC = () => {
         emptyText="구매한 내역이 없어요."
         onRowClick={(id) => nav(`/auctions/${id}`)}
       />
+
       <Section
         title="판매 내역"
         items={sellItems}

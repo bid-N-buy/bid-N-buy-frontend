@@ -1,4 +1,3 @@
-// src/features/mypage/components/profile/ProfileDetails.tsx
 import React from "react";
 
 export type Item = {
@@ -157,7 +156,7 @@ const ProfileDetails: React.FC<Props> = ({
   onClickSelling,
   onItemClick,
 }) => {
-  // ✅ 온도 처리: 없으면 null
+  // 온도 처리: 없으면 null
   const hasTemp =
     typeof temperature === "number" && Number.isFinite(temperature);
 

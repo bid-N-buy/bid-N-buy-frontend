@@ -1,10 +1,11 @@
-// src/features/mypage/containers/ProfileDetailsContainer.tsx
+// src/features/mypage/pages/ProfileDetailsContainer.tsx
 import React from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import ProfileDetails from "../components/profile/ProfileDetails";
 import { useProfile } from "../hooks/useProfile";
 import { useSalePreview } from "../hooks/useSalePreview";
 import api from "../../../shared/api/axiosInstance";
+import { useAuthStore } from "../../auth/store/authStore"; // ✅ 내 userId 확인용
 
 type OtherProfileRes = {
   nickname: string;
@@ -16,34 +17,45 @@ type OtherProfileRes = {
 
 const ProfileDetailsContainer: React.FC = () => {
   const nav = useNavigate();
+  const myUserId = useAuthStore((s) => s.userId); // ✅ 로그인 유저 id
 
-  // /profile  -> targetUserId undefined
-  // /users/:targetUserId -> targetUserId "123"
   const { targetUserId } = useParams<{ targetUserId?: string }>();
   const isOtherUserPage = Boolean(targetUserId);
 
-  /* =========================================================
-   * 1) 내 프로필 (내 페이지에서만 호출)
-   * ========================================================= */
+  console.log("[PDC] targetUserId =", targetUserId);
+  console.log(
+    "[PDC] isOtherUserPage =",
+    isOtherUserPage,
+    "myUserId =",
+    myUserId
+  );
+
+  // ✅ 내 id로 /users/:id를 열었다면 /profile로 보내 혼동 방지
+  React.useEffect(() => {
+    if (!targetUserId || myUserId == null) return;
+    if (String(myUserId) === String(targetUserId)) {
+      console.log("[PDC] same user id detected. redirect -> /profile");
+      nav("/profile", { replace: true });
+    }
+  }, [targetUserId, myUserId, nav]);
+
+  // 1) 내 프로필(내 페이지에서만)
   const {
     data: myProfile,
     loading: myProfileLoading,
     error: myProfileError,
   } = useProfile(undefined, {
     endpoint: "/mypage",
-    enabled: !isOtherUserPage,
+    enabled: !isOtherUserPage, // 다른 유저 페이지면 호출 안 함
   });
 
-  /* =========================================================
-   * 2) 다른 유저 프로필 (/users/:id 에서만 호출)
-   * ========================================================= */
+  // 2) 다른 유저 프로필(남의 페이지에서만)
   const [otherProfile, setOtherProfile] =
     React.useState<OtherProfileRes | null>(null);
   const [otherLoading, setOtherLoading] = React.useState(false);
   const [otherError, setOtherError] = React.useState<unknown>(null);
 
   React.useEffect(() => {
-    // only run when looking at someone else's profile
     if (!isOtherUserPage || !targetUserId) return;
 
     let alive = true;
@@ -53,20 +65,24 @@ const ProfileDetailsContainer: React.FC = () => {
         setOtherLoading(true);
         setOtherError(null);
 
+        console.log("[PDC] fetching other profile for", targetUserId);
+
         const { data } = await api.get<OtherProfileRes>(
           `/auth/other/${targetUserId}`,
-          { withCredentials: true }
+          {
+            withCredentials: true,
+          }
         );
 
         if (!alive) return;
+        console.log("[PDC] /auth/other response =", data);
         setOtherProfile(data ?? null);
       } catch (err) {
         if (!alive) return;
+        console.error("[PDC] otherProfile error =", err);
         setOtherError(err);
       } finally {
-        if (alive) {
-          setOtherLoading(false);
-        }
+        if (alive) setOtherLoading(false);
       }
     })();
 
@@ -75,15 +91,7 @@ const ProfileDetailsContainer: React.FC = () => {
     };
   }, [isOtherUserPage, targetUserId]);
 
-  /* =========================================================
-   * 3) 판매 프리뷰 (완료된 거래 / 판매중 거래)
-   *    - 내 페이지일 때는 둘 다 호출
-   *    - 상대 페이지일 때:
-   *        COMPLETED 프리뷰는 굳이 안 보여주면 enabled=false
-   *        ONGOING 프리뷰만 ownerUserId로 가져오기
-   * ========================================================= */
-
-  // 판매완료(내 것만)
+  // 3) 판매 프리뷰
   const {
     items: completedPreviewMine,
     count: completedCountMine,
@@ -93,36 +101,37 @@ const ProfileDetailsContainer: React.FC = () => {
     page: 0,
     size: 3,
     sort: "end",
-    enabled: !isOtherUserPage, // 다른 유저 프로필에서는 안 불러옴
+    enabled: !isOtherUserPage,
     ownerUserId: undefined,
     ownerNickname: myProfile?.nickname,
   });
 
-  // 판매중
+  const ongoingEnabled = isOtherUserPage
+    ? Boolean(otherProfile?.nickname)
+    : Boolean(myProfile?.nickname);
+
   const {
-    items: ongoingPreview,
-    count: ongoingCount,
+    items: ongoingPreviewRaw,
+    count: ongoingCountRaw,
     loading: ongoingLoading,
     error: ongoingError,
   } = useSalePreview("ONGOING", {
     page: 0,
     size: 3,
     sort: "end",
-    // 다른 유저 화면에서도 보고 싶으면 true.
-    // 만약 "상대방 판매중 목록은 비공개" 정책이면 isOtherUserPage ? false : true 로 바꿔.
-    enabled: true,
-    ownerUserId: isOtherUserPage ? targetUserId : undefined,
+    enabled: ongoingEnabled,
+    ownerUserId: isOtherUserPage ? targetUserId : undefined, // ✅ 숫자/문자 모두 허용
     ownerNickname: isOtherUserPage
       ? otherProfile?.nickname
       : myProfile?.nickname,
   });
 
-  /* =========================================================
-   * 4) 로딩/에러 상태 머지
-   * ========================================================= */
-  // 로딩: 내페이지면 내프로필/완료/진행중, 상대페이지면 상대/진행중
+  // 4) 로딩/에러 상태
+  const stillPreparingOther =
+    isOtherUserPage && (!otherProfile || otherLoading);
+
   const isLoading = isOtherUserPage
-    ? otherLoading || ongoingLoading
+    ? stillPreparingOther || ongoingLoading
     : myProfileLoading || completedLoading || ongoingLoading;
 
   if (isLoading) {
@@ -145,29 +154,16 @@ const ProfileDetailsContainer: React.FC = () => {
     );
   }
 
-  /* =========================================================
-   * 5) 뷰에 넣을 데이터 가공
-   * ========================================================= */
-
-  // 닉네임
+  // 5) 최종 뷰 데이터
   const nickname = isOtherUserPage
     ? otherProfile?.nickname || "사용자"
     : myProfile?.nickname || "NickName";
-
-  // 이메일: 다른 사람 프로필이면 숨김
   const email = isOtherUserPage ? undefined : myProfile?.email || "";
 
-  // 아바타 URL
   const avatarUrl = isOtherUserPage
     ? otherProfile?.profileImageUrl || undefined
-    : myProfile?.avatarUrl ||
-      // 혹시 백엔드에서 profileImageUrl만 주는 케이스 커버
-      (myProfile as any)?.profileImageUrl ||
-      undefined;
+    : myProfile?.avatarUrl || (myProfile as any)?.profileImageUrl || undefined;
 
-  // 매너 온도
-  // - 상대 유저: number면 그대로, 아니면 null
-  // - 내 프로필: 내 temperature가 number면 그대로, 아니면 null
   const temperature = isOtherUserPage
     ? typeof otherProfile?.temperature === "number" &&
       Number.isFinite(otherProfile.temperature)
@@ -178,7 +174,6 @@ const ProfileDetailsContainer: React.FC = () => {
       ? myProfile.temperature
       : null;
 
-  // 판매완료 / 판매중 개수
   const soldCount = isOtherUserPage
     ? (otherProfile?.salesCompletedCount ?? 0)
     : (completedCountMine ?? 0);
@@ -189,44 +184,36 @@ const ProfileDetailsContainer: React.FC = () => {
         (otherProfile?.totalProductsCount ?? 0) -
           (otherProfile?.salesCompletedCount ?? 0)
       )
-    : (ongoingCount ?? 0);
+    : (ongoingCountRaw ?? 0);
 
-  // 미리보기 리스트
   const soldPreview = isOtherUserPage ? [] : (completedPreviewMine ?? []);
-  const sellingPreview = ongoingPreview ?? [];
+  const sellingPreview = ongoingPreviewRaw ?? [];
 
-  /* =========================================================
-   * 6) 이동 핸들러
-   * ========================================================= */
+  console.log("[PDC] final nickname =", nickname);
+  console.log("[PDC] final email =", email);
+  console.log("[PDC] final otherProfile =", otherProfile);
+  console.log("[PDC] final myProfile =", myProfile);
+
+  // 6) 핸들러
   const handleClickSoldList = () => {
-    if (isOtherUserPage) {
-      nav(`/users/${targetUserId}/sales?tab=completed`);
-    } else {
-      nav("/mypage/sales?tab=completed");
-    }
+    if (isOtherUserPage) nav(`/users/${targetUserId}/sales?tab=completed`);
+    else nav("/mypage/sales?tab=completed");
   };
 
   const handleClickSellingList = () => {
-    if (isOtherUserPage) {
-      nav(`/users/${targetUserId}/sales?tab=ongoing`);
-    } else {
-      nav("/mypage/sales?tab=ongoing");
-    }
+    if (isOtherUserPage) nav(`/users/${targetUserId}/sales?tab=ongoing`);
+    else nav(`/mypage/sales?tab=ongoing`);
   };
 
-  const handleClickItem = (id: string | number) => {
-    nav(`/auctions/${id}`);
-  };
+  const handleClickItem = (id: string | number) => nav(`/auctions/${id}`);
 
-  /* =========================================================
-   * 7) 렌더
-   * ========================================================= */
+  // 7) 렌더
   return (
     <ProfileDetails
       avatarUrl={avatarUrl}
       nickname={nickname}
       email={email}
-      temperature={temperature} // null 가능
+      temperature={temperature}
       soldCount={soldCount}
       sellingCount={sellingCount}
       soldPreview={soldPreview}
