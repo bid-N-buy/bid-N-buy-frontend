@@ -37,7 +37,7 @@ export interface AuctionDetail {
   minBidPrice: number;
   bidCount: number;
   startTime: string; // "2025-10-15T13:50:00"
-  createdAt: string; // "2025-10-15T13:49:42.106429" // 지금 사용x
+  createdAt: string; // "2025-10-15T13:49:42.106429"
   endTime: string;
   sellerId: number;
   sellerNickname: string;
@@ -45,7 +45,7 @@ export interface AuctionDetail {
   sellerTemperature: number;
   sellingStatus: string;
   wishCount: number;
-  liked?: boolean; // 추가 예정이라 optional
+  liked?: boolean;
 }
 
 // 페이지 래퍼(백 응답 예시 형태)
@@ -70,7 +70,7 @@ export interface AuctionItem {
   sellerId?: number;
   sellerNickname: string;
   wishCount: number;
-  liked?: boolean; // 추가 예정이라 optional
+  liked?: boolean;
 }
 
 export interface AuctionsRes {

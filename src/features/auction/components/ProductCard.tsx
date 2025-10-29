@@ -1,4 +1,3 @@
-// todo 백 작업 완료 시 liked 다시 확인
 import React, { useMemo, useState, type KeyboardEvent } from "react";
 import type { AuctionItem } from "../types/auctions";
 import { buildImageUrl } from "../../../shared/utils/imageUrl";
@@ -74,7 +73,7 @@ const ProductCard = React.memo(function ProductCard({
           </div>
         )}
 
-        {/* 상태 배지 */}
+        {/* 상태 */}
         <div
           className={`text-h8 absolute top-3 right-3 flex items-center justify-center rounded-2xl px-2.5 py-1 ${badgeClass}`}
           aria-label={`판매 상태: ${sellingStatus}`}
@@ -96,7 +95,7 @@ const ProductCard = React.memo(function ProductCard({
 
         <div className="flex items-end justify-between">
           <span className="text-g300 px-1.5 text-base">{sellerNickname}</span>
-          {/* 찜 버튼 - 카드 클릭과 이벤트 충돌 방지 stopPropagation */}
+
           <div onClick={(e) => e.stopPropagation()}>
             <WishButton
               auctionId={auctionId}
