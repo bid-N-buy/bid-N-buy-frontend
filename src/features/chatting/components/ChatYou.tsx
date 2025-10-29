@@ -4,6 +4,7 @@ import type { ChatYouProps } from "../types/ChatType";
 import { useAuthStore } from "../../auth/store/authStore";
 //토스페이먼츠
 import { loadTossPayments } from "@tosspayments/tosspayments-sdk";
+import { formatTime } from "../../../shared/utils/datetime";
 
 // TODO: 추후 배포단계에서 .env로 옮길 예정
 const clientKey = "test_ck_DpexMgkW36PwLbonEpqwrGbR5ozO";
@@ -36,7 +37,7 @@ const ChatYou = ({
         body: JSON.stringify({
           sellerId,
           buyerId: userId,
-          type: "ESCROW"
+          type: "ESCROW",
         }),
       });
 
@@ -81,9 +82,7 @@ const ChatYou = ({
           <p className="bg-g400 mr-2 max-w-65 rounded-md p-3">{message}</p>
           <div>
             <p className="text-g300 text-xs">{read ? "" : "읽지 않음"}</p>
-            <p className="text-g300 text-xs">
-              {new Date(createdAt).toLocaleTimeString()}
-            </p>
+            <p className="text-g300 text-xs">{formatTime(createdAt)}</p>
           </div>
         </div>
       </div>
@@ -122,9 +121,7 @@ const ChatYou = ({
           </div>
           <div>
             <p className="text-g300 text-xs">{read ? "" : "읽지 않음"}</p>
-            <p className="text-g300 text-xs">
-              {new Date(createdAt).toLocaleTimeString()}
-            </p>
+            <p className="text-g300 text-xs">{formatTime(createdAt)}</p>
           </div>
         </div>
       </div>
@@ -144,9 +141,7 @@ const ChatYou = ({
           </div>
           <div>
             <p className="text-g300 text-xs">{read ? "" : "읽지 않음"}</p>
-            <p className="text-g300 text-xs">
-              {new Date(createdAt).toLocaleTimeString()}
-            </p>
+            <p className="text-g300 text-xs">{formatTime(createdAt)}</p>
           </div>
         </div>
       </div>
@@ -160,9 +155,7 @@ const ChatYou = ({
           <p className="bg-g400 mr-2 max-w-65 rounded-md p-3">{message}</p>
           <div>
             <p className="text-g300 text-xs">{read ? "" : "읽지 않음"}</p>
-            <p className="text-g300 text-xs">
-              {new Date(createdAt).toLocaleTimeString()}
-            </p>
+            <p className="text-g300 text-xs">{formatTime(createdAt)}</p>
           </div>
         </div>
       </div>
