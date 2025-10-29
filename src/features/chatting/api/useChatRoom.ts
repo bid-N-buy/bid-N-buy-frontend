@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import api from "../../../shared/api/axiosInstance";
 import { useAuthStore } from "../../auth/store/authStore";
+import { useChatModalStore } from "../../../shared/store/ChatModalStore";
 import type { ChatRoomProps, ChatListItemProps } from "../types/ChatType";
 
 export const useChatRoomApi = (chatroomId: number, isEnable: boolean) => {
@@ -9,10 +10,11 @@ export const useChatRoomApi = (chatroomId: number, isEnable: boolean) => {
   const [error, setError] = useState<string | null>(null);
 
   const token = useAuthStore((state) => state.accessToken);
+  const chatList = useChatModalStore((state) => state.chatList);
 
   // 데이터 로딩 로직
   const loadChatRoom = useCallback(async () => {
-    if (!token || !chatroomId) {
+    if (!token || !chatroomId || !chatList) {
       setError("채팅방을 불러올 수 없습니다.");
       setIsLoading(false);
       return;
@@ -21,15 +23,17 @@ export const useChatRoomApi = (chatroomId: number, isEnable: boolean) => {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await api.get<ChatListItemProps[]>("/chatrooms/list", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      // const response = await api.get<ChatListItemProps[]>("/chatrooms/list", {
+      //   headers: {
+      //     Authorization: `Bearer ${token}`,
+      //   },
+      // });
 
-      const listItem = response.data.find(
-        (item) => item.chatroomId === chatroomId
-      );
+      // const listItem = response.data.find(
+      //   (item) => item.chatroomId === chatroomId
+      // );
+
+      const listItem = chatList.find((item) => item.chatroomId === chatroomId);
 
       // listItem이 없을 경우
       if (!listItem) {
