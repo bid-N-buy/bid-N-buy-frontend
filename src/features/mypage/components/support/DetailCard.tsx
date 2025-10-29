@@ -134,14 +134,14 @@ const DetailCard: React.FC<Props> = ({
       {hasAnswer && (
         <section className="mt-6 flex flex-col gap-3 rounded-md border border-purple-200 bg-purple-50 p-5 sm:flex-row sm:gap-4">
           {/* 왼쪽 사이드 라벨(데스크탑에서 시각적 구분) */}
-          <div className="flex shrink-0 flex-col sm:w-[120px]">
+          {/* <div className="flex shrink-0 flex-col sm:w-[120px]">
             <span className="inline-block rounded-md bg-purple-600 px-2 py-[2px] text-center text-[11px] font-medium text-white">
               고객센터 답변
             </span>
             <span className="mt-2 hidden text-[12px] text-purple-600 sm:block">
               문의에 대한 답변이 등록되었어요
             </span>
-          </div>
+          </div> */}
 
           {/* 실제 답변 내용 */}
           <div className="min-w-0 flex-1">
@@ -163,11 +163,11 @@ const DetailCard: React.FC<Props> = ({
       )}
 
       {/* 추가 블록 (신고 메타 등) */}
-      {extra && (
+      {/* {extra && (
         <section className="mt-6 rounded-md border border-neutral-200 bg-white p-5">
           {extra}
         </section>
-      )}
+      )} */}
     </div>
   );
 };

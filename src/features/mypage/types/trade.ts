@@ -1,382 +1,133 @@
+// src/features/mypage/types/trade.ts
+
 /* =========================
- *        Types
+ * 기본 도메인 타입
  * ========================= */
 
+// 구매/판매 구분 (필터 등에서 사용)
 export type TradeKind = "purchase" | "sale";
 
+// 내부 표준화된 상태
 export type TradeStatus =
-  | "BEFORE" // 등록 전/비공개(판매탭에선 진행으로 취급)
-  | "SALE" // 판매 중(입찰 가능)
+  | "BEFORE" // 경매 시작 전 (프리뷰 단계)
+  | "SALE" // 경매/판매 중 (입찰 가능 / 노출 중)
+  | "PROGRESS" // 낙찰 이후 결제/배송/정산 중
   | "COMPLETED" // 거래 완료
-  | "PROGRESS" // 결제/배송/정산 등 진행 중
-  | "FINISH"; // 경매/판매 종료(더 이상 입찰 X)
+  | "FINISH" // 종료(입찰 불가/유찰/만료)
+  | "UNKNOWN"; // 혹시 못 매핑된 경우 대비
 
-// 구매/판매 내역 탭 필터(백엔드 enum 대응)
+// 마이페이지 상단 탭 필터에서 쓰는 상태
 export type TradeFilterStatus = "ALL" | "ONGOING" | "COMPLETED" | "CANCELLED";
 
-// 화면 공통 표준 모델 (단일 소스)
+// 화면에서 공통으로 쓰는 표준 모델
 export type TradeItem = {
-  id: string; // 공통 id (문자열 권장)
+  /** 상세/딜 라우팅에 쓰는 기본 ID. 응답의 auctionId나 id 등을 문자열로 normalize */
+  id: string;
+
+  /**
+   * 구매 확정(정산) API에 넘길 식별자.
+   * 서버에서 아직 정확히 뭐라고 줄지(orderId / settlementId / purchaseId 등) 안정화 안 된 상태라
+   * 지금은 auctionId 등으로 fallback 하고 있음.
+   * 없을 수도 있으므로 optional.
+   */
+  orderId?: string | number | null;
+
+  /** 타이틀(상품명/경매명) */
   title: string;
+
+  /** 썸네일 이미지 URL */
   thumbUrl?: string | null;
+
+  /** 최종 금액 / 낙찰가 / 결제금액 등. 서버에서 아직 안내려줄 수도 있음 */
   price?: number;
+
+  /** 정규화된 상태 enum (BEFORE / SALE / PROGRESS / COMPLETED / FINISH / UNKNOWN) */
   status: TradeStatus;
+
+  /**
+   * 사용자에게 그대로 보여줄 라벨.
+   * 예: "시작 전 · 20시간 22분 남음"
+   *     "진행 중 · 9시간 25분 남음"
+   *     "거래 완료"
+   *     "종료"
+   */
   statusText?: string;
-  counterparty?: string; // 구매면 판매자, 판매면 구매자(혹은 meAsSeller / winnerNickname)
-  auctionStart?: string; // ISO
-  auctionEnd?: string; // ISO
+
+  /** 상대방 정보 (구매 목록이면 판매자 닉, 판매 목록이면 구매자/낙찰자 닉) */
+  counterparty?: string;
+
+  /** 경매/거래 시작 시각 (ISO) */
+  auctionStart?: string;
+
+  /** 경매/거래 마감 시각 (ISO) */
+  auctionEnd?: string;
+
+  /**
+   * 이미 구매 확정/정산 완료된 건지 여부.
+   * 프론트에서 "구매 확정" 버튼 노출 여부 판단용.
+   * 서버에서 안 오면 기본 false.
+   */
+  settled?: boolean;
 };
 
-/* -------------------------
- *   서버 응답 (변환 전)
- * ------------------------- */
+/* =========================
+ * API 응답 타입 (서버 원본 형식)
+ * ========================= */
 
-// 구매 탭 API 예시
+// 구매 탭 등의 응답 원본
 export type ApiPurchase = {
-  auctionId?: number; // ✅ 실제 응답에 있음
-  id?: number; // 혹시 다른 API에서 id로 올 수도 있으니까 유지
-  title?: string; // ✅ 실제 응답
-  itemName?: string; // 예전/다른 API 호환
+  auctionId?: number;
+  id?: number;
+
+  title?: string;
+  itemName?: string;
+
   seller?: string;
-  sellerNickname?: string; // ✅ 실제 응답
+  sellerNickname?: string;
+
   thumbnail?: string | null;
   image?: string | null;
-  itemImageUrl?: string | null; // ✅ 실제 응답
-  status?: string; // "결제 대기 중 (진행 중)"
-  statusText?: string; // 혹시 따로 줄 수도 있으니 유지
+  itemImageUrl?: string | null;
+
+  status?: string; // 예: "결제 대기 중 (진행 중)"
+  statusText?: string; // 서버 라벨 (있으면)
+
   startAt?: string;
   startTime?: string;
+
   endAt?: string;
-  endTime?: string; // ✅ 실제 응답
+  endTime?: string;
+
   finalPrice?: number;
   winnerNickname?: string;
   currentPrice?: number;
   price?: number;
 };
-// 판매 탭 API 예시 (/mypage/sales 샘플 포함)
+
+// 판매 탭 등의 응답 원본
 export type ApiSale = {
-  id?: number; // 일부 API는 id
-  auctionId?: number; // /mypage/sales 는 auctionId
-  title: string;
-  meAsSeller?: string; // 나(판매자)
+  id?: number;
+  auctionId?: number;
+
+  title?: string;
+  meAsSeller?: string;
+
   image?: string | null;
-  itemImageUrl?: string | null; // /mypage/sales
-  status?: string; // BEFORE/SALE/... 또는 한글/영문키
+  itemImageUrl?: string | null;
+
+  status?: string; // ex. "BEFORE"/"SALE" 또는 한글 상태
+  statusText?: string; // ex. "결제 대기 중 (진행 중)"
+
   startAt?: string;
   endAt?: string;
-  startTime?: string; // /mypage/sales
-  endTime?: string; // /mypage/sales
-  finalPrice?: number; // /mypage/sales
-  winnerNickname?: string; // /mypage/sales
+  startTime?: string;
+  endTime?: string;
+
+  finalPrice?: number;
+  winnerNickname?: string;
   buyerNickname?: string;
-  statusText?: string; // /mypage/sales (예: "결제 대기 중 (진행 중)")
 };
 
-// ✅ 기존 코드 호환 alias
+// alias (기존 코드 호환용)
 export type PurchaseResponseItem = ApiPurchase;
 export type SaleResponseItem = ApiSale;
-
-/* =========================
- *     Status Utilities
- * ========================= */
-
-// 화면 표기 라벨(기본)
-export const STATUS_LABEL: Record<TradeStatus, string> = {
-  BEFORE: "등록 전",
-  SALE: "판매 중",
-  PROGRESS: "진행 중",
-  COMPLETED: "거래 완료",
-  FINISH: "종료됨",
-};
-
-// 영어/기타 문자열을 한글로 보정하는 매퍼 (statusText가 없을 때 보조)
-const STATUS_TEXT_MAP: Record<string, string> = {
-  WAIT_PAY: "결제 대기 중",
-  WAITING_PAYMENT: "결제 대기 중",
-  PAID: "결제 완료",
-  CLOSED: "종료됨",
-  CLOSE: "종료됨",
-  WIN: "낙찰",
-  CANCELED: "취소됨",
-  CANCELLED: "취소됨",
-  IN_PROGRESS: "진행 중",
-  RUNNING: "진행 중",
-  DONE: "거래 완료",
-};
-
-// 한/영/혼합 표기 정규화 → TradeStatus
-export const toStatus = (raw?: string, statusText?: string): TradeStatus => {
-  if (!raw && !statusText) return "FINISH";
-  const u = String(raw ?? statusText ?? "")
-    .trim()
-    .toUpperCase();
-
-  // 직접 매핑(한글/영문)
-  if (["BEFORE", "경매전", "경매 전", "READY", "NOT_STARTED"].includes(u))
-    return "BEFORE";
-  if (
-    [
-      "SALE",
-      "진행 중",
-      "IN_PROGRESS",
-      "RUNNING",
-      "ON_SALE",
-      "BIDDING",
-    ].includes(u)
-  )
-    return "SALE";
-  if (
-    [
-      "PROGRESS",
-      "결제 중",
-      "결재 중",
-      "PAYMENT",
-      "PAYMENT_PENDING",
-      "WAIT_PAY",
-      "WAITING_PAYMENT",
-      "PAID",
-    ].includes(u)
-  )
-    return "PROGRESS";
-  if (["COMPLETED", "경매 완료", "DONE", "FINISH"].includes(u))
-    return "COMPLETED";
-  if (["CLOSED", "CLOSE", "CANCELLED", "CANCELED", "종료", "만료"].includes(u))
-    return "FINISH";
-
-  // 괄호형 텍스트(예: "결제 대기 중 (진행 중)")에서 내부 상태 힌트 추출
-  if (/\(.*진행\s*중.*\)/.test(u) || /\(.*IN_PROGRESS.*\)/.test(u))
-    return "PROGRESS";
-  if (/결제\s*대기/.test(u)) return "PROGRESS";
-  if (/완료/.test(u)) return "COMPLETED";
-
-  return "FINISH";
-};
-
-// 종료시간 기반 보조 판정 (end가 과거면 종료 취급)
-export const isEndedByTime = (endAt?: string): boolean => {
-  if (!endAt) return false;
-  const end = new Date(endAt).getTime();
-  return Number.isFinite(end) ? end <= Date.now() : false;
-};
-
-/** 시간까지 고려한 "실효 상태" 도출
- * - COMPLETED 는 무조건 완료 우선
- * - 종료시간이 지났으면 FINISH 로 강제
- * - 그 외에는 본래 status 유지
- */
-export const deriveEffectiveStatus = (
-  item: Pick<TradeItem, "status" | "auctionEnd">
-): TradeStatus => {
-  if (item.status === "COMPLETED") return "COMPLETED";
-  if (isEndedByTime(item.auctionEnd)) return "FINISH";
-  return item.status;
-};
-
-// 진행/종료 여부 (실효 상태 + 시간 고려)
-export const isOngoing = (
-  item: Pick<TradeItem, "status" | "auctionEnd">
-): boolean => {
-  const eff = deriveEffectiveStatus(item);
-  return eff === "SALE" || eff === "PROGRESS" || eff === "BEFORE";
-};
-
-export const isEnded = (
-  item: Pick<TradeItem, "status" | "auctionEnd">
-): boolean => {
-  const eff = deriveEffectiveStatus(item);
-  return eff === "FINISH" || eff === "COMPLETED";
-};
-
-// 정렬: 진행 우선 → 종료 뒤로, 종료 내에서는 종료시각 최근순
-export const compareTradeItems = (a: TradeItem, b: TradeItem): number => {
-  const ea = deriveEffectiveStatus(a);
-  const eb = deriveEffectiveStatus(b);
-
-  // 진행건을 상단에: SALE(0) → PROGRESS(1) → BEFORE(2) → FINISH(3) → COMPLETED(4)
-  const ORDER: Record<TradeStatus, number> = {
-    SALE: 0,
-    PROGRESS: 1,
-    BEFORE: 2,
-    FINISH: 3,
-    COMPLETED: 4,
-  };
-
-  const so = ORDER[ea] - ORDER[eb];
-  if (so !== 0) return so;
-
-  // 동일 그룹이면 종료시각 내림차순(최근 종료가 위)
-  const ta = a.auctionEnd ? new Date(a.auctionEnd).getTime() : 0;
-  const tb = b.auctionEnd ? new Date(b.auctionEnd).getTime() : 0;
-  return tb - ta;
-};
-
-// 잔여 시간 텍스트 (예: "1시간 20분 남음" / "종료")
-export const timeLeftLabel = (endAt?: string): string => {
-  if (!endAt) return "";
-  const end = new Date(endAt).getTime();
-  const diff = end - Date.now();
-  if (!Number.isFinite(end) || diff <= 0) return "종료";
-  const m = Math.floor(diff / 60000);
-  if (m < 60) return `${m}분 남음`;
-  const h = Math.floor(m / 60);
-  const rm = m % 60;
-  return `${h}시간 ${rm}분 남음`;
-};
-
-/* =========================
- *     API → 표준 모델
- * ========================= */
-
-const pickThumb = (r: any): string | null =>
-  r?.thumbnail ?? r?.image ?? r?.itemImageUrl ?? r?.mainImageUrl ?? null;
-
-const pickStart = (r: any): string | undefined =>
-  r?.startAt ?? r?.startTime ?? undefined;
-
-const pickEnd = (r: any): string | undefined =>
-  r?.endAt ?? r?.endTime ?? undefined;
-
-const pickCounterpartyPurchase = (r: any): string | undefined =>
-  r?.seller ?? r?.sellerNickname ?? r?.winnerNickname ?? undefined;
-
-// ⚠️ 판매에서는 상대방(구매자/낙찰자)을 우선적으로 표시
-const pickCounterpartySale = (r: any): string | undefined =>
-  r?.winnerNickname ?? r?.buyerNickname ?? r?.meAsSeller ?? undefined;
-
-const pickPrice = (r: any): number | undefined =>
-  typeof r?.finalPrice === "number"
-    ? r.finalPrice
-    : typeof r?.currentPrice === "number"
-      ? r.currentPrice
-      : typeof r?.price === "number"
-        ? r.price
-        : undefined;
-
-const pickStatusTextKR = (
-  status?: string,
-  statusText?: string
-): string | undefined => {
-  if (statusText && String(statusText).trim()) return statusText;
-  if (!status) return undefined;
-  const key = String(status).trim().toUpperCase();
-  if (STATUS_TEXT_MAP[key]) return STATUS_TEXT_MAP[key];
-  // ENUM 라벨로 대체
-  const s = toStatus(key);
-  return STATUS_LABEL[s];
-};
-
-export const fromPurchase = (r: ApiPurchase): TradeItem => {
-  // id 우선순위: auctionId -> id
-  const rawId =
-    typeof r.auctionId === "number"
-      ? r.auctionId
-      : typeof r.id === "number"
-        ? r.id
-        : undefined;
-
-  const status = toStatus(r.status, r.statusText);
-
-  return {
-    id: String(rawId ?? ""), // 빈 문자열이라도 최소 string 보장
-    title: r.title ?? r.itemName ?? "",
-    thumbUrl: pickThumb(r),
-    status,
-    statusText: pickStatusTextKR(r.status, r.statusText),
-    counterparty: pickCounterpartyPurchase(r), // sellerNickname 등
-    auctionStart: pickStart(r), // startAt/startTime (없으면 undefined)
-    auctionEnd: pickEnd(r), // endAt/endTime
-    price: pickPrice(r),
-  };
-};
-
-export const fromSale = (r: ApiSale): TradeItem => {
-  const id = typeof r.id === "number" ? r.id : (r.auctionId as number);
-  const status = toStatus(r.status, r.statusText);
-  return {
-    id: String(id),
-    title: r.title ?? "",
-    thumbUrl: pickThumb(r),
-    status,
-    statusText: pickStatusTextKR(r.status, r.statusText),
-    counterparty: pickCounterpartySale(r),
-    auctionStart: pickStart(r),
-    auctionEnd: pickEnd(r),
-    price: pickPrice(r),
-  };
-};
-
-/* =========================
- *  Lists & Filter Helpers
- * ========================= */
-
-// 리스트 변환 유틸(안전)
-export const mapPurchases = (
-  rows: ApiPurchase[] | null | undefined
-): TradeItem[] => (rows ?? []).map(fromPurchase);
-
-export const mapSales = (rows: ApiSale[] | null | undefined): TradeItem[] =>
-  (rows ?? []).map(fromSale);
-
-// 필터 라벨(탭 표기)
-export const FILTER_LABEL: Record<TradeFilterStatus, string> = {
-  ALL: "전체",
-  ONGOING: "진행 중",
-  COMPLETED: "완료",
-  CANCELLED: "취소/실패",
-};
-
-/** 필터 판정기
- * - 요구사항: 판매 탭에서는 BEFORE 노출(ONGOING으로 취급)
- * - 구매 탭에서는 BEFORE 미노출(초안은 구매자 관점에서 볼 일 없음)
- */
-export const matchFilter = (
-  kind: TradeKind,
-  filter: TradeFilterStatus,
-  item: TradeItem
-): boolean => {
-  const eff = deriveEffectiveStatus(item);
-
-  // 정책: 구매 탭에서는 BEFORE 숨김
-  if (kind === "purchase" && eff === "BEFORE") {
-    return false;
-  }
-
-  // 판매 탭에서 BEFORE 노출(= 진행 중으로 취급)
-  const treatBeforeAsOngoing = kind === "sale";
-
-  switch (filter) {
-    case "ALL":
-      return kind === "purchase" ? eff !== "BEFORE" : true;
-
-    case "ONGOING":
-      if (isEndedByTime(item.auctionEnd)) return false; // 시간상 종료는 제외
-      if (eff === "SALE" || eff === "PROGRESS") return true;
-      if (eff === "BEFORE" && treatBeforeAsOngoing) return true;
-      return false;
-
-    case "COMPLETED":
-      return eff === "COMPLETED";
-
-    case "CANCELLED":
-      // 완료가 아닌 종료(유찰/만료/취소 등) = FINISH
-      return eff === "FINISH";
-
-    default:
-      return true;
-  }
-};
-
-// 필터 적용 + 정렬까지 일괄
-export const applyTradeFilter = (
-  kind: TradeKind,
-  filter: TradeFilterStatus,
-  rows: TradeItem[]
-): TradeItem[] =>
-  rows.filter((r) => matchFilter(kind, filter, r)).sort(compareTradeItems);
-
-/* =========================
- *   Legacy-style helpers
- * ========================= */
-
-export const filterOngoing = (rows: TradeItem[]) => rows.filter(isOngoing);
-export const filterEnded = (rows: TradeItem[]) => rows.filter(isEnded);

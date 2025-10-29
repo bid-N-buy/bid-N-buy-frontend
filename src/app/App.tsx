@@ -197,6 +197,10 @@ export default function App() {
               {/* <Route path="inquiries/:id" element={<InquiryDetail />} /> */}
             </Route>
             <Route path="/profile" element={<ProfileDetailsContainer />} />
+            <Route
+              path="/users/:targetUserId"
+              element={<ProfileDetailsContainer />}
+            />
           </Route>
 
           {/* 기타 */}
