@@ -36,6 +36,7 @@ type AuctionListItem = {
   mainImageUrl?: string;
   sellingStatus?: string; // 예: "시작전", "진행중", ...
   sellerNickname?: string;
+  sellerId?: number | string; // ✅ 이 값이 오면 userId기반 필터 가능
 };
 
 export type UseSalePreviewOptions = {
@@ -43,6 +44,7 @@ export type UseSalePreviewOptions = {
   size?: number;
   sort?: string;
   enabled?: boolean;
+
   /**
    * 특정 유저의 아이템만 보고 싶을 때 (다른 사람 프로필)
    * - undefined → "내 것" 모드
@@ -52,9 +54,8 @@ export type UseSalePreviewOptions = {
 
   /**
    * 내 닉네임(혹은 현재 로그인 유저 닉네임).
-   * /auctions는 sellerNickname만 주기 때문에
-   * 내 것만 고르려면 필요함.
-   * 다른 유저 프로필일 땐 그 유저 닉네임 넣어주면 됨.
+   * /auctions는 sellerNickname만 줄 수 있어서
+   * sellerId가 아예 안 올 때 fallback 용도로 사용.
    */
   ownerNickname?: string;
 };
@@ -164,11 +165,11 @@ function parseListResponse<T>(data: T[] | { items?: T[]; total?: number }): {
  *
  * 내 프로필일 땐:
  *   - COMPLETED은 /mypage/sales
- *   - ONGOING은 /auctions 중에서 sellerNickname === 내 닉네임 && 진행중만
+ *   - ONGOING은 /auctions 중 sellerId === 내 id (또는 sellerNickname === 내 닉네임) && 진행중
  *
  * 다른 유저 프로필일 땐:
- *   - 아직 백엔드 특정 유저 전용 API 없음 → 임시로 /auctions 불러서 sellerNickname === 그 유저 닉네임 으로만 ONGOING,
- *     COMPLETED은 아직 없으니까 빈 배열로 (0건)
+ *   - COMPLETED은 현재 백엔드에 상대방 완료내역 API 없으므로 비움
+ *   - ONGOING은 /auctions 에서 sellerId === 그 사람 id (없으면 닉네임으로 fallback)
  */
 export function useSalePreview(
   group: PreviewGroup,
@@ -179,7 +180,7 @@ export function useSalePreview(
     size: sizeRaw = 3,
     sort = "end",
     enabled = true,
-    ownerUserId,
+    ownerUserId, // ex) "2" (string) or 2 (number)
     ownerNickname,
   } = opts;
 
@@ -190,8 +191,12 @@ export function useSalePreview(
   const [loading, setLoading] = useState<boolean>(!!enabled);
   const [error, setError] = useState<unknown>(null);
 
-  // nickname은 의존성으로 쓰일 수 있으니까 메모 키로
+  // 메모 키들 (의존성에서 객체 비교 대신 안정적으로 비교하려고 string화)
   const nickKey = useMemo(() => ownerNickname ?? "", [ownerNickname]);
+  const ownerIdKey = useMemo(
+    () => (ownerUserId !== undefined ? String(ownerUserId) : ""),
+    [ownerUserId]
+  );
 
   useEffect(() => {
     if (!enabled) {
@@ -209,20 +214,18 @@ export function useSalePreview(
         setLoading(true);
         setError(null);
 
-        // ⚠️ 다른 유저 프로필일 때: ownerUserId 가 정의돼 있다
         const viewingOther = ownerUserId !== undefined;
 
-        // ───────── COMPLETED 섹션 ─────────
+        // ── COMPLETED 섹션 ──────────────────────────────────
         if (group === "COMPLETED") {
           if (viewingOther) {
-            // 지금은 상대방의 "완료 거래"용 API가 명확히 없다고 했으니
-            // 일단 빈값 처리
+            // 상대 유저 완료내역은 아직 서버 API 없음 → 빈값
             setItems([]);
             setCount(0);
             return;
           }
 
-          // 내 판매완료 내역: /mypage/sales
+          // 내 판매완료 내역
           const { data } = await api.get<
             MySaleItem[] | { items?: MySaleItem[]; total?: number }
           >("/mypage/sales", {
@@ -232,14 +235,13 @@ export function useSalePreview(
 
           const { list } = parseListResponse<MySaleItem>(data);
 
-          // COMPLETED 인 것만 추림
+          // COMPLETED 상태만 추리기
           const completedOnly = list.filter((it) =>
             isCompleted(
               normalizeState(it.sellingStatus ?? it.statusText ?? it.status)
             )
           );
 
-          // PreviewItem 형태로 매핑
           const mapped: PreviewItem[] = completedOnly.map((it) => ({
             id: it.auctionId,
             title: it.title,
@@ -251,27 +253,41 @@ export function useSalePreview(
           return;
         }
 
-        // ───────── ONGOING 섹션 ─────────
-        // 진행중은 /auctions 전체에서 sellerNickname 필터
+        // ── ONGOING 섹션 ────────────────────────────────────
         const { data } = await api.get<{
           data: AuctionListItem[];
           totalElements?: number;
-          // ... 기타 페이지 정보
         }>("/auctions", {
-          params: { page, size: 50, sort }, // 넉넉히 50개만 끊어서 불러옴
+          params: { page, size: 50, sort }, // 최대 50개만 한번에
           signal: ctrl.signal,
         });
 
         const allAuctions = Array.isArray(data.data) ? data.data : [];
 
-        // 닉네임 기준으로 내가 올린(or 상대가 올린) 것만
-        const mineOnly = ownerNickname
-          ? allAuctions.filter(
-              (a) => a.sellerNickname && a.sellerNickname === ownerNickname
-            )
-          : allAuctions;
+        // 1차: sellerId와 ownerUserId 일치로 필터 (가장 정확)
+        let mineOnly = allAuctions;
+        if (ownerUserId != null) {
+          const wantId = String(ownerUserId);
+          const byId = allAuctions.filter((a) =>
+            a.sellerId != null ? String(a.sellerId) === wantId : false
+          );
 
-        // 그 중에서 "진행중(또는 경매전/결제중 등 아직 안 끝난)" 상태만
+          if (byId.length > 0) {
+            mineOnly = byId;
+          } else if (ownerNickname) {
+            // 2차: sellerId가 없거나 매칭 실패 → 닉네임 fallback
+            mineOnly = allAuctions.filter(
+              (a) => a.sellerNickname && a.sellerNickname === ownerNickname
+            );
+          }
+        } else if (ownerNickname) {
+          // ownerUserId 자체가 없으면 내 페이지 상황이니까 닉네임 기준
+          mineOnly = allAuctions.filter(
+            (a) => a.sellerNickname && a.sellerNickname === ownerNickname
+          );
+        }
+
+        // 진행중 상태만
         const ongoingOnly = mineOnly.filter((a) =>
           isOngoing(normalizeState(a.sellingStatus))
         );
@@ -299,8 +315,8 @@ export function useSalePreview(
     size,
     sort,
     enabled,
-    ownerUserId,
-    nickKey, // nickname이 바뀌면 다시 로드
+    ownerIdKey, // ownerUserId 바뀌면 다시
+    nickKey, // ownerNickname 바뀌면 다시
   ]);
 
   return { items, count, loading, error };

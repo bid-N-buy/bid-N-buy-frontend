@@ -1,4 +1,3 @@
-// src/features/mypage/hooks/useProfile.ts
 import { useCallback, useEffect, useMemo, useState } from "react";
 import api from "../../../shared/api/axiosInstance";
 import { useAuthStore } from "../../auth/store/authStore";
@@ -7,7 +6,7 @@ export type ProfileDto = {
   nickname: string;
   email?: string;
   avatarUrl?: string;
-  temperature?: number; // 0~100 가정
+  temperature?: number | null; // 0~100 or null
 };
 
 type Options = {
@@ -35,7 +34,7 @@ export function useProfile(userId?: number | string, opts: Options = {}) {
    * 우선순위:
    * 1) endpoint가 문자열이면 그대로 사용
    * 2) endpoint가 함수면 userId를 넣어서 사용 (userId 없으면 "/mypage")
-   * 3) 둘 다 없으면 userId ? `/auth/${userId}` : "/mypage"
+   * 3) 둘 다 없으면 userId ? `/auth/${userId}` : "/mypage`
    */
   const url = useMemo(() => {
     if (typeof endpoint === "string") return endpoint;
@@ -71,8 +70,6 @@ export function useProfile(userId?: number | string, opts: Options = {}) {
         setLoading(true);
         setError(null);
 
-        // axiosInstance 사용. 인터셉터가 자동으로 토큰 붙이겠지만
-        // 혹시 인터셉터보다 먼저 실행될 타이밍 대비해서 headers에 한 번 더 넣어줌.
         const res = await api.get(url, {
           signal: ctrl.signal,
           headers: accessToken
@@ -86,28 +83,24 @@ export function useProfile(userId?: number | string, opts: Options = {}) {
 
         console.log("[useProfile] response from", url, raw);
 
-        // -------------------------------
-        // 🔥 온도 매핑 로직 (여기가 핵심 변경점)
-        // -------------------------------
-        // 서버가 temperature 또는 user_temperature 같은 값을 안 내려주거나
-        // null을 내려주는 경우가 있어서 fallbackTemp를 넣어서 보여줄 거야.
-        // 이 fallbackTemp는 '일단 화면에 보여줄 기본 신뢰도' 같은 느낌.
-        const fallbackTemp = 72.5; // <- 원하는 기본값으로 조정 가능
-
-        // 서버에서 올 법한 키들 전부 훑어서 후보로 사용
-        const tempCandidate =
+        // ---- 온도 처리 (fallback 제거 버전) ----
+        // 서버가 그냥 null 주면 그대로 null로 둔다.
+        // 절대 임의로 72.5 같은 기본값을 넣지 않는다.
+        const rawTempCandidate =
           raw.temperature ??
           raw.user_temperature ??
           raw.userTemperature ??
           raw.userTemperatureScore ??
           raw.userTemp ??
-          fallbackTemp;
+          null;
 
-        // 숫자 변환 + 클램프(0~100)
-        let tempNum = Number(tempCandidate);
-        if (!Number.isFinite(tempNum)) tempNum = fallbackTemp;
-        if (tempNum < 0) tempNum = 0;
-        if (tempNum > 100) tempNum = 100;
+        let tempNum: number | null = Number(rawTempCandidate);
+        if (!Number.isFinite(tempNum)) {
+          tempNum = null;
+        } else {
+          if (tempNum < 0) tempNum = 0;
+          if (tempNum > 100) tempNum = 100;
+        }
 
         const mapped: ProfileDto = {
           nickname: raw.nickname ?? "NickName",
@@ -118,17 +111,15 @@ export function useProfile(userId?: number | string, opts: Options = {}) {
             raw.profile_image_url ??
             raw.imageUrl ??
             "",
-          temperature: tempNum,
+          temperature: tempNum, // now can be null
         };
 
-        console.log("[useProfile] mapped profile", mapped);
+        console.log("[useProfile] mapped profile (CLEAN)", mapped);
 
         setData(mapped);
       } catch (e: any) {
         if (!alive || e?.name === "CanceledError") return;
 
-        // axiosInstance가 401에서 리프레시를 이미 시도할 수 있으므로
-        // 여기선 그냥 에러 저장만.
         setError(
           e?.response?.status
             ? {

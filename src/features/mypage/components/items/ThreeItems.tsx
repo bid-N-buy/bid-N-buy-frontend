@@ -4,8 +4,8 @@ import { Link, useNavigate } from "react-router-dom";
 import TradeRowCompact from "../items/TradeRowCompact";
 import type { TradeItem } from "../../types/trade";
 
-// ✅ 공통 라벨 & 정렬 유틸 (경로는 프로젝트 구조에 맞춰 조정)
-import { STATUS_LABEL } from "../../types/trade";
+// 공통 유틸
+import { STATUS_LABEL } from "../../utils/tradeMappers";
 import { compareTradeItems, isEndedByTime } from "../../utils/tradeStatus";
 
 type Props = {
@@ -16,7 +16,7 @@ type Props = {
   sortBy?: "auctionEnd" | "auctionStart";
 };
 
-// 공통 날짜 포맷
+// ========== 날짜 포맷 유틸 ==========
 const formatDate = (iso?: string) => {
   if (!iso) return "-";
   const d = new Date(iso);
@@ -28,26 +28,35 @@ const formatDate = (iso?: string) => {
   return `${d.getFullYear()}.${mm}.${dd} ${hh}:${mi}`;
 };
 
-// 남은 시간 텍스트
-const timeLeftLabel = (endAt?: string): string => {
-  if (!endAt) return "";
-  const end = new Date(endAt).getTime();
-  const diff = end - Date.now();
-  if (!Number.isFinite(end) || diff <= 0) return "종료";
-  const m = Math.floor(diff / 60000);
-  if (m < 60) return `${m}분 남음`;
-  const h = Math.floor(m / 60);
-  const rm = m % 60;
-  return `${h}시간 ${rm}분 남음`;
-};
+// ========== 상태/시간 텍스트 분리 유틸 ==========
+// "진행 중 · 9시간 9분 남음" -> { badgeLabel: "진행 중", subLabel: "9시간 9분 남음" }
+// "종료" -> { badgeLabel: "종료" }
+function splitStatus(statusText?: string): {
+  badgeLabel: string;
+  subLabel?: string;
+} {
+  if (!statusText) return { badgeLabel: "" };
 
-// 상태 배지 스타일(로컬)
+  const parts = statusText.split("·").map((s) => s.trim());
+
+  if (parts.length === 1) {
+    return { badgeLabel: parts[0] };
+  }
+
+  return {
+    badgeLabel: parts[0],
+    subLabel: parts.slice(1).join(" · "),
+  };
+}
+
+// ========== 상태 배지 스타일 ==========
 const BADGE: Record<NonNullable<TradeItem["status"]>, string> = {
-  BEFORE: "border-neutral-200 bg-neutral-50 text-neutral-700",
+  BEFORE: "border-neutral-300 bg-neutral-50 text-neutral-700",
   SALE: "border-emerald-200 bg-emerald-50 text-emerald-700",
   PROGRESS: "border-blue-200 bg-blue-50 text-blue-700",
-  COMPLETED: "border-neutral-200 bg-neutral-50 text-neutral-700",
-  FINISH: "border-neutral-200 bg-neutral-50 text-neutral-500",
+  COMPLETED: "border-neutral-300 bg-neutral-50 text-neutral-700",
+  FINISH: "border-neutral-300 bg-neutral-50 text-neutral-500",
+  UNKNOWN: "border-neutral-300 bg-neutral-50 text-neutral-500",
 };
 
 export default function ThreeCompactSection({
@@ -59,6 +68,7 @@ export default function ThreeCompactSection({
 }: Props) {
   const navigate = useNavigate();
 
+  // 상위 3개 뽑기
   const top3 = useMemo(() => {
     const list = [...(items ?? [])];
 
@@ -73,7 +83,7 @@ export default function ThreeCompactSection({
         .slice(0, 3);
     }
 
-    // 기본: 공통 정렬(진행군 우선 → 종료군, 종료 내 최근 종료 우선)
+    // 기본: 진행군 우선 → 종료군, 종료군 내부는 최근 종료 우선
     return list.sort(compareTradeItems).slice(0, 3);
   }, [items, sortBy]);
 
@@ -81,6 +91,7 @@ export default function ThreeCompactSection({
     <section className="space-y-2">
       <div className="mb-1 flex items-center justify-between">
         <h2 className="text-[18px] font-semibold text-neutral-900">{title}</h2>
+
         {items.length > 3 && (
           <Link
             to={seeAllTo}
@@ -99,20 +110,26 @@ export default function ThreeCompactSection({
           </li>
         ) : (
           top3.map((it) => {
+            // 상태텍스트를 두 줄(상태 / 남은시간)로 쪼갠다
+            const { badgeLabel, subLabel } = splitStatus(
+              it.statusText ?? STATUS_LABEL[it.status]
+            );
+
             const right = (
               <div className="text-right">
                 <span
                   className={[
-                    "inline-block rounded border px-2 py-0.5 text-[11px]",
+                    "inline-block rounded border px-2 py-1 text-[11px] leading-[1.1] font-medium",
                     BADGE[it.status],
                   ].join(" ")}
                 >
-                  {it.statusText ?? STATUS_LABEL[it.status]}
+                  {badgeLabel}
                 </span>
-                {/* 남은 시간 또는 종료 표기 */}
-                {it.auctionEnd && (
+
+                {/* 남은 시간 / 시작까지 남은 시간 등 */}
+                {subLabel && (
                   <div className="mt-1 text-[11px] text-neutral-500">
-                    {timeLeftLabel(it.auctionEnd)}
+                    {subLabel}
                   </div>
                 )}
               </div>
@@ -123,16 +140,16 @@ export default function ThreeCompactSection({
                 key={it.id}
                 item={it}
                 onClick={(id) => navigate(`/auctions/${id}`)}
-                // 구매자: 판매자 이름, 판매자: 경매 시작 시간
+                // 구매자 화면이면 판매자 닉네임, 판매자 화면이면 "경매 시작: ~"
                 subtitleTop={
                   role === "seller"
                     ? `경매 시작: ${formatDate(it.auctionStart)}`
                     : it.counterparty || ""
                 }
-                // 하단은 항상 마감 시간
+                // 항상 마감 표기
                 subtitleBottom={`마감: ${formatDate(it.auctionEnd)}`}
                 rightText={right}
-                // 선택: 종료된 건은 줄 흐리게(가독성)
+                // 종료된 건은 살짝 희미하게
                 className={
                   isEndedByTime(it.auctionEnd) ? "opacity-80" : undefined
                 }

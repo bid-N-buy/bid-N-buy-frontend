@@ -6,13 +6,22 @@ import type { TradeItem } from "../../types/trade";
 
 type Props = {
   item: TradeItem;
-  wishStyle?: boolean; // 찜 화면이면 true → 오른쪽에 하트 + 현재가
+  wishStyle?: boolean;
   onToggleLike?: (auctionId: number, nextLiked: boolean) => void;
-  rightText?: React.ReactNode; // 구매/판매 내역 등에서 오른쪽에 표시할 상태 텍스트 override
-  onClick?: (id: string) => void;
+  rightText?: React.ReactNode;
+  onClick?: (id: string | number) => void;
   subtitleTop?: string;
   subtitleBottom?: string;
   className?: string;
+
+  // 구매 확정 (별점 → 정산) 버튼 노출 여부
+  canConfirm?: boolean;
+
+  // 구매 확정 버튼 눌렀을 때 부모에서 처리 (모달 오픈 등)
+  onConfirmClick?: (orderId: number | string) => void;
+
+  // 이 아이템만 로딩 중인지 여부
+  confirming?: boolean;
 };
 
 function fmtDateTime(iso?: string) {
@@ -35,41 +44,84 @@ const TradeRowCompact: React.FC<Props> = ({
   subtitleTop,
   subtitleBottom,
   className,
+  canConfirm = false,
+  onConfirmClick,
+  confirming = false,
 }) => {
   const nav = useNavigate();
 
-  const { id, title, thumbUrl, price, statusText, counterparty, auctionEnd } =
-    item;
+  // 서버에서 내려온 필드들
+  const {
+    id,
+    title,
+    thumbUrl,
+    statusText,
+    counterparty,
+    auctionEnd,
+    price,
+    finalPrice,
+    currentPrice,
+    winningPrice,
+  } = item as any;
 
-  // 전체 row 클릭 시
+  // 구매확정/정산 API 호출 때 사용할 식별자
+  const orderId = (item as any).orderId ?? item.id;
+
+  // row 전체 클릭 시
   const handleRowClick = () => {
-    if (!id) return;
-    if (onClick) onClick(id);
-    else nav(`/auctions/${id}`);
+    if (id == null) return;
+    if (onClick) {
+      onClick(id);
+    } else {
+      nav(`/auctions/${id}`);
+    }
   };
 
   // 왼쪽 본문 보조 텍스트
   const topText =
     subtitleTop ?? (counterparty ? `판매자: ${counterparty}` : "");
-
   const bottomText =
     subtitleBottom ?? (auctionEnd ? `마감: ${fmtDateTime(auctionEnd)}` : "");
 
-  // 기본 모드에서 오른쪽에 뿌릴 내용
+  // 우측 상태 텍스트 기본
   const fallbackRightNode = rightText ?? statusText ?? "";
 
-  // 가격 문자열
-  const priceStr = useMemo(
-    () =>
-      typeof price === "number"
-        ? price.toLocaleString("ko-KR") + "원"
-        : undefined,
-    [price]
-  );
+  // 💰 가격 계산
+  const numericPrice: number | undefined =
+    typeof price === "number"
+      ? price
+      : typeof finalPrice === "number"
+        ? finalPrice
+        : typeof currentPrice === "number"
+          ? currentPrice
+          : typeof winningPrice === "number"
+            ? winningPrice
+            : undefined;
 
-  // 찜 목록에서는 어차피 '찜한 상태'라 하트는 기본적으로 보라색 채움 상태로 노출하는 게 UX적으로 자연스럽다.
-  // 아직 서버 liked 값이 없으니 liked = true 가정.
+  const priceStr = useMemo(() => {
+    if (typeof numericPrice === "number") {
+      return numericPrice.toLocaleString("ko-KR") + "원";
+    }
+    return undefined;
+  }, [numericPrice]);
+
+  // 찜 화면일 때는 우측 하트 모드
   const liked = true;
+
+  // 구매 확정 버튼 text (상태에 따라 조금 느낌 다르게)
+  const confirmLabel = useMemo(() => {
+    const txt = String(statusText || "");
+    if (txt.includes("정산")) return "거래 완료하기";
+    if (txt.includes("결제")) return "수령 완료";
+    return "구매 확정";
+  }, [statusText]);
+
+  // 구매 확정 버튼 클릭
+  const handleConfirmClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // 행 전체 클릭 방지
+    if (confirming) return;
+    onConfirmClick?.(orderId);
+  };
 
   return (
     <li
@@ -95,9 +147,6 @@ const TradeRowCompact: React.FC<Props> = ({
               className="h-full w-full object-cover"
               loading="lazy"
               onError={(e) => {
-                // 개발 중 디버깅용
-                // console.error("❌ 이미지 로드 실패:", thumbUrl, item);
-
                 const el = e.currentTarget as HTMLImageElement;
                 el.src = "https://via.placeholder.com/64x64.png?text=%3F";
                 el.style.objectFit = "cover";
@@ -125,7 +174,7 @@ const TradeRowCompact: React.FC<Props> = ({
             <p className="text-sm text-neutral-600">{bottomText}</p>
           )}
 
-          {/* 찜 모드가 아닐 때만 본문에도 가격 노출 */}
+          {/* 찜 모드가 아닐 때만 가격 노출 */}
           {priceStr && !wishStyle && (
             <p className="mt-1 text-sm text-neutral-700">{priceStr}</p>
           )}
@@ -134,19 +183,19 @@ const TradeRowCompact: React.FC<Props> = ({
         {/* 우측 영역 */}
         <div
           className="shrink-0 pl-2 text-right text-sm text-neutral-700"
-          onClick={(e) => e.stopPropagation()} // 우측 눌러도 row 클릭 안 타게
+          onClick={(e) => e.stopPropagation()} // 우측 클릭은 row 클릭 막음
         >
           {wishStyle ? (
             <>
-              {/* 하트 버튼 */}
+              {/* 찜/하트 영역 */}
               <button
                 type="button"
                 aria-label={liked ? "찜 해제" : "찜 하기"}
                 aria-pressed={liked}
                 className="mb-2 inline-flex items-center justify-center rounded-full p-1 hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
                 onClick={() => {
-                  if (!id) return;
-                  onToggleLike?.(Number(id), !liked); // liked가 true니까 -> false로 토글 요청
+                  if (id == null) return;
+                  onToggleLike?.(Number(id), !liked);
                 }}
               >
                 <Heart
@@ -165,12 +214,28 @@ const TradeRowCompact: React.FC<Props> = ({
                 {priceStr ?? "0원"}
               </div>
             </>
+          ) : canConfirm ? (
+            // 구매 확정 버튼
+            <button
+              type="button"
+              onClick={handleConfirmClick}
+              disabled={confirming}
+              className={`rounded-[6px] border px-2 py-1 text-xs font-semibold ${
+                confirming
+                  ? "cursor-not-allowed border-neutral-300 bg-neutral-100 text-neutral-400"
+                  : "border-purple-600 text-purple-600 hover:bg-purple-50"
+              }`}
+            >
+              {confirming ? "처리 중..." : confirmLabel}
+            </button>
           ) : (
-            <div>{fallbackRightNode}</div>
+            // 그냥 상태 텍스트
+            <div className="text-sm text-neutral-700">{fallbackRightNode}</div>
           )}
         </div>
       </div>
 
+      {/* row 하단 구분선 */}
       <div className="h-px w-full bg-neutral-200" />
     </li>
   );
