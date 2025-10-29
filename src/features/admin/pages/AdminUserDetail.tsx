@@ -99,7 +99,7 @@ const AdminUserDetail = () => {
             )}
             {user.deletedAt && (
               <span className="flex items-center gap-1">
-                <span className="text-neutral-400">탈퇴일시</span>
+                <span className="text-neutral-400">강퇴일시</span>
                 <span className="font-medium text-neutral-700">
                   {formatDate(user.deletedAt)}
                 </span>
@@ -130,7 +130,8 @@ const AdminUserDetail = () => {
                   <strong>정지 기간 :</strong> {user.suspendedUntil}
                 </p>
                 <p>
-                  <strong>총 정지 횟수 :</strong> {user.suspensionCount}
+                  <strong>정지 전적 :</strong>{" "}
+                  {user.suspensionCount === 1 ? "있음" : "없음"}
                 </p>
               </li>
             ) : (
@@ -138,7 +139,7 @@ const AdminUserDetail = () => {
             )}
             <li>
               <p>
-                <strong>총 정지 횟수 :</strong> {user.banCount}
+                <strong>강퇴여부 :</strong> {user.banCount === 1 ? "O" : "X"}
               </p>
             </li>
           </ul>
