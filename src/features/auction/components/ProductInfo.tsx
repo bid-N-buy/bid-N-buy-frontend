@@ -1,4 +1,3 @@
-// todo 백 수정 후 liked 다시 확인
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import BidModal from "./BidModal";
 import { useAuthStore } from "../../auth/store/authStore";
@@ -15,6 +14,7 @@ import WishButton from "../../wish/components/WishButton";
 import { deleteAuction } from "../api/auctions";
 import { useAdminAuthStore } from "../../admin/store/adminStore";
 import { adminDeleteAuction } from "../../admin/api/admin";
+import { Link } from "react-router-dom";
 
 export interface ProductInfoProps {
   auctionId: number;
@@ -73,7 +73,6 @@ const ProductInfo = ({
 
   const { loadChatRoom } = useChatRoomAuc(sellerId, auctionId);
 
-  // 더보기 외부 클릭 시 닫기
   useEffect(() => {
     if (!isMenuOpen) return;
     const onDocMouseDown = (e: MouseEvent) => {
@@ -111,14 +110,14 @@ const ProductInfo = ({
   // 삭제
   const handleDeleteAuction = useCallback(async () => {
     if (!isSeller && !adminToken) return;
-    const ok = window.confirm("정말로 이 경매를 삭제하시겠어요?");
+    const ok = window.confirm("경매를 삭제하시겠습니까?");
     if (!ok) return;
 
     try {
       if (isSeller) await deleteAuction(auctionId);
       if (adminToken) await adminDeleteAuction(auctionId);
       showToast("경매가 삭제되었습니다.", "success");
-      onDeleteClick?.(); // 부모에서 후속 처리
+      onDeleteClick?.();
     } catch (err: any) {
       const msg =
         err?.response?.data?.message ?? err?.message ?? "삭제에 실패했습니다.";
@@ -132,7 +131,6 @@ const ProductInfo = ({
   const { submitBid, loading } = useBid({
     onSuccess: (res) => {
       showToast(res.message ?? "입찰이 완료되었습니다.", "success");
-      // 상위 페이지에 현재가 전달
       const nextPrice = res.item?.bidPrice;
       onAfterBid?.({
         currentPrice: Number.isFinite(nextPrice)
@@ -201,8 +199,6 @@ const ProductInfo = ({
 
   // 채팅방 생성
   const handleChatAdd = async (auctionId: number, sellerId: number) => {
-    // const token = useAuthStore.getState().accessToken; // 상단으로 옮겼어요 리렌더 반영되게 처리했습니다
-
     if (!token) {
       showToast("로그인이 필요합니다.", "error");
       return;
@@ -232,10 +228,10 @@ const ProductInfo = ({
     <>
       <div className="w-full lg:aspect-[645/500]">
         <div className="flex h-full flex-col justify-between gap-5 px-1.5 py-3 sm:gap-4 sm:px-2 sm:py-4 md:gap-4.5 md:px-2.5 md:py-5 lg:gap-5">
-          {/* 1-2. 카테고리 ~ 제목 */}
-          <div className="flex flex-col gap-1.5 sm:gap-1.5 md:gap-2 lg:gap-3.5">
-            {/* 1. 카테고리 + 더보기 */}
-            <div className="relative">
+          {/* 카테고리/제목/더보기 */}
+          <div className="flex">
+            <div className="flex min-w-0 flex-1 flex-col gap-1.5 sm:gap-1.5 md:gap-2 lg:gap-3.5">
+              {/* 카테고리 */}
               {(categoryMain || categorySub) && (
                 <div className="text-g300 text-h7 md:text-h6 sm:text-base">
                   {categoryMain ?? "카테고리"}
@@ -243,66 +239,69 @@ const ProductInfo = ({
                 </div>
               )}
 
-              {/* 더보기 */}
-              <div className="absolute top-0 right-0">
-                <button
-                  onClick={() => setIsMenuOpen((v) => !v)}
-                  className="hover:bg-g500/50 rounded-full p-1.5 transition-colors sm:p-2"
-                  aria-haspopup="menu"
-                  aria-expanded={isMenuOpen}
-                  aria-label="더보기"
-                >
-                  <EllipsisVertical className="text-g200 h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8" />
-                </button>
-
-                {isMenuOpen && (
-                  <div
-                    role="menu"
-                    className="border-g400 absolute top-full right-0 z-10 mt-2 w-18 rounded-md border bg-white shadow-lg"
-                  >
-                    <button
-                      onClick={handleShare}
-                      className="text-g100 hover:bg-g500 w-full px-3.5 py-2.5 text-center text-base transition-colors md:py-2.5"
-                      role="menuitem"
-                    >
-                      공유
-                    </button>
-
-                    {(isSeller || adminToken) && (
-                      <button
-                        onClick={handleDeleteAuction}
-                        className="border-g400 text-red hover:bg-g500 w-full border-t px-3.5 py-2.5 text-center text-base transition-colors md:py-2.5"
-                        role="menuitem"
-                      >
-                        삭제
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
+              {/* 제목 */}
+              {title && (
+                <div>
+                  <span className="text-g100 text-h4 sm:text-h4 md:text-h3 lg:text-h2 leading-none font-bold break-words whitespace-normal">
+                    {title}
+                  </span>
+                </div>
+              )}
             </div>
 
-            {/* 2. 제목 */}
-            {title && (
-              <div>
-                <span className="text-g100 text-h4 sm:text-h4 md:text-h3 lg:text-h2 max-w-full truncate pr-10 font-bold md:pr-12">
-                  {title}
-                </span>
-              </div>
-            )}
+            {/* 더보기 */}
+            <div className="relative flex-shrink-0">
+              <button
+                onClick={() => setIsMenuOpen((v) => !v)}
+                className="hover:bg-g500/50 rounded-full p-1.5 transition-colors sm:p-2"
+                aria-haspopup="menu"
+                aria-expanded={isMenuOpen}
+                aria-label="더보기"
+              >
+                <EllipsisVertical className="text-g200 h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8" />
+              </button>
+
+              {isMenuOpen && (
+                <div
+                  role="menu"
+                  className="border-g400 absolute top-full right-0 z-10 w-18 rounded-md border bg-white shadow-lg"
+                >
+                  <button
+                    onClick={handleShare}
+                    className="text-g100 hover:bg-g500 w-full px-3.5 py-2.5 text-center text-base transition-colors md:py-2.5"
+                    role="menuitem"
+                  >
+                    공유
+                  </button>
+
+                  {(isSeller || adminToken) && (
+                    <button
+                      onClick={handleDeleteAuction}
+                      className="border-g400 text-red hover:bg-g500 w-full border-t px-3.5 py-2.5 text-center text-base transition-colors md:py-2.5"
+                      role="menuitem"
+                    >
+                      삭제
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* 3. 판매자 정보 - todo 클릭 시 연결 */}
+          {/* 판매자 정보 */}
           {(sellerNickname || sellerProfileImageUrl) && (
-            <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
+            <Link
+              to={userId === sellerId ? "/mypage" : `/users/${sellerId}`}
+              className="flex cursor-pointer items-center gap-2 sm:gap-3 md:gap-4"
+            >
               <div className="bg-g500 h-11 w-11 flex-shrink-0 overflow-hidden rounded-full sm:h-12 sm:w-12 md:h-13 md:w-13 lg:h-17 lg:w-17">
-                {sellerProfileImageUrl ? (
+                {sellerProfileImageUrl && (
                   <img
                     src={buildImageUrl(sellerProfileImageUrl) ?? undefined}
                     alt={sellerNickname ?? "판매자"}
                     className="h-full w-full object-cover"
                   />
-                ) : null}
+                )}
               </div>
               <div className="flex min-w-0 items-center gap-1 sm:gap-2">
                 {sellerNickname && (
@@ -314,10 +313,10 @@ const ProductInfo = ({
                   {sellerTemperature ?? 0}°C
                 </span>
               </div>
-            </div>
+            </Link>
           )}
 
-          {/* 4. 가격 + 최소 입찰 단위 */}
+          {/* 가격/최소 입찰 단위 */}
           {(typeof currentPrice === "number" ||
             typeof minBidPrice === "number") && (
             <div className="flex flex-wrap items-baseline gap-1.5 sm:gap-2.5">
@@ -334,9 +333,8 @@ const ProductInfo = ({
             </div>
           )}
 
-          {/* 5-6. 버튼들 ~ 기타 */}
+          {/* 버튼들 */}
           <div className="flex flex-col justify-end gap-1 sm:gap-1.5 md:gap-2 lg:gap-3.5">
-            {/* 5. 버튼들 + 찜 */}
             <div className="flex items-stretch gap-2 md:gap-1.5">
               <div className="grid flex-1 grid-cols-1 gap-2 md:grid-cols-2 md:gap-2.5">
                 <button
@@ -362,7 +360,6 @@ const ProductInfo = ({
                 </button>
               </div>
 
-              {/* 찜 */}
               <WishButton
                 auctionId={auctionId}
                 initial={{ liked, wishCount: wishCount ?? 0 }}
@@ -371,7 +368,7 @@ const ProductInfo = ({
               />
             </div>
 
-            {/* 6. 기간 + 입찰 횟수 */}
+            {/* 기간/입찰 횟수 */}
             {(startTime || endTime || typeof bidCount === "number") && (
               <div className="bg-g500/50 text-h7 md:text-h6 flex items-center gap-2 rounded-md px-2 py-1.5 sm:gap-3 sm:px-3 sm:py-2 sm:text-base">
                 {(startTime || endTime) && (
@@ -408,7 +405,7 @@ const ProductInfo = ({
         onBidSubmit={handleBidSubmit}
       />
 
-      {/* 토스트 알림 */}
+      {/* 토스트 */}
       {toast.isVisible && (
         <Toast message={toast.message} type={toast.type} onClose={hideToast} />
       )}
