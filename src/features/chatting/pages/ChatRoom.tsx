@@ -33,7 +33,7 @@ const ChatRoom = ({
   const token = useAuthStore((state) => state.accessToken);
   const userId = useAuthStore.getState().userId;
 
-  const { markAsRead } = useChatModalStore();
+  const { totalUnreadCount, markAsRead } = useChatModalStore();
   const { refetchList } = useChatListApi();
 
   // 웹소켓 주소
@@ -162,14 +162,20 @@ const ChatRoom = ({
 
   // 메시지 수신 및 화면 업데이트 로직
   const handleMessageReceived = (message: IMessage) => {
-    try {
-      const messageBody = JSON.parse(message.body);
-      // 메시지 배열 상태 업데이트
-      setMessages((prevMessages) => {
-        return [...prevMessages, messageBody];
-      });
-    } catch (e) {
-      console.error("메시지 파싱 오류:", e, message.body);
+    const isCurrentChatRoom = chatroomId === messages.chatroomId;
+
+    if (isCurrentChatRoom) {
+      try {
+        const messageBody = JSON.parse(message.body);
+        // 메시지 배열 상태 업데이트
+        setMessages((prevMessages) => {
+          return [...prevMessages, messageBody];
+        });
+      } catch (e) {
+        console.error("메시지 파싱 오류:", e, message.body);
+      }
+    } else {
+      refetchList();
     }
   };
   // 새 메시지 생길 시 자동 스크롤 이동

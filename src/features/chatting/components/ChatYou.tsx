@@ -38,6 +38,7 @@ const ChatYou = ({
           sellerId,
           buyerId: userId,
           type: "ESCROW",
+          auctionId,
         }),
       });
 
