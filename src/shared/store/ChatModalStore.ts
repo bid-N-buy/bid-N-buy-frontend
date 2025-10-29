@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import type { ChatMessageProps } from "../../features/chatting/types/ChatType";
 
 type ModalView = "list" | "room";
 type ChatModalState = {
@@ -7,11 +8,14 @@ type ChatModalState = {
   selectedChatroomId: number | null;
   chatList: ChatListItemState[];
   totalUnreadCount: number;
+  initialLoading: boolean;
   openChatList: () => void;
   openChatRoom: (chatroomId: number) => void;
   onClose: () => void;
   setChatList: (list: ChatListItemState[]) => void;
   markAsRead: (chatroomId: number) => void;
+  fetchInitialChatList: (accessToken: string) => Promise<void>;
+  handleNewChatMessage: (message: ChatMessageProps) => void;
 };
 
 interface ChatListItemState {
@@ -28,6 +32,7 @@ export const useChatModalStore = create<ChatModalState>((set, get) => ({
   selectedChatroomId: null,
   chatList: [],
   totalUnreadCount: 0,
+  initialLoading: false,
 
   openChatList: () =>
     set({
@@ -37,7 +42,6 @@ export const useChatModalStore = create<ChatModalState>((set, get) => ({
     }),
   openChatRoom: (chatroomId) => {
     get().markAsRead(chatroomId);
-
     set({
       isChatOpen: true,
       targetView: "room",
@@ -71,4 +75,5 @@ export const useChatModalStore = create<ChatModalState>((set, get) => ({
       totalUnreadCount: calculateTotalUnread(updatedList),
     });
   },
+  fetchInitialChatList: (accessToken) => {},
 }));

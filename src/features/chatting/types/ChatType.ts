@@ -58,7 +58,7 @@ export interface ChatProductInfoProps {
 
 export interface ChatMessageProps {
   chatmessageId: number;
-  chatroomId: ChatListItemProps["chatroomId"];
+  chatroomId: number;
   senderId: number;
   imageUrl: string | null;
   message: string;
