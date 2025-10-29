@@ -36,7 +36,8 @@ const ChatYou = ({
         body: JSON.stringify({
           sellerId,
           buyerId: userId,
-          type: "ESCROW"
+          type: "ESCROW",
+          auctionId
         }),
       });
 
