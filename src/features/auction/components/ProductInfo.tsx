@@ -245,7 +245,7 @@ const ProductInfo = ({
               {/* 제목 */}
               {title && (
                 <div>
-                  <span className="text-g100 text-h4 sm:text-h4 md:text-h3 lg:text-h2 font-bold break-words whitespace-normal">
+                  <span className="text-g100 text-h4 sm:text-h4 md:text-h3 lg:text-h2 leading-none font-bold break-words whitespace-normal">
                     {title}
                   </span>
                 </div>

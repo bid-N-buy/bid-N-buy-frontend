@@ -86,7 +86,7 @@ const ProductCard = React.memo(function ProductCard({
 
       {/* 정보 */}
       <div className="mt-2">
-        <h3 className="text-g100 mb-1 line-clamp-2 px-1.5 text-base font-medium">
+        <h3 className="text-g100 mb-1 truncate px-1.5 text-base font-medium">
           {title}
         </h3>
 
