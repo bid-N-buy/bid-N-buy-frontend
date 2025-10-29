@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, ChevronRight, Filter, X } from "lucide-react";
-import ProductCard from "../components/ProductCard";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import AuctionFilter from "../components/AuctionFilter";
+import ProductCard from "../components/ProductCard";
 import { useAuctionSearch } from "../hooks/useAuctionSearch";
 import { useCategoryStore } from "../store/categoryStore";
 import type { CategoryNode } from "../api/categories";
 import type { AuctionItem } from "../types/auctions";
+import { ChevronDown, Filter, X } from "lucide-react";
 
 const PAGE_SIZE = 20;
 
@@ -25,7 +26,7 @@ const AuctionList = () => {
   const minPrice = sp.get("minPrice") ? Number(sp.get("minPrice")) : undefined;
   const maxPrice = sp.get("maxPrice") ? Number(sp.get("maxPrice")) : undefined;
   const includeEnded = sp.get("includeEnded") === "1";
-  const subCategoryId = sp.get("subCategoryId") // 카테고리 - 소분류 우선, 없으면 대분류
+  const subCategoryId = sp.get("subCategoryId")
     ? Number(sp.get("subCategoryId"))
     : undefined;
   const mainCategoryId = sp.get("subCategoryId")
@@ -109,7 +110,29 @@ const AuctionList = () => {
     setTempMaxPrice(hi);
   }, [minPrice, maxPrice, priceCeil]);
 
-  const applyPriceFilter = () => {
+  // 카테고리 핸들러
+  const handleCategorySelect = (
+    mainId?: number,
+    subId?: number,
+    categoryName?: { main: string; sub?: string }
+  ) => {
+    const next = new URLSearchParams(sp);
+    if (mainId) {
+      next.delete("subCategoryId");
+      next.set("mainCategoryId", String(mainId));
+    } else if (subId) {
+      next.delete("mainCategoryId");
+      next.set("subCategoryId", String(subId));
+    }
+    setSp(next, { replace: false });
+    if (categoryName) {
+      setSelectedCategory(categoryName);
+    }
+    setIsFilterOpen(false);
+  };
+
+  // 가격 핸들러
+  const handleApplyPrice = () => {
     const loRaw = Math.max(0, tempMinPrice);
     const hiRaw = Math.max(0, tempMaxPrice);
     const lo = Math.min(loRaw, priceCeil);
@@ -181,174 +204,30 @@ const AuctionList = () => {
     return "전체 경매";
   }, [searchKeyword, selectedCategory, mainCategoryId, subCategoryId]);
 
-  // 필터 컴포넌트 분리
-  const FilterContent = () => (
-    <div className="flex flex-col gap-6 lg:gap-8">
-      {/* 카테고리 */}
-      <div className="flex flex-col gap-4">
-        <div className="text-g100 text-h5 leading-tight font-bold">
-          카테고리
-        </div>
-
-        {loadingTop ? (
-          <div className="text-g300 text-h7">불러오는 중…</div>
-        ) : (
-          <div className="flex flex-col gap-2">
-            {mains.map((m: CategoryNode) => {
-              const isOpen = expandedCategory === String(m.categoryId);
-              const subs = subsByParent[m.categoryId] ?? [];
-
-              return (
-                <div key={m.categoryId} className="flex flex-col">
-                  {/* 대분류 */}
-                  <button
-                    onClick={() => onExpand(m)}
-                    className={`text-g100 hover:text-purple flex items-center justify-between py-1 text-left text-base transition-colors ${
-                      !subCategoryId && mainCategoryId === m.categoryId
-                        ? "text-purple font-semibold"
-                        : ""
-                    }`}
-                  >
-                    <span
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const next = new URLSearchParams(sp);
-                        next.delete("subCategoryId");
-                        next.set("mainCategoryId", String(m.categoryId));
-                        setSp(next, { replace: false });
-                        setSelectedCategory({ main: m.categoryName });
-                        setIsFilterOpen(false);
-                      }}
-                    >
-                      {m.categoryName}
-                    </span>
-                    <ChevronRight
-                      className={`h-4 w-4 transition-transform ${isOpen ? "rotate-90" : ""}`}
-                    />
-                  </button>
-
-                  {/* 소분류 */}
-                  {isOpen && (
-                    <div className="mt-2 flex flex-col gap-2 pl-4">
-                      {subs.map((s) => (
-                        <button
-                          key={s.categoryId}
-                          onClick={() => {
-                            const next = new URLSearchParams(sp);
-                            next.delete("mainCategoryId");
-                            next.set("subCategoryId", String(s.categoryId));
-                            setSp(next, { replace: false });
-                            setSelectedCategory({
-                              main: m.categoryName,
-                              sub: s.categoryName,
-                            });
-                            setIsFilterOpen(false);
-                          }}
-                          className={`py-1 text-left transition-colors ${
-                            subCategoryId === s.categoryId
-                              ? "text-purple font-medium"
-                              : "text-g200 hover:text-purple"
-                          } text-h7`}
-                        >
-                          {s.categoryName}
-                        </button>
-                      ))}
-                      {subs.length === 0 && (
-                        <div className="text-g300 text-h7 py-1">
-                          소분류 없음
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* 가격 필터 */}
-      <div className="flex flex-col gap-4">
-        <div className="text-g100 text-h5 leading-tight font-bold">가격</div>
-        <div className="flex flex-col gap-4">
-          <div className="bg-g400 relative h-1 rounded-md">
-            <div
-              className="bg-purple absolute h-1 rounded-md"
-              style={{
-                left: `${(priceCeil ? tempMinPrice / priceCeil : 0) * 100}%`,
-                right: `${100 - (priceCeil ? (tempMaxPrice / priceCeil) * 100 : 0)}%`,
-              }}
-            />
-            <input
-              type="range"
-              min="0"
-              max={priceCeil}
-              step="1000"
-              value={tempMinPrice}
-              onChange={(e) => {
-                const v = Number(e.target.value);
-                if (v < tempMaxPrice) setTempMinPrice(v);
-              }}
-              className="[&::-webkit-slider-thumb]:bg-purple pointer-events-none absolute h-1 w-full cursor-pointer appearance-none bg-transparent [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:shadow"
-            />
-            <input
-              type="range"
-              min="0"
-              max={priceCeil}
-              step="1000"
-              value={tempMaxPrice}
-              onChange={(e) => {
-                const v = Number(e.target.value);
-                if (v > tempMinPrice) setTempMaxPrice(v);
-              }}
-              className="[&::-webkit-slider-thumb]:bg-purple pointer-events-none absolute h-1 w-full cursor-pointer appearance-none bg-transparent [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:shadow"
-            />
-          </div>
-          <div className="text-purple text-h7 text-center font-medium">
-            현재가 : {tempMinPrice.toLocaleString()}원 ~{" "}
-            {tempMaxPrice.toLocaleString()}원
-          </div>
-        </div>
-        <button
-          onClick={applyPriceFilter}
-          className="bg-purple hover:bg-deep-purple rounded-md py-2 text-base font-medium text-white transition-colors"
-        >
-          적용
-        </button>
-      </div>
-
-      {/* 완료/종료 포함 */}
-      <div className="flex flex-col gap-4">
-        <label className="group flex cursor-pointer items-center justify-between">
-          <span className="text-g100 group-hover:text-purple text-base font-semibold transition-colors">
-            완료/종료 포함
-          </span>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={includeEnded}
-            onClick={toggleIncludeEnded}
-            className={`relative inline-flex h-6.5 w-10.5 items-center rounded-full transition-colors ${
-              includeEnded ? "bg-purple" : "bg-g400"
-            }`}
-          >
-            <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                includeEnded ? "translate-x-6" : "translate-x-1"
-              }`}
-            />
-          </button>
-        </label>
-      </div>
-    </div>
-  );
-
   return (
     <div className="container pt-6 pb-12 sm:pt-8 sm:pb-16 lg:pt-10 lg:pb-20">
       <div className="grid grid-cols-[repeat(24,minmax(0,1fr))] gap-4 sm:gap-7 lg:gap-10">
         {/* 데스크탑 - 사이드바ㅇ */}
         <aside className="hidden lg:col-span-6 lg:block xl:col-span-5">
-          <FilterContent />
+          <AuctionFilter
+            mains={mains}
+            subsByParent={subsByParent}
+            loadingTop={loadingTop}
+            expandedCategory={expandedCategory}
+            mainCategoryId={mainCategoryId}
+            subCategoryId={subCategoryId}
+            selectedCategory={selectedCategory}
+            onExpand={onExpand}
+            onCategorySelect={handleCategorySelect}
+            priceCeil={priceCeil}
+            tempMinPrice={tempMinPrice}
+            tempMaxPrice={tempMaxPrice}
+            setTempMinPrice={setTempMinPrice}
+            setTempMaxPrice={setTempMaxPrice}
+            onApplyPrice={handleApplyPrice}
+            includeEnded={includeEnded}
+            onToggleEnded={toggleIncludeEnded}
+          />
         </aside>
 
         {/* 상품 목록 */}
@@ -356,7 +235,7 @@ const AuctionList = () => {
           {/* 상단 */}
           <div className="mb-6 sm:mb-8">
             <div className="flex items-start justify-between gap-3">
-              <div className="text-g100 text-h7 flex-1 leading-tight sm:text-base">
+              <div className="text-g100 flex-1 text-base leading-tight">
                 <span className="font-bold">{resultTitle}</span>
               </div>
               <div className="flex items-center gap-2 sm:gap-3">
@@ -378,13 +257,13 @@ const AuctionList = () => {
                         e.target.value as "latest" | "price_asc" | "price_desc"
                       )
                     }
-                    className="border-g400 text-g100 focus:border-purple sm:text-h7 text-h8 cursor-pointer appearance-none border bg-white py-1.5 pr-7 pl-2.5 focus:outline-none"
+                    className="border-g400 text-g100 focus:border-purple sm:text-h7 text-h8 cursor-pointer appearance-none border bg-white py-1 pr-6 pl-2 focus:outline-none sm:py-1.5 sm:pr-7 sm:pl-2.5"
                   >
                     <option value="latest">최신순</option>
                     <option value="price_asc">가격낮은순&nbsp;</option>
                     <option value="price_desc">가격높은순&nbsp;</option>
                   </select>
-                  <ChevronDown className="text-g300 pointer-events-none absolute top-1/2 right-2.5 h-3 w-3 -translate-y-1/2" />
+                  <ChevronDown className="text-g300 pointer-events-none absolute top-1/2 right-2 h-3 w-3 -translate-y-1/2" />
                 </div>
               </div>
             </div>
@@ -408,7 +287,7 @@ const AuctionList = () => {
                 {loading &&
                   Array.from({ length: 8 }).map((_, i) => (
                     <div key={`sk-${i}`} className="animate-pulse">
-                      <div className="bg-g400 mb-3 aspect-square w-full" />
+                      <div className="bg-g400 mb-3 aspect-square w-full rounded-3xl" />
                       <div className="bg-g400 h-4 w-3/4" />
                     </div>
                   ))}
@@ -445,7 +324,25 @@ const AuctionList = () => {
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <FilterContent />
+            <AuctionFilter
+              mains={mains}
+              subsByParent={subsByParent}
+              loadingTop={loadingTop}
+              expandedCategory={expandedCategory}
+              mainCategoryId={mainCategoryId}
+              subCategoryId={subCategoryId}
+              selectedCategory={selectedCategory}
+              onExpand={onExpand}
+              onCategorySelect={handleCategorySelect}
+              priceCeil={priceCeil}
+              tempMinPrice={tempMinPrice}
+              tempMaxPrice={tempMaxPrice}
+              setTempMinPrice={setTempMinPrice}
+              setTempMaxPrice={setTempMaxPrice}
+              onApplyPrice={handleApplyPrice}
+              includeEnded={includeEnded}
+              onToggleEnded={toggleIncludeEnded}
+            />
           </div>
         </div>
       )}
