@@ -30,6 +30,7 @@ const toStatus = (raw?: string): TradeStatus => {
 
   if (/BEFORE|대기|준비중|등록전|비공개|검수/.test(s)) return "BEFORE";
 
+  // 알 수 없는 경우 찜 목록에서는 보통 "끝난 상품" 취급
   return "FINISH";
 };
 
@@ -38,7 +39,7 @@ const toStatus = (raw?: string): TradeStatus => {
  * ========================= */
 const absolutize = (url?: string | null): string | null => {
   if (!url) return null;
-  if (/^https?:\/\//i.test(url)) return url; // 이미 절대 URL이면 그대로
+  if (/^https?:\/\//i.test(url)) return url;
 
   const API_BASE =
     import.meta.env.VITE_BACKEND_ADDRESS ?? "http://localhost:8080";
@@ -49,18 +50,17 @@ const absolutize = (url?: string | null): string | null => {
 
 /* =========================
  * 서버 응답 1건 -> TradeItem
- * (/wishs, /mypage/purchase, /mypage/sales 등 공통 대응)
  * ========================= */
 const fromWish = (r: any): TradeItem => {
-  // 1) 대표 이미지 고르기
+  // 1) 대표 이미지
   let candidate: string | null = null;
 
-  // /wishs style
+  // 스타일 1: wish 리스트용
   if (r.mainImageUrl) {
     candidate = r.mainImageUrl;
   }
 
-  // /auctions/{id} style
+  // 스타일 2: /auctions/{id}에서 오는 images 배열
   if (!candidate && Array.isArray(r.images) && r.images.length > 0) {
     const mainImg = r.images.find((img: any) => {
       const t = String(img.imageType || "").toUpperCase();
@@ -70,12 +70,12 @@ const fromWish = (r: any): TradeItem => {
     candidate = (mainImg?.imageUrl || fallbackImg?.imageUrl) ?? null;
   }
 
-  // /mypage/purchase or /mypage/sales style
+  // 스타일 3: /mypage/purchase, /mypage/sales 등
   if (!candidate && r.itemImageUrl) {
     candidate = r.itemImageUrl;
   }
 
-  // fallback candidates
+  // 기타 fallback
   if (!candidate) {
     candidate =
       r.thumbnailUrl ??
@@ -98,11 +98,11 @@ const fromWish = (r: any): TradeItem => {
           ? r.price
           : 0;
 
-  // 3) 상태 텍스트 및 내부화된 상태코드
+  // 3) 상태
   const statusText = r.statusText ?? r.sellingStatus ?? r.status ?? undefined;
   const status = toStatus(r.sellingStatus ?? r.status ?? r.statusText);
 
-  // 4) 판매자/상대방 닉네임
+  // 4) 상대 닉네임(판매자 등)
   const counterparty =
     r.sellerNickname ??
     r.winnerNickname ??
@@ -146,11 +146,10 @@ export type UseWishlistOpts = {
   page?: number;
   size?: number;
   sort?: "end" | "start"; // 기본 'end'
-  useMock?: boolean;
 };
 
 export function useWishlist(opts: UseWishlistOpts = {}) {
-  const { page = 0, size = 20, sort = "end", useMock = true } = opts;
+  const { page = 0, size = 20, sort = "end" } = opts;
 
   const [data, setData] = useState<TradeItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -168,21 +167,21 @@ export function useWishlist(opts: UseWishlistOpts = {}) {
           params: { page, size, sort },
         });
 
-        // 서버가 배열을 바로 줄 수도 있고 {items: [...]} 로 줄 수도 있으니 방어
-        const list = Array.isArray(res?.items) ? res.items : res;
-        const items: TradeItem[] = (list ?? []).map(fromWish);
+        // 서버가 배열을 바로 주거나 { items: [...] } 형태일 수도 있음
+        const rawList: any[] = Array.isArray(res?.items)
+          ? res.items
+          : Array.isArray(res)
+            ? res
+            : [];
+
+        const items: TradeItem[] = rawList.map(fromWish);
 
         if (!alive) return;
         setData(items);
       } catch (e) {
         if (!alive) return;
         setError(e);
-
-        if (useMock) {
-          const m = await import("../mocks/tradeMocks");
-          if (!alive) return;
-          setData(m.MOCK_WISH.map(fromWish));
-        }
+        setData([]); // mock 없이 그냥 비움
       } finally {
         if (alive) setLoading(false);
       }
@@ -191,7 +190,7 @@ export function useWishlist(opts: UseWishlistOpts = {}) {
     return () => {
       alive = false;
     };
-  }, [page, size, sort, useMock]);
+  }, [page, size, sort]);
 
   // 정렬 보정
   const sorted = useMemo(() => {

@@ -10,7 +10,7 @@ type Props = {
   avatarUrl?: string | null;
   nickname: string;
   email?: string;
-  temperature: number | null | undefined; // 0~100 가정, 없으면 null
+  temperature: number | null | undefined;
   soldCount: number;
   sellingCount: number;
   soldPreview?: Item[];
@@ -18,13 +18,16 @@ type Props = {
   onClickSold?: () => void;
   onClickSelling?: () => void;
   onItemClick?: (id: string | number) => void;
+
+  // ✅ 경매 시작 CTA
+  onClickStartAuction?: () => void;
 };
 
-// 안전하게 0~100 사이로 자르는 함수
+// 숫자 0~100 방어
 const clamp = (n: number, min: number, max: number) =>
   Math.max(min, Math.min(max, n));
 
-// 아바타 없을 때 닉네임 이니셜 원형
+// 프로필 이미지 없을 때 이니셜 동그라미
 function Initials({ name }: { name: string }) {
   const trimmed = (name || "").trim();
   const parts = trimmed.split(/\s+/);
@@ -39,22 +42,35 @@ function Initials({ name }: { name: string }) {
   );
 }
 
-// 거래 미리보기 리스트 (최대 3개)
+// 공용 리스트 컴포넌트
 const ItemRowList: React.FC<{
   items: Item[];
   emptyText: string;
   onItemClick?: (id: string | number) => void;
-}> = ({ items, emptyText, onItemClick }) => {
+  onClickStartAuction?: () => void; // ✅ 비었을 때만 나올 버튼
+}> = ({ items, emptyText, onItemClick, onClickStartAuction }) => {
   const list = (items ?? []).slice(0, 3);
 
+  // ❗비어 있을 때: 안내문 + (옵션) CTA 버튼을 카드 내부 가운데 배치
   if (list.length === 0) {
     return (
-      <div className="flex h-24 items-center justify-center rounded-xl border border-dashed border-gray-300 bg-gray-50 text-sm text-gray-500">
-        {emptyText}
+      <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-gray-300 bg-gray-50 py-10 text-sm text-gray-600">
+        <span>{emptyText}</span>
+
+        {onClickStartAuction && (
+          <button
+            type="button"
+            onClick={onClickStartAuction}
+            className="rounded-lg bg-gradient-to-r from-purple-600 to-fuchsia-500 px-4 py-2 text-sm font-semibold text-white shadow-md ring-1 ring-purple-500/50 hover:brightness-110 focus:ring-2 focus:ring-purple-400 focus:outline-none"
+          >
+            경매 등록
+          </button>
+        )}
       </div>
     );
   }
 
+  // 목록 있을 때: 아이템 리스트
   return (
     <ul className="divide-y divide-gray-200 overflow-hidden rounded-xl border border-gray-200 bg-white">
       {list.map((it) => (
@@ -93,7 +109,7 @@ const ItemRowList: React.FC<{
             {it.title}
           </p>
 
-          {/* 화살표 아이콘 */}
+          {/* > 아이콘 */}
           <svg
             className="h-4 w-4 shrink-0 text-gray-400"
             viewBox="0 0 24 24"
@@ -114,7 +130,7 @@ const ItemRowList: React.FC<{
   );
 };
 
-// 섹션 헤더
+// 섹션 타이틀 + "보러가기" 버튼 영역
 const SectionHeader: React.FC<{
   label: string;
   count: number;
@@ -155,34 +171,20 @@ const ProfileDetails: React.FC<Props> = ({
   onClickSold,
   onClickSelling,
   onItemClick,
+  onClickStartAuction,
 }) => {
-  // 온도 처리: 없으면 null
+  // 매너온도 처리
   const hasTemp =
     typeof temperature === "number" && Number.isFinite(temperature);
 
   const temp = hasTemp ? clamp(temperature as number, 0, 100) : null;
   const knobLeft = temp !== null ? `${temp}%` : "0%";
 
-  // mock 데이터 (API 비어 있을 때만 표시)
-  const MOCK_SOLD: Item[] = [
-    { id: "ms1", title: "판매완료 샘플 1" },
-    { id: "ms2", title: "판매완료 샘플 2" },
-    { id: "ms3", title: "판매완료 샘플 3" },
-  ];
-  const MOCK_SELLING: Item[] = [
-    { id: "mm1", title: "판매중 샘플 1" },
-    { id: "mm2", title: "판매중 샘플 2" },
-  ];
+  // 서버에서 받은 실제 아이템
+  const soldList = soldPreview.slice(0, 3);
+  const sellingList = sellingPreview.slice(0, 3);
 
-  const usingMockSold = soldPreview.length === 0;
-  const usingMockSelling = sellingPreview.length === 0;
-
-  const soldList = (usingMockSold ? MOCK_SOLD : soldPreview).slice(0, 3);
-  const sellingList = (usingMockSelling ? MOCK_SELLING : sellingPreview).slice(
-    0,
-    3
-  );
-
+  // 카운트 표시용
   const displaySoldCount =
     typeof soldCount === "number" && soldCount >= 0
       ? soldCount
@@ -222,7 +224,7 @@ const ProfileDetails: React.FC<Props> = ({
             <p className="mt-1 truncate text-sm text-gray-500">{email}</p>
           ) : null}
 
-          {/* 매너 온도 게이지 */}
+          {/* 매너온도 게이지 */}
           <div className="mt-4 w-[350px] max-w-full">
             <div className="mb-1 flex items-center justify-between text-[11px] leading-none text-gray-700">
               <span className="font-medium text-gray-700">매너온도</span>
@@ -242,10 +244,12 @@ const ProfileDetails: React.FC<Props> = ({
             <div className="relative h-[10px] rounded-full bg-gray-900/90 shadow-[inset_0_0_4px_rgba(0,0,0,0.4)]">
               {temp !== null && (
                 <>
+                  {/* 진행 바 */}
                   <div
                     className="absolute inset-y-0 left-0 rounded-full bg-purple-500 transition-[width] duration-300"
                     style={{ width: `${temp}%` }}
                   />
+                  {/* 노브 */}
                   <div
                     className="absolute top-1/2 h-[18px] w-[18px] -translate-x-1/2 -translate-y-1/2 rounded-full border-[2px] border-white bg-purple-500 shadow-[0_4px_12px_rgba(131,34,191,0.5)] ring-[2px] ring-purple-400/40"
                     style={{ left: knobLeft }}
@@ -272,13 +276,8 @@ const ProfileDetails: React.FC<Props> = ({
           items={soldList}
           emptyText="판매완료 물품이 없습니다."
           onItemClick={(id) => onItemClick?.(id)}
+          // 판매완료 섹션은 경매 시작 CTA 필요 없으니까 onClickStartAuction 안 넘김
         />
-
-        {usingMockSold && (
-          <p className="mt-2 text-xs text-gray-400">
-            ※ 아직 실제 판매완료 데이터가 없어서 샘플을 보여주는 중이에요.
-          </p>
-        )}
       </section>
 
       {/* 판매중 섹션 */}
@@ -295,13 +294,8 @@ const ProfileDetails: React.FC<Props> = ({
           items={sellingList}
           emptyText="판매 중인 물품이 없습니다."
           onItemClick={(id) => onItemClick?.(id)}
+          onClickStartAuction={onClickStartAuction} // ✅ 여기서만 전달
         />
-
-        {usingMockSelling && (
-          <p className="mt-2 text-xs text-gray-400">
-            ※ 아직 실제 판매중 데이터가 없어서 샘플을 보여주는 중이에요.
-          </p>
-        )}
       </section>
     </section>
   );

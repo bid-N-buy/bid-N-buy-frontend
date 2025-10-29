@@ -1,12 +1,10 @@
 // src/features/mypage/pages/PurchasesPage.tsx
-
 import React, { useMemo, useState } from "react";
 import { usePurchases } from "../hooks/usePurchases";
 import TradeRowCompact from "../components/items/TradeRowCompact";
 import StatusTriFilter, {
   type TriFilterValue,
 } from "../components/filters/StatusTriFilter";
-import { MOCK_PURCHASES } from "../mocks/tradeMocks";
 import type { TradeItem } from "../types/trade";
 
 import { confirmSettlement } from "../api/confirmSettlement";
@@ -96,8 +94,6 @@ const RatingModal: React.FC<RatingModalProps> = ({
 
 /* =========================================================
  * 진행중 여부 판별
- * - settledMap에서 이미 확정(true)이면 무조건 '진행중 아님'
- * - 그 외 기존 statusText / 시간 기준으로 판단
  * ========================================================= */
 function isOngoing(
   item: TradeItem,
@@ -105,7 +101,7 @@ function isOngoing(
 ): boolean {
   const orderId = (item as any).orderId ?? item.id;
   if (settledMap[String(orderId)]) {
-    // 내가 방금 구매확정 처리한 거래 => 더 이상 진행중으로 취급하지 않음
+    // 내가 방금 구매확정을 눌러 완료 처리한 건 진행중 취급 X
     return false;
   }
 
@@ -117,7 +113,7 @@ function isOngoing(
 
   const txt = String(rawStatus).toUpperCase();
 
-  // 종료/완료/취소 느낌 나는 단어 있으면 진행 아님
+  // 완료/종료/취소 등 단어가 들어가면 진행중 아님
   if (
     txt.includes("COMPLETE") ||
     txt.includes("COMPLETED") ||
@@ -136,7 +132,7 @@ function isOngoing(
     return false;
   }
 
-  // 마감시간(auctionEnd 등)이 이미 지났으면 진행 아님
+  // 마감 시간이 이미 지났으면 진행중 아님
   const endIso =
     (item as any)?.auctionEnd ??
     (item as any)?.endTime ??
@@ -151,18 +147,15 @@ function isOngoing(
     }
   }
 
-  // 위에서 걸러지지 않으면 아직 진행중으로 본다
+  // 위 조건에 안 걸리면 진행중
   return true;
 }
 
-/* =========================================================
- * 페이지
- * ========================================================= */
 const PurchasesPage: React.FC = () => {
   // 탭 상태: "all" | "ongoing" | "ended"
   const [filter, setFilter] = useState<TriFilterValue>("all");
 
-  // 어떤 orderId를 지금 처리중인지 (버튼 로딩)
+  // 구매확정 처리 중인 orderId
   const [confirmingId, setConfirmingId] = useState<string | number | null>(
     null
   );
@@ -175,29 +168,21 @@ const PurchasesPage: React.FC = () => {
   const [rating, setRating] = useState<number>(10);
   const [submittingReview, setSubmittingReview] = useState(false);
 
-  // 구매확정(정산 완료)된 orderId들을 로컬에 저장
-  // { [orderId: string]: true }
+  // 이미 정산(구매확정)한 orderId들을 로컬에 저장해서 UI에 즉시 반영
   const [settledMap, setSettledMap] = useState<Record<string, boolean>>({});
 
-  // 서버에서 구매내역
+  // 실제 구매내역 데이터만 사용 (mock 없음)
   const { data, loading, error } = usePurchases({
     page: 0,
     size: 20,
     sort: "end",
-    useMock: true,
   });
 
-  // 서버 데이터 없으면 목업
   const base: TradeItem[] = useMemo(() => {
-    if (Array.isArray(data) && data.length > 0) {
-      return data as TradeItem[];
-    }
-    return MOCK_PURCHASES as TradeItem[];
+    return Array.isArray(data) ? data : [];
   }, [data]);
 
-  /* ---------------------------------------------------------
-   * 탭 카운트
-   * --------------------------------------------------------- */
+  // 카운트 뽑기
   const counts = useMemo(() => {
     const all = base.length;
     const ongoing = base.filter((it) => isOngoing(it, settledMap)).length;
@@ -205,9 +190,7 @@ const PurchasesPage: React.FC = () => {
     return { all, ongoing, ended };
   }, [base, settledMap]);
 
-  /* ---------------------------------------------------------
-   * 탭 필터링
-   * --------------------------------------------------------- */
+  // 탭 필터링
   const filtered = useMemo(() => {
     switch (filter) {
       case "ongoing":
@@ -220,9 +203,7 @@ const PurchasesPage: React.FC = () => {
     }
   }, [base, filter, settledMap]);
 
-  /* ---------------------------------------------------------
-   * 정렬 (진행중 먼저, 그다음 종료 / 종료끼리는 최근 마감일 우선)
-   * --------------------------------------------------------- */
+  // 정렬 (진행중 먼저, 같은 그룹끼리는 종료시각이 더 최근인 순)
   const sorted = useMemo(() => {
     const getEndMs = (it: TradeItem) => {
       const iso =
@@ -242,39 +223,28 @@ const PurchasesPage: React.FC = () => {
       if (aOngoing && !bOngoing) return -1;
       if (!aOngoing && bOngoing) return 1;
 
-      // 같은 그룹이면 종료/마감 시간이 더 최근인 것 우선
       return getEndMs(b) - getEndMs(a);
     });
   }, [filtered, settledMap]);
 
-  /* ---------------------------------------------------------
-   * 구매 확정 버튼 노출 여부
-   * --------------------------------------------------------- */
+  // 구매 확정 버튼 노출 여부
   function canShowConfirmButton(item: TradeItem): boolean {
     const orderId = (item as any).orderId ?? item.id;
     const localDone = settledMap[String(orderId)];
-    const serverDone = (item as any).settled === true; // 혹시 서버에서 내려줄 수도 있으니까
+    const serverDone = (item as any).settled === true;
 
-    // 이미 확정된 건 버튼 숨김
     if (localDone || serverDone) return false;
-
-    // 아직 진행중으로 보이는 애한테도 우리는 버튼을 보여주고 있음.
-    // (정산 전 단계/정산중 단계 등도 유저가 눌러서 완료 가능하도록)
     return true;
   }
 
-  /* ---------------------------------------------------------
-   * "구매 확정" 버튼을 눌렀을 때 → 모달 열기
-   * --------------------------------------------------------- */
+  // 구매 확정 누르면 → 별점 모달 열기
   function handleRequestConfirm(orderId: number | string) {
     setReviewTargetId(orderId);
-    setRating(10); // 기본값
+    setRating(10); // 기본 10점
     setReviewModalOpen(true);
   }
 
-  /* ---------------------------------------------------------
-   * 모달 "제출" → 별점 등록 + 정산 확정
-   * --------------------------------------------------------- */
+  // 모달 "제출" → 별점 등록 + 구매확정
   async function finalizeConfirmAndReview() {
     if (!reviewTargetId) return;
 
@@ -282,21 +252,19 @@ const PurchasesPage: React.FC = () => {
       setSubmittingReview(true);
       setConfirmingId(reviewTargetId);
 
-      // 1. 별점 등록
-      const ratingMsg = await submitRating(reviewTargetId, rating);
-      console.log("[별점 등록 성공]", ratingMsg);
+      // 1. 별점 보내기
+      await submitRating(reviewTargetId, rating);
 
-      // 2. 구매 확정(정산)
-      const settleMsg = await confirmSettlement(reviewTargetId);
-      console.log("[구매 확정 성공]", settleMsg);
+      // 2. 구매 확정(정산) 처리
+      await confirmSettlement(reviewTargetId);
 
-      // 3. 로컬에 이 orderId는 완료됨이라고 표기
+      // 3. 로컬 state 업데이트 (이제 이 거래는 완료 처리)
       setSettledMap((prev) => ({
         ...prev,
         [String(reviewTargetId)]: true,
       }));
 
-      // 4. 종료 탭으로 전환해서 곧바로 '완료 목록'을 보여줌
+      // 4. 종료 탭으로 전환
       setFilter("ended");
 
       alert("구매 확정이 완료되었어요! ⭐");
@@ -311,11 +279,7 @@ const PurchasesPage: React.FC = () => {
     }
   }
 
-  /* ---------------------------------------------------------
-   * 리스트 렌더러
-   * - 확정된 애는 statusText를 강제로 '거래 완료'로 바꿔서 넘겨주기
-   *   (UI에 바로 반영되도록)
-   * --------------------------------------------------------- */
+  // 리스트 렌더러
   const renderList = (list: TradeItem[]) => (
     <ul className="divide-y divide-neutral-200">
       {list.map((it) => {
@@ -327,7 +291,7 @@ const PurchasesPage: React.FC = () => {
             key={String(it.id)}
             item={{
               ...it,
-              // 이미 확정된 아이템이라면 라벨을 "거래 완료"로 강제 노출
+              // 이미 확정된 건 UI에서 바로 '거래 완료'로 보이게
               statusText: settled ? "거래 완료" : it.statusText,
             }}
             canConfirm={canShowConfirmButton(it)}
@@ -335,7 +299,7 @@ const PurchasesPage: React.FC = () => {
             onConfirmClick={handleRequestConfirm}
             onClick={(clickedId) => {
               console.log("row clicked:", clickedId);
-              // 상세 페이지로 이동하고 싶으면 여기서 nav(`/auctions/${clickedId}`) 등
+              // 상세 페이지 이동 필요 시 여기서 nav(`/auctions/${clickedId}`)
             }}
           />
         );
@@ -343,34 +307,56 @@ const PurchasesPage: React.FC = () => {
     </ul>
   );
 
+  // 빈 상태 UI (+ 쇼핑 유도 CTA)
+  const renderEmptyState = () => (
+    <div className="flex min-h-[300px] flex-col items-center justify-center gap-4 rounded-xl border border-dashed border-neutral-300 bg-neutral-50 p-10 text-center">
+      <p className="text-sm text-neutral-500">구매 내역이 없습니다.</p>
+      <button
+        type="button"
+        onClick={() => {
+          // 사용자가 물건 보러 갈 수 있는 경로로 수정
+          // 예: 전체 경매 목록 / 카테고리 페이지 등
+          window.location.href = "/auctions";
+        }}
+        className="rounded-lg bg-gradient-to-r from-purple-600 to-fuchsia-500 px-4 py-2 text-sm font-semibold text-white shadow-md ring-1 ring-purple-500/50 hover:brightness-110 focus:ring-2 focus:ring-purple-400 focus:outline-none"
+      >
+        지금 구경하러 가기
+      </button>
+    </div>
+  );
+
   return (
     <div className="min-h-[800px] p-4">
       <h2 className="mb-3 text-lg font-semibold">구매 내역</h2>
 
-      {/* 필터 탭 (전체 / 진행중 / 종료) */}
+      {/* 탭 (전체 / 진행중 / 종료) */}
       <StatusTriFilter
         value={filter}
         onChange={setFilter}
-        counts={counts}
+        counts={{
+          all: counts.all,
+          ongoing: counts.ongoing,
+          ended: counts.ended,
+        }}
         className="mb-3"
       />
 
       {loading ? (
         <p className="text-sm text-neutral-500">불러오는 중…</p>
       ) : error && sorted.length === 0 ? (
-        <div className="text-sm text-red-500">
-          구매 내역을 불러오지 못했습니다.
-          <div className="mt-4 text-black">
-            {renderList(MOCK_PURCHASES as TradeItem[])}
-          </div>
-        </div>
+        <>
+          <p className="text-sm text-red-500">
+            구매 내역을 불러오지 못했습니다.
+          </p>
+          <div className="mt-4">{renderEmptyState()}</div>
+        </>
       ) : sorted.length === 0 ? (
-        <p className="text-sm text-neutral-500">구매 내역이 없습니다.</p>
+        renderEmptyState()
       ) : (
         renderList(sorted)
       )}
 
-      {/* ⭐ 구매확정 / 별점 모달 */}
+      {/* 구매확정 / 별점 모달 */}
       <RatingModal
         open={reviewModalOpen}
         rating={rating}

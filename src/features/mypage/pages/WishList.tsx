@@ -12,14 +12,14 @@ import type { TradeItem } from "../types/trade";
 const WishList: React.FC = () => {
   const [filter, setFilter] = useState<TriFilterValue>("all");
 
-  // 서버 + fallback(mock)에서 정규화된 TradeItem[]을 주는 훅
+  // 서버에서만 가져온 찜 목록
   const { data, loading, error } = useWishlist({
     page: 0,
     size: 20,
-    useMock: true,
+    sort: "end",
   });
 
-  // data 없을 경우에도 항상 배열로
+  // 항상 배열 형태로 사용
   const base: TradeItem[] = data ?? [];
 
   // 진행중 여부 판정 함수 메모
@@ -41,20 +41,16 @@ const WishList: React.FC = () => {
     return base.filter((x) => !isOngoingForItem(x));
   }, [base, filter, isOngoingForItem]);
 
-  // 찜 토글 핸들러 (하트 눌렀을 때)
+  // 찜 토글 핸들러 (하트)
   const handleToggleLike = (auctionId: number, nextLiked: boolean) => {
     console.log("toggle like", auctionId, nextLiked);
     // TODO:
-    // - nextLiked === false -> 찜 해제 API (DELETE /wishs/:auctionId 등)
-    // - nextLiked === true  -> 찜 추가 API (POST /wishs 등)
-    // - 성공하면 목록 다시 불러오거나, 낙관적 업데이트로 base 상태 갱신
+    //  nextLiked === false -> DELETE /wishs/:auctionId
+    //  nextLiked === true  -> POST /wishs
+    //  성공 시 refetch or optimistic update
   };
 
-  // ======================
-  // 렌더링 분기
-  // ======================
-
-  // 완전하게 아무 데이터가 없을 때(목록도 비었고 로딩도 아님)
+  // 완전히 비어 있는지?
   const isTrulyEmpty = !loading && filtered.length === 0;
 
   return (
@@ -69,27 +65,39 @@ const WishList: React.FC = () => {
         className="mb-4"
       />
 
-      {/* 에러 메시지 (데이터까지 비었을 때만 크게 노출) */}
+      {/* 에러 && 데이터 없음 → 에러 문구 */}
       {error && base.length === 0 && (
         <p className="mb-3 text-sm text-red-600">
           찜 목록을 불러오지 못했어요.
         </p>
       )}
 
-      {/* 로딩 중인데 아직 아무 데이터도 없는 케이스 */}
+      {/* 로딩 중 + 아직 아무 데이터도 없는 경우 */}
       {loading && base.length === 0 ? (
         <p className="text-sm text-neutral-500">불러오는 중…</p>
       ) : isTrulyEmpty ? (
-        // 데이터는 다 받아왔는데 현재 필터 결과가 0개인 경우
-        <p className="text-sm text-neutral-500">찜한 항목이 없습니다.</p>
+        // 로딩 끝났는데 필터 결과가 비었을 때
+        <div className="flex min-h-[300px] flex-col items-center justify-center gap-4 rounded-xl border border-dashed border-neutral-300 bg-neutral-50 p-10 text-center">
+          <p className="text-sm text-neutral-500">찜한 항목이 없습니다.</p>
+
+          {/* 👉 여기 CTA 버튼 추가하고 싶으면 이 안에 넣으면 돼
+              예: 관심 상품 둘러보기 */}
+          {/* <button
+            type="button"
+            onClick={() => (window.location.href = "/auctions")}
+            className="rounded-lg bg-gradient-to-r from-purple-600 to-fuchsia-500 px-4 py-2 text-sm font-semibold text-white shadow-md ring-1 ring-purple-500/50 hover:brightness-110 focus:ring-2 focus:ring-purple-400 focus:outline-none"
+          >
+            지금 인기 상품 보기
+          </button> */}
+        </div>
       ) : (
         // 실제 목록
         <ul role="list" aria-label="찜한 상품 목록">
           {filtered.map((it, idx) => (
             <TradeRowCompact
-              key={it.id || idx} // 안전빵
+              key={it.id || idx}
               item={it}
-              wishStyle={true} // 오른쪽에 하트 + 현재가 레이아웃
+              wishStyle={true} // 오른쪽에 하트 + 가격
               onToggleLike={handleToggleLike}
             />
           ))}
