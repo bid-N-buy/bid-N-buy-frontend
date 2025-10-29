@@ -3,22 +3,15 @@ import { useEffect, useState } from "react";
 import api from "../../../shared/api/axiosInstance";
 import type { TradeItem } from "../types/trade";
 import { fromSale } from "../utils/tradeMappers";
-import { MOCK_SALES } from "../mocks/tradeMocks";
 
 type Options = {
   page?: number;
   size?: number;
   sort?: "end" | "start";
-  useMock?: boolean;
 };
 
 export function useSales(opts: Options = {}) {
-  const {
-    page = 0,
-    size = 20,
-    sort = "end",
-    useMock = import.meta.env.DEV,
-  } = opts;
+  const { page = 0, size = 20, sort = "end" } = opts;
 
   const [data, setData] = useState<TradeItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,39 +20,45 @@ export function useSales(opts: Options = {}) {
 
   useEffect(() => {
     let alive = true;
+
     (async () => {
       setLoading(true);
       setError(null);
+
       try {
         const { data: res } = await api.get("/mypage/sales", {
           params: { page, size, sort },
         });
-        const items = (res.items ?? res ?? []).map(fromSale) as TradeItem[];
+
+        // 응답 형태 방어:
+        // - 백엔드가 배열로 주는 경우: res
+        // - { items: [], total: n } 형식으로 주는 경우: res.items
+        const rawItems = Array.isArray(res) ? res : (res.items ?? []);
+        const mappedItems = rawItems.map(fromSale) as TradeItem[];
 
         if (!alive) return;
 
-        if (useMock && items.length === 0) {
-          setData(MOCK_SALES);
-          setTotal(MOCK_SALES.length);
-        } else {
-          setData(items);
-          setTotal(res.total ?? items.length);
-        }
+        setData(mappedItems);
+        setTotal(
+          typeof (res as any).total === "number"
+            ? (res as any).total
+            : mappedItems.length
+        );
       } catch (e) {
         if (!alive) return;
         setError(e);
-        if (useMock) {
-          setData(MOCK_SALES);
-          setTotal(MOCK_SALES.length);
-        }
+        setData([]);
+        setTotal(0);
       } finally {
         if (alive) setLoading(false);
       }
     })();
+
     return () => {
       alive = false;
     };
-  }, [page, size, sort, useMock]);
+  }, [page, size, sort]);
 
+  // reload()는 필요하면 나중에 구현 가능. 일단 no-op으로 유지
   return { data, total, loading, error, reload: () => {} };
 }

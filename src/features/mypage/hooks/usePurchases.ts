@@ -2,25 +2,17 @@
 import { useEffect, useState } from "react";
 import api from "../../../shared/api/axiosInstance";
 import type { TradeItem } from "../types/trade";
-import { fromPurchase } from "../utils/tradeMappers"; // 서버응답 → TradeItem 변환
-import { MOCK_PURCHASES } from "../mocks/tradeMocks";
+import { fromPurchase } from "../utils/tradeMappers"; // 서버응답 -> TradeItem 변환
 
 type Options = {
   page?: number;
   size?: number;
   status?: string;
   sort?: "end" | "start";
-  useMock?: boolean; // 데이터 없을 때 목업 대체
 };
 
 export function usePurchases(opts: Options = {}) {
-  const {
-    page = 0,
-    size = 20,
-    status,
-    sort = "end",
-    useMock = import.meta.env.DEV, // 개발모드에서만 목업 활성화
-  } = opts;
+  const { page = 0, size = 20, status, sort = "end" } = opts;
 
   const [data, setData] = useState<TradeItem[]>([]);
   const [total, setTotal] = useState(0);
@@ -35,41 +27,28 @@ export function usePurchases(opts: Options = {}) {
       setError(null);
 
       try {
-        // ✅ 서버에서 바로 배열 리턴
         const { data: res } = await api.get("/mypage/purchase", {
           params: { page, size, status, sort },
         });
 
-        // ✅ 배열인지 체크 (API 응답이 배열이거나 items 배열로 감싸져 있을 수도 있음)
-        const list: any[] = Array.isArray(res)
+        // 서버가 배열로 줄 수도 있고 { items: [], total: n } 로 줄 수도 있어서 방어
+        const rawList: any[] = Array.isArray(res)
           ? res
           : Array.isArray(res?.items)
             ? res.items
             : [];
 
-        const items: TradeItem[] = list.map(fromPurchase);
+        const mapped: TradeItem[] = rawList.map(fromPurchase);
 
         if (!alive) return;
 
-        if (useMock && items.length === 0) {
-          setData(MOCK_PURCHASES);
-          setTotal(MOCK_PURCHASES.length);
-        } else {
-          setData(items);
-          setTotal(typeof res?.total === "number" ? res.total : items.length);
-        }
+        setData(mapped);
+        setTotal(typeof res?.total === "number" ? res.total : mapped.length);
       } catch (err) {
         if (!alive) return;
         setError(err);
-
-        // 개발 모드에서는 에러 시 목업 보여주기
-        if (useMock) {
-          setData(MOCK_PURCHASES);
-          setTotal(MOCK_PURCHASES.length);
-        } else {
-          setData([]);
-          setTotal(0);
-        }
+        setData([]);
+        setTotal(0);
       } finally {
         if (alive) setLoading(false);
       }
@@ -78,7 +57,7 @@ export function usePurchases(opts: Options = {}) {
     return () => {
       alive = false;
     };
-  }, [page, size, status, sort, useMock]);
+  }, [page, size, status, sort]);
 
   return {
     data,
@@ -86,7 +65,7 @@ export function usePurchases(opts: Options = {}) {
     loading,
     error,
     reload: () => {
-      // 원하면 refetch 기능 추가 가능
+      // 필요하면 refetch 로직 넣을 자리
     },
   };
 }
