@@ -15,10 +15,13 @@ export const useWishStore = create<WishStore>((set, get) => ({
   byId: {},
   loadingIds: new Set<number>(),
 
-  prime: (auctionId, init) =>
+  prime: (auctionId, init) => {
+    const exists = !!get().byId[auctionId];
+    if (exists) return;
     set((s) => ({
-      byId: { ...s.byId, [auctionId]: s.byId[auctionId] ?? init },
-    })),
+      byId: { ...s.byId, [auctionId]: init },
+    }));
+  },
 
   toggleRaw: async (auctionId: number) => {
     const { byId, loadingIds } = get();

@@ -1,4 +1,4 @@
-import { useMemo, useCallback } from "react";
+import { useEffect, useMemo, useCallback } from "react";
 import { useWishStore } from "../store/useWishStore";
 import type { WishState } from "../types/wish";
 import useToast from "../../../shared/hooks/useToast";
@@ -19,7 +19,11 @@ export const useWish = ({ auctionId, initial, sellerId }: UseWishOptions) => {
   const { showToast } = useToast();
   const userId = useAuthStore((s) => s.userId); // 현재 로그인 유저
 
-  if (initial) prime(auctionId, initial);
+  useEffect(() => {
+    if (!state && initial) {
+      prime(auctionId, initial);
+    }
+  }, [state, initial, auctionId, prime]);
 
   const loading = useMemo(
     () => loadingIds.has(auctionId),

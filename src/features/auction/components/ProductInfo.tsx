@@ -158,7 +158,7 @@ const ProductInfo = ({
       showToast("본인 상품에는 입찰할 수 없습니다.", "error");
       return;
     }
-    // 판매 상태 가드 - todo 한번더확인
+    // 판매 상태 가드
     if (sellingStatus && sellingStatus !== "진행중") {
       showToast("현재 입찰할 수 없는 상태입니다.", "error");
       return;
@@ -292,7 +292,7 @@ const ProductInfo = ({
             )}
           </div>
 
-          {/* 3. 판매자 정보 - todo 분리 */}
+          {/* 3. 판매자 정보 - todo 클릭 시 연결 */}
           {(sellerNickname || sellerProfileImageUrl) && (
             <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
               <div className="bg-g500 h-11 w-11 flex-shrink-0 overflow-hidden rounded-full sm:h-12 sm:w-12 md:h-13 md:w-13 lg:h-17 lg:w-17">
@@ -310,11 +310,6 @@ const ProductInfo = ({
                     {sellerNickname}
                   </span>
                 )}
-                {/* {typeof sellerTemperature === "number" && (
-                  <span className="text-g300 text-h8 sm:text-h7 lg:text-h6 whitespace-nowrap md:text-base">
-                    {sellerTemperature}°C
-                  </span>
-                )} */}
                 <span className="text-g300 text-h8 sm:text-h7 lg:text-h6 whitespace-nowrap md:text-base">
                   {sellerTemperature ?? 0}°C
                 </span>
@@ -368,14 +363,12 @@ const ProductInfo = ({
               </div>
 
               {/* 찜 */}
-              {/* <div className="flex-shrink-0"> */}
               <WishButton
                 auctionId={auctionId}
                 initial={{ liked, wishCount: wishCount ?? 0 }}
                 sellerId={sellerId}
                 size="lg"
               />
-              {/* </div> */}
             </div>
 
             {/* 6. 기간 + 입찰 횟수 */}

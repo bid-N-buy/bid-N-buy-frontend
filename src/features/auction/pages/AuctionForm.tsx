@@ -117,7 +117,7 @@ const AuctionForm = () => {
     setSelectedFiles((prev) => [...prev, ...taking]);
   };
 
-  // 인덱스 i 이미지를 첫 번째로 옮길 때, 파일 배열도 같이 이동
+  // 인덱스 i 이미지 첫 번째로 옮길 때 파일 배열도 같이 이동
   const moveFileToFront = (i: number) => {
     setSelectedFiles((prev) => {
       if (i < 0 || i >= prev.length) return prev;
@@ -280,11 +280,12 @@ const AuctionForm = () => {
               <input
                 id="productName"
                 type="text"
-                placeholder="상품명을 입력해 주세요."
+                placeholder="상품명을 입력해 주세요 (최대 50자)"
                 value={title}
                 onChange={(e) => set("title", e.target.value)}
                 className="field-input placeholder-muted"
                 autoComplete="off"
+                maxLength={50}
               />
             </div>
           </div>
@@ -349,7 +350,7 @@ const AuctionForm = () => {
             <div className="field">
               <textarea
                 id="description"
-                placeholder="구매 시기, 하자 유무 등 최대한 자세히 설명을 적어 주세요."
+                placeholder="상품 상태, 하자 유무, 구매 시기 등 설명을 적어 주세요 (최대 2000자)"
                 value={description}
                 onChange={(e) => set("description", e.target.value)}
                 className="field-input placeholder-muted h-[200px] resize-none"
