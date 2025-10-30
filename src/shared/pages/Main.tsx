@@ -31,17 +31,17 @@ const Main = () => {
   return (
     <div className="w-full">
       {/* 배너 (1320 x 500) */}
-      <section className="pt-[60px]">
+      <section className="pt-[60px] pb-[60px] md:pb-0">
         <div className="container">
           <BannerSlider items={banners} />
         </div>
       </section>
 
       {/* 카테고리 */}
-      <section className="py-[60px]">
+      <section className="hidden py-[60px] md:block">
         <div className="container">
           <div className="flex items-center justify-between gap-4 overflow-x-auto md:overflow-visible">
-            {/* 로딩 중 스켈레톤 */}
+            {/* 스켈레톤 */}
             {loadingTop
               ? Array.from({ length: 10 }).map((_, i) => (
                   <div key={i} className="flex flex-col items-center gap-3">
@@ -73,7 +73,6 @@ const Main = () => {
 
       <AuctionSection title="최신 경매 상품" size={10} moreLink="/auctions" />
 
-      {/* 보류 영역 */}
       <section className="pb-[60px]">
         <div className="container">
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8">
