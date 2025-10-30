@@ -4,7 +4,7 @@ import { Client, type IMessage } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 import { useAuthStore } from "../../auth/store/authStore";
 import { useChatModalStore } from "../../../shared/store/ChatModalStore";
-import { useChatListApi } from "../api/useChatList";
+// import { useChatListApi } from "../api/useChatList";
 import ChatProductInfo from "../components/ChatProductInfo";
 import ChatMe from "../components/ChatMe";
 import ChatYou from "../components/ChatYou";
@@ -33,8 +33,8 @@ const ChatRoom = ({
   const token = useAuthStore((state) => state.accessToken);
   const userId = useAuthStore.getState().userId;
 
-  const { totalUnreadCount, markAsRead } = useChatModalStore();
-  const { refetchList } = useChatListApi();
+  const { markAsRead, refetchChatList, handleNewChatMessage } =
+    useChatModalStore();
 
   // 웹소켓 주소
   const WS_URL = import.meta.env.VITE_WEBSOCKET_URL;
@@ -109,42 +109,41 @@ const ChatRoom = ({
 
         client.subscribe(receivedDestination, (message) => {
           handleMessageReceived(message); // 화면 변경
+          try {
+            const newMessage: ChatMessageProps = JSON.parse(message.body);
+            handleNewChatMessage(newMessage); // 실시간 전체 메시지 읽음 상태 관리
+          } catch (e) {
+            console.error("뱃지 관련 오류:", e);
+          }
         });
 
         client.subscribe(readDestination, (readMessage) => {
           try {
             const readData = JSON.parse(readMessage.body);
-            console.log("서버에서 받은 읽음 데이터:", readData);
-
-            // 💡 [핵심 변수] 서버가 알려준 새로 읽음 처리된 메시지 개수
+            // 서버가 알려준 새로 읽음 처리된 메시지 개수
             const countToUpdate = readData.updatedCount;
 
-            // 서버 알림을 받아 setMessages로 화면 갱신 (송신자 화면)
+            // 화면 갱신
             setMessages((prevMessages) => {
               let messagesUpdated = 0; // 실제로 업데이트된 메시지 개수 카운터
-
-              // 1. 메시지 배열을 복사하고 역순으로 순회 (최신 메시지부터 처리)
+              // 최신 메시지부터 처리하기 위해 역순
               return prevMessages
                 .slice()
                 .reverse()
                 .map((msg) => {
-                  // 2. [조건] 업데이트할 개수가 남아있고, 아직 읽지 않았으며, 상대방이 읽은 상태를 표시해야 하는 메시지(보통 내가 보낸 메시지)라면
                   if (messagesUpdated < countToUpdate && !msg.read) {
                     messagesUpdated++;
-                    // 3. 읽음 처리 후 리턴
                     return { ...msg, read: true };
                   }
-                  // 4. 나머지 메시지는 그대로 유지
                   return msg;
                 })
-                .reverse(); // 5. 순서를 원래대로 되돌립니다.
+                .reverse();
             });
           } catch (e) {
             console.error("읽음 상태 파싱 오류:", e);
           }
         });
       },
-
       onStompError: (frame) => {
         console.error("STOMP Error:", frame);
         setIsConnected(false);
@@ -162,20 +161,13 @@ const ChatRoom = ({
 
   // 메시지 수신 및 화면 업데이트 로직
   const handleMessageReceived = (message: IMessage) => {
-    const isCurrentChatRoom = chatroomId === messages.chatroomId;
-
-    if (isCurrentChatRoom) {
-      try {
-        const messageBody = JSON.parse(message.body);
-        // 메시지 배열 상태 업데이트
-        setMessages((prevMessages) => {
-          return [...prevMessages, messageBody];
-        });
-      } catch (e) {
-        console.error("메시지 파싱 오류:", e, message.body);
-      }
-    } else {
-      refetchList();
+    try {
+      const messageBody = JSON.parse(message.body);
+      setMessages((prevMessages) => {
+        return [...prevMessages, messageBody];
+      });
+    } catch (e) {
+      console.error("메시지 파싱 오류:", e, message.body);
     }
   };
   // 새 메시지 생길 시 자동 스크롤 이동
@@ -321,21 +313,25 @@ const ChatRoom = ({
 
   // [전송] 읽음 상태
   const sendReadStatus = async () => {
-    const lastMessage = messages[messages.length - 1];
-    const lastReadMessageId = lastMessage.chatmessageId;
+    const latestUnreadMessage = messages
+      .slice() // 배열 복사
+      .reverse() // 최신 메시지부터 탐색
+      .find((msg) => msg.senderId !== userId && !msg.read);
 
-    if (
-      !token ||
-      !chatroomId ||
-      !lastMessage ||
-      lastMessage.senderId === userId
-    )
+    if (!latestUnreadMessage) {
+      console.log("읽을 상대방 메시지가 없거나 모두 읽었습니다.");
+      refetchChatList(token);
       return;
+    }
+
+    const lastUnreadMessageId = latestUnreadMessage.chatmessageId;
+
+    if (!token || !chatroomId) return;
 
     try {
       await api.put(
         `/chat/${chatroomId}/read`,
-        { lastReadMessageId },
+        { lastUnreadMessageId },
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -343,7 +339,7 @@ const ChatRoom = ({
         }
       );
       markAsRead(chatroomId);
-      await refetchList();
+      refetchChatList(token);
       console.log("채팅 읽음 상태 전송 및 채팅 목록 갱신 완료");
     } catch (error) {
       console.error("읽음 상태 전송 실패:", error);

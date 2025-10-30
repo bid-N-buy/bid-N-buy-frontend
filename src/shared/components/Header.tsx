@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Search, Menu, MessageCircleMore, Bell, X, Plus } from "lucide-react";
+import { Search, Menu, MessageCircleMore, Bell, X } from "lucide-react";
 import New from "./New";
 import ChatModal from "../../features/chatting/pages/ChatModal";
 import NotiModal from "../../features/notification/pages/NotiModal";
@@ -13,7 +13,6 @@ import { useAuthInit } from "../../features/auth/hooks/UseAuthInit";
 import api from "../../shared/api/axiosInstance";
 import { useChatModalStore } from "../store/ChatModalStore";
 import { useNotiStore } from "../../features/notification/store/notiStore";
-import { useInitialUnreadCount } from "../hooks/useInitialUnreadCount";
 
 const Header = () => {
   // 알람 상태변경
@@ -32,8 +31,12 @@ const Header = () => {
   const userNickname = profile?.nickname ?? "User";
   const clearAuth = useAuthStore((s: AuthState) => s.clear);
 
-  const { isChatOpen, openChatList, onClose, totalUnreadCount } =
-    useChatModalStore();
+  const totalUnreadCount = useChatModalStore((state) => state.totalUnreadCount);
+
+  const openChatList = useChatModalStore((state) => state.openChatList);
+  const onClose = useChatModalStore((state) => state.onClose);
+  const fetchChatList = useChatModalStore((state) => state.fetchChatList);
+  const isChatOpen = useChatModalStore((state) => state.isChatOpen);
 
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isNotiOpen, setIsNotiOpen] = useState<boolean>(false);
@@ -42,8 +45,6 @@ const Header = () => {
     () => ready && Boolean(accessToken),
     [ready, accessToken]
   );
-
-  useInitialUnreadCount();
 
   // 리프레시/로그인 완료 후, 프로필 없으면 한 번 불러오기
   useEffect(() => {
@@ -69,6 +70,13 @@ const Header = () => {
       cancelled = true;
     };
   }, [isAuthed, profile?.nickname, setProfile]);
+
+  useEffect(() => {
+    if (!isAuthed || !accessToken) {
+      return;
+    }
+    fetchChatList(accessToken);
+  }, [isAuthed, accessToken, fetchChatList]);
 
   // url -> 입력 동기화
   useEffect(() => {

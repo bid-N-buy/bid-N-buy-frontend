@@ -2,7 +2,7 @@ import { useRef, useEffect, useState } from "react";
 import api from "../../../shared/api/axiosInstance";
 import { useShallow } from "zustand/shallow";
 import { useAuthStore } from "../../auth/store/authStore";
-import { useChatListApi } from "../api/useChatList";
+// import { useChatListApi } from "../api/useChatList";
 import { useChatRoomApi } from "../api/useChatRoom";
 import Toast from "../../../shared/components/Toast";
 import useToast from "../../../shared/hooks/useToast";
@@ -21,18 +21,28 @@ const ChatModal = ({ onClose }: ModalProps) => {
   const { toast, showToast, hideToast } = useToast();
 
   // 채팅목록/채팅방 화면 상태관리
-  const { targetView, selectedChatroomId } = useChatModalStore(
+  const {
+    targetView,
+    selectedChatroomId,
+    chatList,
+    loading,
+    openChatList,
+    refetchChatList,
+  } = useChatModalStore(
     useShallow((state) => ({
       targetView: state.targetView,
       selectedChatroomId: state.selectedChatroomId,
+      chatList: state.chatList,
+      loading: state.loading,
+      openChatList: state.openChatList,
+      refetchChatList: state.refetchChatList,
     }))
   );
 
   const [currentView, setCurrentView] = useState<string>(targetView);
 
   // chatlist 데이터
-  const listApi = useChatListApi();
-  type ChatListItem = (typeof listApi.chatList)[number]; // 불러와진 ChatListItemProps 중 원하는 요소만 사용
+  type ChatListItem = (typeof chatList)[number]; // 불러와진 ChatListItemProps 중 원하는 요소만 사용
   // 이동할 roomInfo(list에서 접근 시)
   const [selectedRoomInfo, setSelectedRoomInfo] = useState<ChatListItem | null>(
     null
@@ -42,8 +52,7 @@ const ChatModal = ({ onClose }: ModalProps) => {
   const targetChatroomId = selectedRoomInfo?.chatroomId || selectedChatroomId;
 
   // chatroom 데이터
-  const shouldEnableRoomApi =
-    currentView === "room" && listApi.chatList.length > 0;
+  const shouldEnableRoomApi = currentView === "room" && chatList.length > 0;
   const roomApi = useChatRoomApi(targetChatroomId!, shouldEnableRoomApi);
 
   // chatroom에서 해당 채팅방 삭제 메뉴
@@ -85,9 +94,7 @@ const ChatModal = ({ onClose }: ModalProps) => {
 
   // list에서 각 Chat 누를 시 채팅방으로 넘어가는 함수
   const handleSelectRoom = (chatroomId: number) => {
-    const roomInfo = listApi.chatList.find(
-      (chat) => chat.chatroomId === chatroomId
-    );
+    const roomInfo = chatList.find((chat) => chat.chatroomId === chatroomId);
     if (roomInfo) {
       setSelectedRoomInfo(roomInfo);
       setCurrentView("room");
@@ -97,7 +104,8 @@ const ChatModal = ({ onClose }: ModalProps) => {
   // 채팅방에서 목록으로 돌아갈 함수
   const handleGoToList = async () => {
     setSelectedRoomInfo(null);
-    await listApi.refetchList();
+    openChatList();
+    refetchChatList(token);
     setCurrentView("list");
   };
 
@@ -108,7 +116,14 @@ const ChatModal = ({ onClose }: ModalProps) => {
         headers: { Authorization: `Bearer ${token}` },
       });
       setIsMenuOpen(false);
-      await listApi.refetchList();
+      useChatModalStore
+        .getState()
+        .setChatList(
+          useChatModalStore
+            .getState()
+            .chatList.filter((chat) => chat.chatroomId !== chatroomId)
+        );
+      refetchChatList(token);
       handleGoToList();
     } catch {
       showToast("채팅방 삭제에 실패했습니다.", "error");
@@ -193,21 +208,18 @@ const ChatModal = ({ onClose }: ModalProps) => {
         )}
         <div className="h-[calc(100%-59px)] overflow-x-hidden overflow-y-auto">
           {currentView === "list" && (
-            <ChatList
-              chatList={listApi.chatList}
-              onSelectRoom={handleSelectRoom}
-            />
+            <ChatList chatList={chatList} onSelectRoom={handleSelectRoom} />
           )}
-          {listApi.isLoading && (
+          {loading && (
             <p className="flex-column flex h-[100%] items-center justify-center p-4 text-center">
               채팅 목록 로딩 중...
             </p>
           )}
-          {listApi.error && (
+          {/* {listApi.error && (
             <p className="flex-column flex h-[100%] items-center justify-center p-4 text-red-500">
               {listApi.error}
             </p>
-          )}
+          )} */}
           {currentView === "room" && roomApi.isLoading && (
             <p>채팅방 정보 로딩 중...</p>
           )}
