@@ -9,7 +9,6 @@ import {
   X,
   ChevronRight,
   Plus,
-  LogIn,
   LogOut,
 } from "lucide-react";
 import New from "./New";
@@ -52,6 +51,7 @@ const Header = () => {
   const [isNotiOpen, setIsNotiOpen] = useState<boolean>(false);
 
   // 모바일 메뉴
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { mains, subsByParent, loadingTop, loadTop, loadSubs } =
     useCategoryStore();
@@ -120,6 +120,7 @@ const Header = () => {
     const sp = new URLSearchParams();
     if (q) sp.set("searchKeyword", q);
     navigate(`/auctions?${sp.toString()}`);
+    setIsMobileSearchOpen(false);
   };
 
   const clearSearch = () => {
@@ -152,7 +153,10 @@ const Header = () => {
     const apply = (): void => {
       const small = mql.matches;
       document.body.style.overflow =
-        (isChatOpen || isNotiOpen || isMobileMenuOpen) && small ? "hidden" : "";
+        (isChatOpen || isNotiOpen || isMobileMenuOpen || isMobileSearchOpen) &&
+        small
+          ? "hidden"
+          : "";
     };
 
     apply();
@@ -162,7 +166,7 @@ const Header = () => {
       mql.removeEventListener("change", apply);
       document.body.style.overflow = "";
     };
-  }, [isChatOpen, isNotiOpen, isMobileMenuOpen]);
+  }, [isChatOpen, isNotiOpen, isMobileMenuOpen, isMobileSearchOpen]);
 
   const modalRoot: HTMLElement | null = document.getElementById("modal-root");
 
@@ -199,7 +203,7 @@ const Header = () => {
               className="mr-2"
               title="검색어 지우기"
             >
-              <X />
+              <X className="h-4 w-4" />
             </button>
           )}
           <button
@@ -216,12 +220,18 @@ const Header = () => {
         <nav className="block md:hidden">
           <ul className="flex gap-4">
             <li>
-              <Link to="/auctions" title="검색 화면 이동" aria-label="검색">
-                <Search className="hover:text-purple transition-colors" />
-              </Link>
+              <button
+                onClick={() => setIsMobileSearchOpen(true)}
+                title="검색"
+                aria-label="검색"
+                className="hover:text-purple cursor-pointer transition-colors"
+              >
+                <Search />
+              </button>
             </li>
             <li>
               <button
+                title="메뉴"
                 aria-label="메뉴"
                 onClick={() => setIsMobileMenuOpen(true)}
                 className="hover:text-purple cursor-pointer transition-colors"
@@ -243,7 +253,10 @@ const Header = () => {
           ) : isAuthed ? (
             <ul className="text-h7 flex items-center text-nowrap">
               <li className="mr-3.5">
-                <Link to="/mypage" className="cursor-pointer">
+                <Link
+                  to="/mypage"
+                  className="hover:text-purple cursor-pointer transition-colors"
+                >
                   <span className="font-bold">{userNickname}</span>님
                   환영합니다!
                 </Link>
@@ -329,6 +342,59 @@ const Header = () => {
         </nav>
       </div>
 
+      {/* 모바일 검색 */}
+      {isMobileSearchOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/30 md:hidden"
+          onClick={() => setIsMobileSearchOpen(false)}
+        >
+          <div
+            className="absolute top-0 right-0 left-0 bg-white p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-4.5 flex items-center justify-between">
+              <h4 className="text-g100 text-h4 font-bold">검색</h4>
+              <button
+                onClick={() => setIsMobileSearchOpen(false)}
+                className="text-g300 hover:text-purple cursor-pointer transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSearch} className="flex flex-col gap-3.5">
+              <div className="border-g300 focus-within:border-purple text-g100 flex items-center gap-2 rounded-md border px-4 py-3">
+                <input
+                  type="text"
+                  placeholder="상품명을 입력해 주세요"
+                  className="flex-1 focus:outline-none"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  autoFocus
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={clearSearch}
+                    aria-label="검색어 지우기"
+                  >
+                    <X className="text-g300 h-5 w-5" />
+                  </button>
+                )}
+              </div>
+
+              <button
+                type="submit"
+                className="bg-purple hover:bg-deep-purple flex cursor-pointer items-center justify-center gap-2 rounded-md py-3 font-semibold text-white transition-colors"
+              >
+                <Search className="h-5 w-5" />
+                <span>검색</span>
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* 모바일 메뉴 */}
       {isMobileMenuOpen && (
         <div
@@ -344,7 +410,7 @@ const Header = () => {
               <h4 className="text-g100 text-h4 font-bold">메뉴</h4>
               <button
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="text-g300 hover:text-purple cursor-pointer"
+                className="text-g300 hover:text-purple cursor-pointer transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>
