@@ -7,6 +7,8 @@ import AuctionGuide from "../components/AuctionGuide";
 import RelatedItem from "../components/RelatedItem";
 import { useAuctionDetailStore } from "../store/auctionDetailStore";
 import { useAuthStore } from "../../auth/store/authStore";
+import useToast from "../../../shared/hooks/useToast";
+import Toast from "../../../shared/components/Toast";
 
 const AuctionDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -21,6 +23,7 @@ const AuctionDetail = () => {
     reset,
     patch,
   } = useAuctionDetailStore();
+  const { toast, showToast, hideToast } = useToast();
 
   useEffect(() => {
     if (!id) return;
@@ -61,7 +64,7 @@ const AuctionDetail = () => {
   return (
     <div className="w-full space-y-10 md:space-y-[70px]">
       {/* 상단 */}
-      <section className="w-full pt-8 md:pt-12">
+      <section className="w-full pt-[30px]">
         <div className="grid grid-cols-12 gap-4 sm:gap-6 md:gap-[30px]">
           {/* 좌측 - ProductImage */}
           <div className="col-span-12 lg:col-span-6">
@@ -93,6 +96,8 @@ const AuctionDetail = () => {
                 reset(); // 상세 캐시 비우기
                 navigate("/", { replace: true }); // 메인으로
               }}
+              showToast={showToast}
+              hideToast={hideToast}
             />
           </div>
         </div>
@@ -116,6 +121,10 @@ const AuctionDetail = () => {
           onCardClick={handleCardClick}
         />
       </section>
+
+      {toast.isVisible && (
+        <Toast message={toast.message} type={toast.type} onClose={hideToast} />
+      )}
     </div>
   );
 };
