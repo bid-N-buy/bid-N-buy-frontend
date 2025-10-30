@@ -31,14 +31,14 @@ const Main = () => {
   return (
     <div className="w-full">
       {/* 배너 (1320 x 500) */}
-      <section className="pt-[60px] pb-[60px] md:pb-0">
+      <section className="pt-[30px] pb-[54px] md:pb-0">
         <div className="container">
           <BannerSlider items={banners} />
         </div>
       </section>
 
       {/* 카테고리 */}
-      <section className="hidden py-[60px] md:block">
+      <section className="hidden py-[54px] md:block">
         <div className="container">
           <div className="flex items-center justify-between gap-4 overflow-x-auto md:overflow-visible">
             {/* 스켈레톤 */}

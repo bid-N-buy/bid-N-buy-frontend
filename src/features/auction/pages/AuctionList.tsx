@@ -205,7 +205,7 @@ const AuctionList = () => {
   }, [searchKeyword, selectedCategory, mainCategoryId, subCategoryId]);
 
   return (
-    <div className="container pt-6 pb-12 sm:pt-8 sm:pb-16 lg:pt-10 lg:pb-20">
+    <div className="container pt-[30px] pb-[60px] sm:pb-[75px] lg:pb-[90px]">
       <div className="grid grid-cols-[repeat(24,minmax(0,1fr))] gap-4 sm:gap-7 lg:gap-10">
         {/* 데스크탑 - 사이드바ㅇ */}
         <aside className="hidden lg:col-span-6 lg:block xl:col-span-5">

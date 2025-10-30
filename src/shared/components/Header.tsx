@@ -176,7 +176,7 @@ const Header = () => {
   }
 
   return (
-    <header className="relative m-auto h-20 w-full md:h-23">
+    <header className="relative m-auto h-20 w-full md:h-24">
       <div className="flex h-full items-center justify-between gap-8 px-6 lg:px-10 xl:px-40">
         <Link to="/" className="font-logo text-h3 md:text-h2 lg:text-h1 block">
           Bid<span className="text-purple">&amp;</span>Buy
@@ -185,7 +185,7 @@ const Header = () => {
         {/* 검색 (데스크탑) */}
         <form
           onSubmit={handleSearch}
-          className="text-g100 focus-within:border-purple border-g300 dark:text-g400 text-h7 hidden w-100 items-center justify-between rounded-md border px-3 py-2.5 md:flex lg:w-200 dark:bg-gray-900 dark:placeholder:text-gray-600"
+          className="text-g100 focus-within:border-purple border-g400 dark:text-g400 text-h7 hidden w-100 items-center justify-between rounded-md border px-3 py-2.5 md:flex lg:w-170 dark:bg-gray-900 dark:placeholder:text-gray-600"
         >
           <input
             type="text"
@@ -312,7 +312,7 @@ const Header = () => {
                 )}
             </ul>
           ) : (
-            <ul className="text-h7 flex gap-4 text-nowrap">
+            <ul className="text-h7 flex gap-4 font-medium text-nowrap">
               <li>
                 <Link
                   to="/login"
@@ -363,7 +363,7 @@ const Header = () => {
             </div>
 
             <form onSubmit={handleSearch} className="flex flex-col gap-3.5">
-              <div className="border-g300 focus-within:border-purple text-g100 flex items-center gap-2 rounded-md border px-4 py-3">
+              <div className="border-g400 focus-within:border-purple text-g100 flex items-center gap-2 rounded-md border px-4 py-3">
                 <input
                   type="text"
                   placeholder="상품명을 입력해 주세요"
