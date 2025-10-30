@@ -208,7 +208,7 @@ const AuctionForm = () => {
   };
 
   return (
-    <div className="container py-12">
+    <div className="container pt-[30px] pb-[60px]">
       <div className="flex flex-col gap-[60px]">
         <h3 className="border-g400 text-g100 border-b pb-4">경매 등록</h3>
 

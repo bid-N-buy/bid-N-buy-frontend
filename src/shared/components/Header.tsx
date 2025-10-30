@@ -9,7 +9,6 @@ import {
   X,
   ChevronRight,
   Plus,
-  LogIn,
   LogOut,
 } from "lucide-react";
 import New from "./New";
@@ -52,6 +51,7 @@ const Header = () => {
   const [isNotiOpen, setIsNotiOpen] = useState<boolean>(false);
 
   // 모바일 메뉴
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { mains, subsByParent, loadingTop, loadTop, loadSubs } =
     useCategoryStore();
@@ -120,6 +120,7 @@ const Header = () => {
     const sp = new URLSearchParams();
     if (q) sp.set("searchKeyword", q);
     navigate(`/auctions?${sp.toString()}`);
+    setIsMobileSearchOpen(false);
   };
 
   const clearSearch = () => {
@@ -152,7 +153,10 @@ const Header = () => {
     const apply = (): void => {
       const small = mql.matches;
       document.body.style.overflow =
-        (isChatOpen || isNotiOpen || isMobileMenuOpen) && small ? "hidden" : "";
+        (isChatOpen || isNotiOpen || isMobileMenuOpen || isMobileSearchOpen) &&
+        small
+          ? "hidden"
+          : "";
     };
 
     apply();
@@ -162,7 +166,7 @@ const Header = () => {
       mql.removeEventListener("change", apply);
       document.body.style.overflow = "";
     };
-  }, [isChatOpen, isNotiOpen, isMobileMenuOpen]);
+  }, [isChatOpen, isNotiOpen, isMobileMenuOpen, isMobileSearchOpen]);
 
   const modalRoot: HTMLElement | null = document.getElementById("modal-root");
 
@@ -172,7 +176,7 @@ const Header = () => {
   }
 
   return (
-    <header className="relative m-auto h-20 w-full md:h-23">
+    <header className="relative m-auto h-20 w-full md:h-24">
       <div className="flex h-full items-center justify-between gap-8 px-6 lg:px-10 xl:px-40">
         <Link to="/" className="font-logo text-h3 md:text-h2 lg:text-h1 block">
           Bid<span className="text-purple">&amp;</span>Buy
@@ -181,7 +185,7 @@ const Header = () => {
         {/* 검색 (데스크탑) */}
         <form
           onSubmit={handleSearch}
-          className="text-g100 focus-within:border-purple border-g300 dark:text-g400 text-h7 hidden w-100 items-center justify-between rounded-md border px-3 py-2.5 md:flex lg:w-200 dark:bg-gray-900 dark:placeholder:text-gray-600"
+          className="text-g100 focus-within:border-purple border-g400 dark:text-g400 text-h7 hidden w-100 items-center justify-between rounded-md border px-3 py-2.5 md:flex lg:w-170 dark:bg-gray-900 dark:placeholder:text-gray-600"
         >
           <input
             type="text"
@@ -199,7 +203,7 @@ const Header = () => {
               className="mr-2"
               title="검색어 지우기"
             >
-              <X />
+              <X className="h-4 w-4" />
             </button>
           )}
           <button
@@ -216,15 +220,21 @@ const Header = () => {
         <nav className="block md:hidden">
           <ul className="flex gap-4">
             <li>
-              <Link to="/auctions" title="검색 화면 이동" aria-label="검색">
+              <button
+                onClick={() => setIsMobileSearchOpen(true)}
+                title="검색"
+                aria-label="검색"
+                className="hover:text-purple cursor-pointer transition-colors"
+              >
                 <Search />
-              </Link>
+              </button>
             </li>
             <li>
               <button
+                title="메뉴"
                 aria-label="메뉴"
                 onClick={() => setIsMobileMenuOpen(true)}
-                className="cursor-pointer"
+                className="hover:text-purple cursor-pointer transition-colors"
               >
                 <Menu />
               </button>
@@ -243,7 +253,10 @@ const Header = () => {
           ) : isAuthed ? (
             <ul className="text-h7 flex items-center text-nowrap">
               <li className="mr-3.5">
-                <Link to="/mypage" className="cursor-pointer">
+                <Link
+                  to="/mypage"
+                  className="hover:text-purple cursor-pointer transition-colors"
+                >
                   <span className="font-bold">{userNickname}</span>님
                   환영합니다!
                 </Link>
@@ -284,7 +297,7 @@ const Header = () => {
                   aria-label="알림"
                   title="알림"
                 >
-                  {/* 안 읽은 알람이 있을때만 표시 */}
+                  {/* 안 읽은 알람 있을 때만 표시 */}
                   <Bell className="h-6 w-6" />
                   {hasNew && <New />}
                 </button>
@@ -299,7 +312,7 @@ const Header = () => {
                 )}
             </ul>
           ) : (
-            <ul className="text-h7 flex gap-4 text-nowrap">
+            <ul className="text-h7 flex gap-4 font-medium text-nowrap">
               <li>
                 <Link
                   to="/login"
@@ -329,6 +342,59 @@ const Header = () => {
         </nav>
       </div>
 
+      {/* 모바일 검색 */}
+      {isMobileSearchOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/30 md:hidden"
+          onClick={() => setIsMobileSearchOpen(false)}
+        >
+          <div
+            className="absolute top-0 right-0 left-0 bg-white p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-4.5 flex items-center justify-between">
+              <h4 className="text-g100 text-h4 font-bold">검색</h4>
+              <button
+                onClick={() => setIsMobileSearchOpen(false)}
+                className="text-g300 hover:text-purple cursor-pointer transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSearch} className="flex flex-col gap-3.5">
+              <div className="border-g400 focus-within:border-purple text-g100 flex items-center gap-2 rounded-md border px-4 py-3">
+                <input
+                  type="text"
+                  placeholder="상품명을 입력해 주세요"
+                  className="flex-1 focus:outline-none"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  autoFocus
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={clearSearch}
+                    aria-label="검색어 지우기"
+                  >
+                    <X className="text-g300 h-5 w-5" />
+                  </button>
+                )}
+              </div>
+
+              <button
+                type="submit"
+                className="bg-purple hover:bg-deep-purple flex cursor-pointer items-center justify-center gap-2 rounded-md py-3 font-semibold text-white transition-colors"
+              >
+                <Search className="h-5 w-5" />
+                <span>검색</span>
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* 모바일 메뉴 */}
       {isMobileMenuOpen && (
         <div
@@ -344,7 +410,7 @@ const Header = () => {
               <h4 className="text-g100 text-h4 font-bold">메뉴</h4>
               <button
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="text-g300 hover:text-purple cursor-pointer"
+                className="text-g300 hover:text-purple cursor-pointer transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -365,7 +431,7 @@ const Header = () => {
                       <div key={m.categoryId} className="flex flex-col">
                         <button
                           onClick={() => onExpand(m)}
-                          className="text-g100 hover:text-purple flex items-center justify-between py-2 text-left text-base transition-colors"
+                          className="text-g100 hover:text-purple flex cursor-pointer items-center justify-between py-2 text-left text-base transition-colors"
                         >
                           <span
                             onClick={(e) => {
@@ -375,7 +441,7 @@ const Header = () => {
                               );
                               setIsMobileMenuOpen(false);
                             }}
-                            className="font-medium"
+                            className="font-semibold"
                           >
                             {m.categoryName}
                           </span>
@@ -395,7 +461,7 @@ const Header = () => {
                                   );
                                   setIsMobileMenuOpen(false);
                                 }}
-                                className="text-g200 hover:text-purple text-h7 py-1 text-left transition-colors"
+                                className="text-g200 hover:text-purple text-h7 cursor-pointer py-1 text-left transition-colors"
                               >
                                 {s.categoryName}
                               </button>
@@ -418,8 +484,8 @@ const Header = () => {
             <div className="border-g500 bg-g500/30 border-t p-6">
               {!ready ? (
                 <div className="flex flex-col gap-3">
-                  <div className="bg-g400 h-10 w-full animate-pulse rounded" />
-                  <div className="bg-g400 h-10 w-full animate-pulse rounded" />
+                  <div className="bg-g400 h-10 w-full animate-pulse rounded-md" />
+                  <div className="bg-g400 h-10 w-full animate-pulse rounded-md" />
                 </div>
               ) : isAuthed ? (
                 <div className="flex flex-col gap-4">
@@ -440,7 +506,7 @@ const Header = () => {
                         navigate("/auctions/new");
                         setIsMobileMenuOpen(false);
                       }}
-                      className="hover:bg-light-purple flex flex-col items-center gap-2 rounded-lg p-3 transition-colors"
+                      className="hover:bg-light-purple flex flex-col items-center gap-2 rounded-md p-3 transition-colors"
                     >
                       <Plus className="text-purple h-6 w-6" />
                       <span className="text-g200 text-h8">경매등록</span>
@@ -451,7 +517,7 @@ const Header = () => {
                         openChatList();
                         setIsMobileMenuOpen(false);
                       }}
-                      className="hover:bg-light-purple relative flex flex-col items-center gap-2 rounded-lg p-3 transition-colors"
+                      className="hover:bg-light-purple relative flex flex-col items-center gap-2 rounded-md p-3 transition-colors"
                     >
                       <MessageCircleMore className="text-purple h-6 w-6" />
                       {totalUnreadCount >= 1 && <New />}
@@ -463,7 +529,7 @@ const Header = () => {
                         setIsNotiOpen(true);
                         setIsMobileMenuOpen(false);
                       }}
-                      className="hover:bg-light-purple relative flex flex-col items-center gap-2 rounded-lg p-3 transition-colors"
+                      className="hover:bg-light-purple relative flex flex-col items-center gap-2 rounded-md p-3 transition-colors"
                     >
                       <Bell className="text-purple h-6 w-6" />
                       {hasNew && <New />}
@@ -472,7 +538,7 @@ const Header = () => {
 
                     <button
                       onClick={handleLogout}
-                      className="hover:bg-light-purple flex flex-col items-center gap-2 rounded-lg p-3 transition-colors"
+                      className="hover:bg-light-purple flex flex-col items-center gap-2 rounded-md p-3 transition-colors"
                     >
                       <LogOut className="text-g200 h-6 w-6" />
                       <span className="text-g200 text-h8">로그아웃</span>
@@ -484,22 +550,21 @@ const Header = () => {
                   <Link
                     to="/login"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="bg-purple hover:bg-deep-purple text-h7 flex items-center justify-center gap-2 rounded-lg py-3 font-medium text-white transition-colors"
+                    className="bg-purple hover:bg-deep-purple text-h7 flex items-center justify-center gap-2 rounded-md py-3 font-bold text-white transition-colors"
                   >
-                    <LogIn className="h-4 w-4" />
                     <span>로그인</span>
                   </Link>
                   <Link
                     to="/signup"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="border-purple text-purple hover:bg-light-purple text-h7 flex items-center justify-center gap-2 rounded-lg border py-3 font-medium transition-colors"
+                    className="border-purple text-purple hover:bg-light-purple text-h7 flex items-center justify-center gap-2 rounded-md border py-3 font-bold transition-colors"
                   >
                     <span>회원가입</span>
                   </Link>
                   <Link
                     to="/mypage/inquiries"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="text-g200 hover:text-g100 text-h7 py-2 text-center transition-colors"
+                    className="text-g200 hover:text-purple text-h7 py-2 text-center transition-colors"
                   >
                     문의하기
                   </Link>
