@@ -1,7 +1,17 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Search, Menu, MessageCircleMore, Bell, X } from "lucide-react";
+import {
+  Search,
+  Menu,
+  MessageCircleMore,
+  Bell,
+  X,
+  ChevronRight,
+  Plus,
+  LogIn,
+  LogOut,
+} from "lucide-react";
 import New from "./New";
 import ChatModal from "../../features/chatting/pages/ChatModal";
 import NotiModal from "../../features/notification/pages/NotiModal";
@@ -13,9 +23,10 @@ import { useAuthInit } from "../../features/auth/hooks/UseAuthInit";
 import api from "../../shared/api/axiosInstance";
 import { useChatModalStore } from "../store/ChatModalStore";
 import { useNotiStore } from "../../features/notification/store/notiStore";
+import { useCategoryStore } from "../../features/auction/store/categoryStore";
+import type { CategoryNode } from "../../features/auction/api/categories";
 
 const Header = () => {
-  // 알람 상태변경
   const notis = useNotiStore((s) => s.notis);
   const hasNew = notis.some((n) => !n.read);
 
@@ -24,7 +35,6 @@ const Header = () => {
 
   const { ready } = useAuthInit();
 
-  // 프로필도 함께 가져오도록 수정
   const accessToken = useAuthStore((s: AuthState) => s.accessToken);
   const profile = useAuthStore((s: AuthState) => s.profile);
   const setProfile = useAuthStore((s: AuthState) => s.setProfile);
@@ -41,20 +51,38 @@ const Header = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isNotiOpen, setIsNotiOpen] = useState<boolean>(false);
 
+  // 모바일 메뉴
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { mains, subsByParent, loadingTop, loadTop, loadSubs } =
+    useCategoryStore();
+  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+
   const isAuthed = useMemo<boolean>(
     () => ready && Boolean(accessToken),
     [ready, accessToken]
   );
 
-  // 리프레시/로그인 완료 후, 프로필 없으면 한 번 불러오기
+  // 카테고리
+  useEffect(() => {
+    loadTop().catch(() => {});
+  }, [loadTop]);
+
+  const onExpand = async (m: CategoryNode) => {
+    const isOpen = expandedCategory === String(m.categoryId);
+    setExpandedCategory(isOpen ? null : String(m.categoryId));
+    if (!subsByParent[m.categoryId]?.length) {
+      await loadSubs(m.categoryId).catch(() => {});
+    }
+  };
+
+  // 로그인/리프레시 하고 프로필 없으면 한 번 불러오기
   useEffect(() => {
     let cancelled = false;
     (async () => {
       if (!isAuthed) return;
-      if (profile?.nickname) return; // 이미 있으면 skip
+      if (profile?.nickname) return;
       try {
         const { data } = await api.get("/mypage", {
-          // 실패해도 전체 앱 흐름 막지 않기
           validateStatus: (s) => s >= 200 && s < 500,
         });
         const nickname = data?.nickname ?? "";
@@ -111,6 +139,7 @@ const Header = () => {
     } finally {
       clearAuth();
       navigate("/", { replace: true });
+      setIsMobileMenuOpen(false);
     }
   };
 
@@ -123,7 +152,7 @@ const Header = () => {
     const apply = (): void => {
       const small = mql.matches;
       document.body.style.overflow =
-        (isChatOpen || isNotiOpen) && small ? "hidden" : "";
+        (isChatOpen || isNotiOpen || isMobileMenuOpen) && small ? "hidden" : "";
     };
 
     apply();
@@ -133,7 +162,7 @@ const Header = () => {
       mql.removeEventListener("change", apply);
       document.body.style.overflow = "";
     };
-  }, [isChatOpen, isNotiOpen]);
+  }, [isChatOpen, isNotiOpen, isMobileMenuOpen]);
 
   const modalRoot: HTMLElement | null = document.getElementById("modal-root");
 
@@ -192,7 +221,11 @@ const Header = () => {
               </Link>
             </li>
             <li>
-              <button aria-label="메뉴">
+              <button
+                aria-label="메뉴"
+                onClick={() => setIsMobileMenuOpen(true)}
+                className="cursor-pointer"
+              >
                 <Menu />
               </button>
             </li>
@@ -295,6 +328,200 @@ const Header = () => {
           )}
         </nav>
       </div>
+
+      {/* 모바일 메뉴 */}
+      {isMobileMenuOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/30 md:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        >
+          <div
+            className="absolute top-0 right-0 flex h-full w-[70vw] max-w-sm flex-col bg-white"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* 상단 */}
+            <div className="border-g500 flex items-center justify-between border-b p-6">
+              <h4 className="text-g100 text-h4 font-bold">메뉴</h4>
+              <button
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="text-g300 hover:text-purple cursor-pointer"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* 카테고리 */}
+            <div className="flex-1 overflow-y-auto p-6">
+              <h5 className="text-g100 text-h5 mb-4 font-bold">카테고리</h5>
+              {loadingTop ? (
+                <div className="text-g300 text-h7">불러오는 중…</div>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {mains.map((m: CategoryNode) => {
+                    const isOpen = expandedCategory === String(m.categoryId);
+                    const subs = subsByParent[m.categoryId] ?? [];
+
+                    return (
+                      <div key={m.categoryId} className="flex flex-col">
+                        <button
+                          onClick={() => onExpand(m)}
+                          className="text-g100 hover:text-purple flex items-center justify-between py-2 text-left text-base transition-colors"
+                        >
+                          <span
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(
+                                `/auctions?mainCategoryId=${m.categoryId}`
+                              );
+                              setIsMobileMenuOpen(false);
+                            }}
+                            className="font-medium"
+                          >
+                            {m.categoryName}
+                          </span>
+                          <ChevronRight
+                            className={`h-4 w-4 transition-transform ${isOpen ? "rotate-90" : ""}`}
+                          />
+                        </button>
+
+                        {isOpen && (
+                          <div className="mt-2 ml-4 flex flex-col gap-2">
+                            {subs.map((s) => (
+                              <button
+                                key={s.categoryId}
+                                onClick={() => {
+                                  navigate(
+                                    `/auctions?subCategoryId=${s.categoryId}`
+                                  );
+                                  setIsMobileMenuOpen(false);
+                                }}
+                                className="text-g200 hover:text-purple text-h7 py-1 text-left transition-colors"
+                              >
+                                {s.categoryName}
+                              </button>
+                            ))}
+                            {subs.length === 0 && (
+                              <div className="text-g300 text-h7 py-1">
+                                소분류 없음
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* 하단 */}
+            <div className="border-g500 bg-g500/30 border-t p-6">
+              {!ready ? (
+                <div className="flex flex-col gap-3">
+                  <div className="bg-g400 h-10 w-full animate-pulse rounded" />
+                  <div className="bg-g400 h-10 w-full animate-pulse rounded" />
+                </div>
+              ) : isAuthed ? (
+                <div className="flex flex-col gap-4">
+                  <button
+                    onClick={() => {
+                      navigate("/mypage");
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="text-g100 hover:text-purple mb-1.5 cursor-pointer text-left text-base transition-colors"
+                  >
+                    <span className="font-bold">{userNickname}</span>님
+                    환영합니다!
+                  </button>
+
+                  <div className="grid grid-cols-4 gap-3">
+                    <button
+                      onClick={() => {
+                        navigate("/auctions/new");
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="hover:bg-light-purple flex flex-col items-center gap-2 rounded-lg p-3 transition-colors"
+                    >
+                      <Plus className="text-purple h-6 w-6" />
+                      <span className="text-g200 text-h8">경매등록</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        openChatList();
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="hover:bg-light-purple relative flex flex-col items-center gap-2 rounded-lg p-3 transition-colors"
+                    >
+                      <MessageCircleMore className="text-purple h-6 w-6" />
+                      {totalUnreadCount >= 1 && <New />}
+                      <span className="text-g200 text-h8">채팅</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setIsNotiOpen(true);
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="hover:bg-light-purple relative flex flex-col items-center gap-2 rounded-lg p-3 transition-colors"
+                    >
+                      <Bell className="text-purple h-6 w-6" />
+                      {hasNew && <New />}
+                      <span className="text-g200 text-h8">알림</span>
+                    </button>
+
+                    <button
+                      onClick={handleLogout}
+                      className="hover:bg-light-purple flex flex-col items-center gap-2 rounded-lg p-3 transition-colors"
+                    >
+                      <LogOut className="text-g200 h-6 w-6" />
+                      <span className="text-g200 text-h8">로그아웃</span>
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  <Link
+                    to="/login"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="bg-purple hover:bg-deep-purple text-h7 flex items-center justify-center gap-2 rounded-lg py-3 font-medium text-white transition-colors"
+                  >
+                    <LogIn className="h-4 w-4" />
+                    <span>로그인</span>
+                  </Link>
+                  <Link
+                    to="/signup"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="border-purple text-purple hover:bg-light-purple text-h7 flex items-center justify-center gap-2 rounded-lg border py-3 font-medium transition-colors"
+                  >
+                    <span>회원가입</span>
+                  </Link>
+                  <Link
+                    to="/mypage/inquiries"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="text-g200 hover:text-g100 text-h7 py-2 text-center transition-colors"
+                  >
+                    문의하기
+                  </Link>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 채팅 모달 */}
+      {isChatOpen && createPortal(<ChatModal onClose={onClose} />, modalRoot)}
+
+      {/* 알림 모달 */}
+      {isNotiOpen &&
+        createPortal(
+          <NotiModal
+            onClose={() => setIsNotiOpen(false)}
+            onDelete={() => setIsNotiOpen(false)}
+          />,
+          modalRoot
+        )}
     </header>
   );
 };

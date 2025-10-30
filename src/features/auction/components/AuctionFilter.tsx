@@ -171,7 +171,7 @@ const AuctionFilter = ({
         </div>
         <button
           onClick={onApplyPrice}
-          className="bg-purple hover:bg-deep-purple rounded-md py-2 text-base font-medium text-white transition-colors"
+          className="bg-purple hover:bg-deep-purple cursor-pointer rounded-md py-2 text-base font-medium text-white transition-colors"
         >
           적용
         </button>
