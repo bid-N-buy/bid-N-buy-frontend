@@ -71,7 +71,7 @@ const AuctionFilter = ({
                   {/* 대분류 */}
                   <button
                     onClick={() => onExpand(m)}
-                    className={`text-g100 hover:text-purple flex items-center justify-between py-1 text-left text-base transition-colors ${
+                    className={`text-g100 hover:text-purple flex cursor-pointer items-center justify-between py-1 text-left text-base transition-colors ${
                       !subCategoryId && mainCategoryId === m.categoryId
                         ? "text-purple font-semibold"
                         : ""
@@ -104,7 +104,7 @@ const AuctionFilter = ({
                               sub: s.categoryName,
                             });
                           }}
-                          className={`py-1 text-left transition-colors ${
+                          className={`cursor-pointer py-1 text-left transition-colors ${
                             subCategoryId === s.categoryId
                               ? "text-purple font-medium"
                               : "text-g200 hover:text-purple"
@@ -188,7 +188,7 @@ const AuctionFilter = ({
             role="switch"
             aria-checked={includeEnded}
             onClick={onToggleEnded}
-            className={`relative inline-flex h-6.5 w-10.5 items-center rounded-full transition-colors ${
+            className={`relative inline-flex h-6.5 w-10.5 cursor-pointer items-center rounded-full transition-colors ${
               includeEnded ? "bg-purple" : "bg-g400"
             }`}
           >

@@ -66,7 +66,7 @@ const AuctionSection = ({
           {moreLink && (
             <button
               onClick={() => navigate(moreLink)}
-              className="text-g300 hover:text-purple text-h7 transition-colors"
+              className="text-g300 hover:text-purple text-h7 cursor-pointer transition-colors"
             >
               전체보기
             </button>

@@ -264,11 +264,11 @@ const ProductInfo = ({
               {isMenuOpen && (
                 <div
                   role="menu"
-                  className="border-g400 absolute top-full right-0 z-10 w-18 rounded-md border bg-white shadow-lg"
+                  className="border-g400 absolute top-full right-0 z-10 w-18 rounded-md border bg-white shadow-sm"
                 >
                   <button
                     onClick={handleShare}
-                    className="text-g100 hover:bg-g500 w-full px-3.5 py-2.5 text-center text-base transition-colors md:py-2.5"
+                    className="text-g100 hover:bg-g500 w-full cursor-pointer px-3.5 py-2.5 text-center text-base transition-colors md:py-2.5"
                     role="menuitem"
                   >
                     공유
@@ -277,7 +277,7 @@ const ProductInfo = ({
                   {(isSeller || adminToken) && (
                     <button
                       onClick={handleDeleteAuction}
-                      className="border-g400 text-red hover:bg-g500 w-full border-t px-3.5 py-2.5 text-center text-base transition-colors md:py-2.5"
+                      className="border-g400 text-red hover:bg-g500 w-full cursor-pointer border-t px-3.5 py-2.5 text-center text-base transition-colors md:py-2.5"
                       role="menuitem"
                     >
                       삭제
