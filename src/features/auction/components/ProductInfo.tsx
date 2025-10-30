@@ -38,6 +38,9 @@ export interface ProductInfoProps {
   onDeleteClick?: () => void;
 
   onAfterBid?: (next: { currentPrice?: number }) => void;
+
+  showToast?: (msg: string, type?: "success" | "error") => void;
+  hideToast?: () => void;
 }
 
 const ProductInfo = ({
@@ -60,6 +63,8 @@ const ProductInfo = ({
   isSeller = false,
   onDeleteClick,
   onAfterBid,
+  showToast: propShowToast, // 👈 프롭스 showToast의 이름을 변경
+  hideToast: propHideToast, // 👈 프롭스 hideToast의 이름을 변경
 }: ProductInfoProps) => {
   const [isBidModalOpen, setIsBidModalOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -130,7 +135,7 @@ const ProductInfo = ({
   // 입찰
   const { submitBid, loading } = useBid({
     onSuccess: (res) => {
-      showToast(res.message ?? "입찰이 완료되었습니다.", "success");
+      propShowToast("입찰이 완료되었습니다.", "success");
       const nextPrice = res.item?.bidPrice;
       onAfterBid?.({
         currentPrice: Number.isFinite(nextPrice)

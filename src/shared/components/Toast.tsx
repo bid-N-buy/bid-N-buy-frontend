@@ -18,10 +18,10 @@ const Toast = ({ message, type, onClose, duration = 3000 }: ToastProps) => {
   }, [duration, onClose]);
 
   return (
-    <div className="animate-fade-in fixed top-8 left-1/2 z-50 -translate-x-1/2">
+    <div className="animate-fade-in fixed top-8 left-1/2 z-[2000] -translate-x-1/2">
       <div
-        className={`flex items-center gap-3 rounded px-6 py-4 shadow-lg ${
-          type === "success" ? "bg-green text-white" : "bg-red text-white"
+        className={`flex items-center gap-3 rounded-md px-6 py-4 shadow-lg ${
+          type === "success" ? "bg-purple text-white" : "bg-red text-white"
         }`}
       >
         {type === "success" ? (
@@ -29,7 +29,7 @@ const Toast = ({ message, type, onClose, duration = 3000 }: ToastProps) => {
         ) : (
           <XCircle className="h-5 w-5 flex-shrink-0" />
         )}
-        <span className="text-[15px] font-medium">{message}</span>
+        <span className="text-h7 font-medium">{message}</span>
         <button
           onClick={onClose}
           className="ml-2 transition-opacity hover:opacity-80"
