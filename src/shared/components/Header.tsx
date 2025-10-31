@@ -574,19 +574,6 @@ const Header = () => {
           </div>
         </div>
       )}
-
-      {/* 채팅 모달 */}
-      {isChatOpen && createPortal(<ChatModal onClose={onClose} />, modalRoot)}
-
-      {/* 알림 모달 */}
-      {isNotiOpen &&
-        createPortal(
-          <NotiModal
-            onClose={() => setIsNotiOpen(false)}
-            onDelete={() => setIsNotiOpen(false)}
-          />,
-          modalRoot
-        )}
     </header>
   );
 };
