@@ -63,8 +63,8 @@ const ProductInfo = ({
   isSeller = false,
   onDeleteClick,
   onAfterBid,
-  showToast: propShowToast, // 👈 프롭스 showToast의 이름을 변경
-  hideToast: propHideToast, // 👈 프롭스 hideToast의 이름을 변경
+  showToast: propShowToast,
+  hideToast: propHideToast,
 }: ProductInfoProps) => {
   const [isBidModalOpen, setIsBidModalOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -234,7 +234,6 @@ const ProductInfo = ({
       useChatModalStore.getState().openChatRoom(chatroomId);
     } catch (error) {
       showToast("채팅방 생성에 실패했습니다.", "error");
-      console.error("Chat creation failed:", error);
     }
   };
 

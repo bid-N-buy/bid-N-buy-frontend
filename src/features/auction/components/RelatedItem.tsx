@@ -44,7 +44,6 @@ const RelatedItem = ({
 
         setItems(filtered);
       } catch (error) {
-        console.error("연관 상품 불러오기 실패:", error);
         setItems([]);
       } finally {
         setLoading(false);
