@@ -6,40 +6,109 @@ import StatusTriFilter, {
   type TriFilterValue,
 } from "../components/filters/StatusTriFilter";
 
-import { isOngoing as isOngoingItem } from "../utils/tradeStatus";
+import {
+  isOngoing as isOngoingCore,
+  isEndedByTime,
+  compareTradeItems,
+} from "../utils/tradeStatus";
 import type { TradeItem } from "../types/trade";
 
+/* ---------------------------------------------
+ * 위시리스트: 상태문구 기반 '종료' 판정 보강
+ * --------------------------------------------- */
+const U = (v?: string | null) => (v ?? "").toString().trim().toUpperCase();
+
+const ENDED_KEYWORDS = new Set([
+  "COMPLETE",
+  "COMPLETED",
+  "FINISH",
+  "FINISHED",
+  "END",
+  "ENDED",
+  "CANCEL",
+  "CANCELED",
+  "CANCELLED",
+  "FAIL",
+  "FAILED",
+  "DONE",
+  // 한글
+  "거래 완료",
+  "거래완료",
+  "종료",
+  "판매 종료",
+  "판매종료",
+  "유찰",
+]);
+
+/** 상태문구로 종료로 볼 수 있으면 true */
+function isEndedLikeText(item: TradeItem): boolean {
+  const cands = [
+    (item as any)?.statusText,
+    (item as any)?.status,
+    (item as any)?.state,
+  ]
+    .map((x) => U(x))
+    .filter(Boolean);
+
+  return cands.some((txt) =>
+    Array.from(ENDED_KEYWORDS).some((kw) => txt.includes(U(kw)))
+  );
+}
+
+/** 위시리스트용 진행/종료 판정:
+ *  - 시간 경과면 종료
+ *  - 상태문구가 종료류면 종료
+ *  - 그 외엔 공통 isOngoing 로직 사용
+ */
+function isOngoingWishlist(item: TradeItem): boolean {
+  if (isEndedByTime((item as any)?.auctionEnd)) return false;
+  if (isEndedLikeText(item)) return false;
+  return isOngoingCore(item);
+}
+
+/* =========================================================
+ * 컴포넌트
+ * ========================================================= */
 const WishList: React.FC = () => {
   const [filter, setFilter] = useState<TriFilterValue>("all");
 
-  // 서버에서만 가져온 찜 목록
+  // 서버 데이터
   const { data, loading, error } = useWishlist({
     page: 0,
     size: 20,
     sort: "end",
   });
 
-  // 항상 배열 형태로 사용
-  const base: TradeItem[] = data ?? [];
+  // ✅ data가 unknown일 수 있으니 확정 타입으로 변환
+  const base: TradeItem[] = Array.isArray(data) ? data : [];
 
   // 진행중 여부 판정 함수 메모
-  const isOngoingForItem = useCallback((x: TradeItem) => isOngoingItem(x), []);
+  const isOngoingForItem = useCallback(
+    (x: TradeItem) => isOngoingWishlist(x),
+    []
+  );
 
-  // 전체/진행중/종료 카운트
-  const counts = useMemo(() => {
-    const all = base.length;
-    const ongoing = base.filter(isOngoingForItem).length;
-    const ended = all - ongoing;
-    return { all, ongoing, ended };
-  }, [base, isOngoingForItem]);
+  // ✅ counts를 명확한 타입으로 고정 (unknown 방지)
+  const counts: { all: number; ongoing: number; ended: number } =
+    useMemo(() => {
+      const all = base.length;
+      const ongoing = base.filter(isOngoingForItem).length;
+      const ended = all - ongoing;
+      return { all, ongoing, ended };
+    }, [base, isOngoingForItem]);
 
   // 현재 탭(필터)에 맞는 목록
-  const filtered = useMemo(() => {
+  const filtered: TradeItem[] = useMemo(() => {
     if (filter === "all") return base;
     if (filter === "ongoing") return base.filter(isOngoingForItem);
-    // filter === "ended"
     return base.filter((x) => !isOngoingForItem(x));
   }, [base, filter, isOngoingForItem]);
+
+  // 공통 정렬(진행군 → 종료군, 같은 군은 마감시각 최근 우선)
+  const sorted: TradeItem[] = useMemo(
+    () => [...filtered].sort((a, b) => compareTradeItems(a, b)),
+    [filtered]
+  );
 
   // 찜 토글 핸들러 (하트)
   const handleToggleLike = (auctionId: number, nextLiked: boolean) => {
@@ -51,7 +120,7 @@ const WishList: React.FC = () => {
   };
 
   // 완전히 비어 있는지?
-  const isTrulyEmpty = !loading && filtered.length === 0;
+  const isTrulyEmpty = !loading && sorted.length === 0;
 
   return (
     <div className="min-h-[800px] p-4">
@@ -79,23 +148,13 @@ const WishList: React.FC = () => {
         // 로딩 끝났는데 필터 결과가 비었을 때
         <div className="flex min-h-[300px] flex-col items-center justify-center gap-4 rounded-xl border border-dashed border-neutral-300 bg-neutral-50 p-10 text-center">
           <p className="text-sm text-neutral-500">찜한 항목이 없습니다.</p>
-
-          {/* 👉 여기 CTA 버튼 추가하고 싶으면 이 안에 넣으면 돼
-              예: 관심 상품 둘러보기 */}
-          {/* <button
-            type="button"
-            onClick={() => (window.location.href = "/auctions")}
-            className="rounded-lg bg-gradient-to-r from-purple-600 to-fuchsia-500 px-4 py-2 text-sm font-semibold text-white shadow-md ring-1 ring-purple-500/50 hover:brightness-110 focus:ring-2 focus:ring-purple-400 focus:outline-none"
-          >
-            지금 인기 상품 보기
-          </button> */}
         </div>
       ) : (
         // 실제 목록
         <ul role="list" aria-label="찜한 상품 목록">
-          {filtered.map((it, idx) => (
+          {sorted.map((it, idx) => (
             <TradeRowCompact
-              key={it.id || idx}
+              key={it.id ?? idx}
               item={it}
               wishStyle={true} // 오른쪽에 하트 + 가격
               onToggleLike={handleToggleLike}

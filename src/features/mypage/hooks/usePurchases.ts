@@ -1,14 +1,14 @@
 // src/features/mypage/hooks/usePurchases.ts
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import api from "../../../shared/api/axiosInstance";
 import type { TradeItem } from "../types/trade";
-import { fromPurchase } from "../utils/tradeMappers"; // 서버응답 -> TradeItem 변환
+import { fromPurchase } from "../utils/tradeMappers";
 
 type Options = {
   page?: number;
   size?: number;
   status?: string;
-  sort?: "end" | "start";
+  sort?: "end" | "start"; // 서버가 지원하면 유지
 };
 
 export function usePurchases(opts: Options = {}) {
@@ -19,53 +19,60 @@ export function usePurchases(opts: Options = {}) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<unknown>(null);
 
-  useEffect(() => {
-    let alive = true;
+  // 외부에서 강제 리패치할 때 사용할 토글
+  const [bump, setBump] = useState(0);
+  const reload = () => setBump((x) => x + 1);
 
-    (async () => {
+  // 최신 요청만 반영하도록 request id 보관
+  const reqIdRef = useRef(0);
+
+  useEffect(() => {
+    const id = ++reqIdRef.current;
+    const ctrl = new AbortController();
+
+    async function run() {
       setLoading(true);
       setError(null);
 
       try {
         const { data: res } = await api.get("/mypage/purchase", {
           params: { page, size, status, sort },
+          signal: ctrl.signal,
         });
 
-        // 서버가 배열로 줄 수도 있고 { items: [], total: n } 로 줄 수도 있어서 방어
-        const rawList: any[] = Array.isArray(res)
-          ? res
-          : Array.isArray(res?.items)
-            ? res.items
+        // 응답 형태 방어
+        const itemsRaw: unknown[] = Array.isArray(res)
+          ? (res as unknown[])
+          : Array.isArray((res as any)?.items)
+            ? (res as any).items
             : [];
 
-        const mapped: TradeItem[] = rawList.map(fromPurchase);
+        const mapped: TradeItem[] = itemsRaw.map(fromPurchase);
 
-        if (!alive) return;
+        // 최신 요청만 반영
+        if (reqIdRef.current !== id) return;
 
         setData(mapped);
-        setTotal(typeof res?.total === "number" ? res.total : mapped.length);
-      } catch (err) {
-        if (!alive) return;
+        setTotal(
+          typeof (res as any)?.total === "number"
+            ? (res as any).total
+            : mapped.length
+        );
+      } catch (err: any) {
+        if (ctrl.signal.aborted) return;
+        if (reqIdRef.current !== id) return;
+
         setError(err);
         setData([]);
         setTotal(0);
       } finally {
-        if (alive) setLoading(false);
+        if (reqIdRef.current === id) setLoading(false);
       }
-    })();
+    }
 
-    return () => {
-      alive = false;
-    };
-  }, [page, size, status, sort]);
+    run();
+    return () => ctrl.abort();
+  }, [page, size, status, sort, bump]);
 
-  return {
-    data,
-    total,
-    loading,
-    error,
-    reload: () => {
-      // 필요하면 refetch 로직 넣을 자리
-    },
-  };
+  return { data, total, loading, error, reload };
 }

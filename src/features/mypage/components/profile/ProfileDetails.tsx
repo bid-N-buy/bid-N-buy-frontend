@@ -177,7 +177,9 @@ const ProfileDetails: React.FC<Props> = ({
   const hasTemp =
     typeof temperature === "number" && Number.isFinite(temperature);
 
-  const temp = hasTemp ? clamp(temperature as number, 0, 100) : null;
+  const temp = hasTemp
+    ? parseFloat(clamp(temperature as number, 0, 100).toFixed(1))
+    : null;
   const knobLeft = temp !== null ? `${temp}%` : "0%";
 
   // 서버에서 받은 실제 아이템
