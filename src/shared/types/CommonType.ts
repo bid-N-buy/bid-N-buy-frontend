@@ -21,8 +21,8 @@ export interface ImageProps {
   imageType?: string;
 }
 export interface AvatarProps {
-  imageUrl: UserProps["profile_image_url"];
-  nickname?: UserProps["nickname"];
+  imageUrl: string | null | undefined;
+  nickname?: string;
 }
 
 export interface ModalProps {
@@ -30,9 +30,6 @@ export interface ModalProps {
   onClose: () => void;
   onDelete?: () => void;
 }
-
-export const profile_default =
-  "https://img.daisyui.com/images/profile/demo/yellingcat@192.webp";
 
 export interface LoginResponse {
   email?: string;

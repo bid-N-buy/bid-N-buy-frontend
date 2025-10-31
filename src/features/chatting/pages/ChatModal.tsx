@@ -3,16 +3,16 @@ import api from "../../../shared/api/axiosInstance";
 import { useShallow } from "zustand/shallow";
 import { useAuthStore } from "../../auth/store/authStore";
 // import { useChatListApi } from "../api/useChatList";
-import { useChatRoomApi } from "../api/useChatRoom";
+// import { useChatchatRoom } from "../api/useChatRoom";
 import Toast from "../../../shared/components/Toast";
 import useToast from "../../../shared/hooks/useToast";
 import type { ModalProps } from "../../../shared/types/CommonType";
 import { useChatModalStore } from "../../../shared/store/ChatModalStore";
 import ChatList from "./ChatList";
 import ChatRoom from "./ChatRoom";
-import AddressModal from "./AddressModal";
-import type { Address } from "../../mypage/types/address";
-import type { ChatAddressModalProps } from "../types/ChatType";
+// import AddressModal from "./AddressModal";
+// import type { Address } from "../../mypage/types/address";
+// import type { ChatAddressModalProps } from "../types/ChatType";
 import { X, ChevronLeft, EllipsisVertical } from "lucide-react";
 
 const ChatModal = ({ onClose }: ModalProps) => {
@@ -25,61 +25,53 @@ const ChatModal = ({ onClose }: ModalProps) => {
     targetView,
     selectedChatroomId,
     chatList,
+    chatRoom,
     loading,
     openChatList,
+    openChatRoom,
     refetchChatList,
+    fetchChatRoom,
   } = useChatModalStore(
     useShallow((state) => ({
       targetView: state.targetView,
       selectedChatroomId: state.selectedChatroomId,
       chatList: state.chatList,
+      chatRoom: state.chatRoom,
       loading: state.loading,
       openChatList: state.openChatList,
+      openChatRoom: state.openChatRoom,
       refetchChatList: state.refetchChatList,
+      fetchChatRoom: state.fetchChatRoom,
     }))
   );
 
   const [currentView, setCurrentView] = useState<string>(targetView);
 
-  // chatlist 데이터
-  type ChatListItem = (typeof chatList)[number]; // 불러와진 ChatListItemProps 중 원하는 요소만 사용
-  // 이동할 roomInfo(list에서 접근 시)
-  const [selectedRoomInfo, setSelectedRoomInfo] = useState<ChatListItem | null>(
-    null
-  );
-
-  // chatroomId 분기점: header에서 버튼 눌렀을 때 || 경매 상세 페이지에서 챗방 생성했을 때
-  const targetChatroomId = selectedRoomInfo?.chatroomId || selectedChatroomId;
-
-  // chatroom 데이터
-  const shouldEnableRoomApi = currentView === "room" && chatList.length > 0;
-  const roomApi = useChatRoomApi(targetChatroomId!, shouldEnableRoomApi);
-
   // chatroom에서 해당 채팅방 삭제 메뉴
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const [isAdOpen, setIsAdOpen] = useState(false); // 주소
-  const [editing, setEditing] = useState<Address | null>(null);
-  const [addrMock, setAddrMock] = useState<boolean>(false);
-  const [addressesMock, setAddressesMock] = useState<Address[]>([
-    {
-      addressId: 1,
-      zonecode: "04524",
-      address: "서울 중구 세종대로 110",
-      detailAddress: "1층",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-  ]);
+  // const [isAdOpen, setIsAdOpen] = useState(false); // 주소
+  // const [editing, setEditing] = useState<Address | null>(null);
+  // const [addrMock, setAddrMock] = useState<boolean>(false);
+  // const [addressesMock, setAddressesMock] = useState<Address[]>([
+  //   {
+  //     addressId: 1,
+  //     zonecode: "04524",
+  //     address: "서울 중구 세종대로 110",
+  //     detailAddress: "1층",
+  //     createdAt: new Date().toISOString(),
+  //     updatedAt: new Date().toISOString(),
+  //   },
+  // ]);
 
-  const onToggleModal = () => {
-    setIsAdOpen((prev) => !prev);
-  };
+  // const onToggleModal = () => {
+  //   setIsAdOpen((prev) => !prev);
+  // };
 
-  const handleComplete = (data: Address) => {
-    console.log(data);
-    onToggleModal(); // 주소창은 자동으로 사라지므로 모달만 꺼주면 된다.
-  };
+  // const handleComplete = (data: Address) => {
+  //   console.log(data);
+  //   onToggleModal(); // 주소창은 자동으로 사라지므로 모달만 꺼주면 된다.
+  // };
 
   // modal창 닫기: 여백 누를 시 꺼지도록
   useEffect(() => {
@@ -95,15 +87,17 @@ const ChatModal = ({ onClose }: ModalProps) => {
   // list에서 각 Chat 누를 시 채팅방으로 넘어가는 함수
   const handleSelectRoom = (chatroomId: number) => {
     const roomInfo = chatList.find((chat) => chat.chatroomId === chatroomId);
+    console.log(roomInfo);
+    console.log(chatList);
     if (roomInfo) {
-      setSelectedRoomInfo(roomInfo);
+      fetchChatRoom(token, chatroomId);
+      openChatRoom(chatroomId);
       setCurrentView("room");
     }
   };
 
   // 채팅방에서 목록으로 돌아갈 함수
   const handleGoToList = async () => {
-    setSelectedRoomInfo(null);
     openChatList();
     refetchChatList(token);
     setCurrentView("list");
@@ -154,11 +148,7 @@ const ChatModal = ({ onClose }: ModalProps) => {
               >
                 <ChevronLeft />
               </button>
-              <p>
-                {selectedRoomInfo?.counterpartNickname ||
-                  roomApi!.chatRoom?.chatroomInfo.counterpartNickname ||
-                  "사용자"}
-              </p>
+              <p>{chatRoom?.chatroomInfo.counterpartNickname || "사용자"}</p>
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 aria-label="더보기"
@@ -169,7 +159,7 @@ const ChatModal = ({ onClose }: ModalProps) => {
                 <div className="border-g400 absolute top-10 right-3 mt-2 w-32 rounded-md border bg-white shadow-lg">
                   <button
                     onClick={() => {
-                      handleDeleteRoom(targetChatroomId!);
+                      handleDeleteRoom(selectedChatroomId!);
                     }}
                     className="text-red hover:bg-g500 w-full px-4 py-2.5 text-left text-base transition-colors md:py-3"
                   >
@@ -180,7 +170,7 @@ const ChatModal = ({ onClose }: ModalProps) => {
             </>
           )}
         </div>
-        {isAdOpen && (
+        {/* {isAdOpen && (
           <AddressModal
             open={isAdOpen}
             initial={editing}
@@ -205,7 +195,7 @@ const ChatModal = ({ onClose }: ModalProps) => {
               }
             }}
           />
-        )}
+        )} */}
         <div className="h-[calc(100%-59px)] overflow-x-hidden overflow-y-auto">
           {currentView === "list" && (
             <ChatList chatList={chatList} onSelectRoom={handleSelectRoom} />
@@ -220,15 +210,13 @@ const ChatModal = ({ onClose }: ModalProps) => {
               {listApi.error}
             </p>
           )} */}
-          {currentView === "room" && roomApi.isLoading && (
-            <p>채팅방 정보 로딩 중...</p>
-          )}
-          {currentView === "room" && !roomApi.isLoading && roomApi.chatRoom && (
+          {currentView === "room" && loading && <p>채팅방 정보 로딩 중...</p>}
+          {currentView === "room" && !loading && chatRoom && (
             <ChatRoom
-              chatroomId={targetChatroomId!}
-              sellerId={roomApi.chatRoom.sellerId}
-              chatroomInfo={selectedRoomInfo || roomApi.chatRoom.chatroomInfo}
-              productInfo={roomApi.chatRoom.productInfo}
+              chatroomId={selectedChatroomId!}
+              sellerId={chatRoom.sellerId}
+              chatroomInfo={chatRoom.chatroomInfo}
+              productInfo={chatRoom.productInfo}
             />
           )}
         </div>

@@ -2,6 +2,7 @@ import { create } from "zustand";
 import type {
   ChatListItemProps,
   ChatMessageProps,
+  ChatRoomProps,
 } from "../../features/chatting/types/ChatType";
 import api from "../api/axiosInstance";
 import { useAuthStore } from "../../features/auth/store/authStore";
@@ -13,8 +14,12 @@ type ChatModalState = {
   targetView: string;
   selectedChatroomId: number | null;
   chatList: ChatListItemProps[];
+  chatRoom: ChatRoomProps | null;
   totalUnreadCount: number;
   loading: boolean;
+  error: string | null;
+};
+type ChatModalAction = {
   openChatList: () => void;
   openChatRoom: (chatroomId: number) => void;
   onClose: () => void;
@@ -22,30 +27,40 @@ type ChatModalState = {
   markAsRead: (chatroomId: number) => void;
   fetchChatList: (accessToken: string | null) => Promise<void>;
   refetchChatList: (accessToken: string | null) => Promise<void>;
+  fetchChatRoom: (
+    accessToken: string | null,
+    chatroomId: number
+  ) => Promise<void>;
+  makeChatRoomInAuc: (
+    accessToken: string | null,
+    sellerId: number,
+    auctionId: number
+  ) => Promise<void>;
   handleNewChatMessage: (message: ChatMessageProps) => void;
 };
+
+type ChatModalStoreProps = ChatModalAction & ChatModalState;
 
 const calculateTotalUnread = (list: ChatListItemProps[]) =>
   list.reduce((total, item) => total + item.unreadCount, 0);
 
-const updateChatState = (newChatList: ChatListItemProps[], set: Function) => {
+const updateChatState = (newChatList: ChatListItemProps[], set) => {
   const newTotalUnreadCount = calculateTotalUnread(newChatList);
-  console.log(newTotalUnreadCount);
-
-  // 🚨 set 호출 방식 확인 필요
   set({
     chatList: newChatList,
-    totalUnreadCount: newTotalUnreadCount, // 💡 이것이 가장 중요
+    totalUnreadCount: newTotalUnreadCount,
   });
 };
 
-export const useChatModalStore = create<ChatModalState>((set, get) => ({
+export const useChatModalStore = create<ChatModalStoreProps>((set, get) => ({
   isChatOpen: false,
   targetView: "list",
   selectedChatroomId: null,
   chatList: [],
+  chatRoom: null,
   totalUnreadCount: 0,
   loading: false,
+  error: null,
 
   // 채팅 모달 여는 상태
   openChatList: () =>
@@ -88,7 +103,7 @@ export const useChatModalStore = create<ChatModalState>((set, get) => ({
   },
   // 로그인 시, 직전까지의 채팅 리스트 상태 갱신
   fetchChatList: async (accessToken) => {
-    set({ loading: true });
+    set({ error: null, loading: true });
     try {
       const response = await api.get("/chatrooms/list", {
         headers: { Authorization: `Bearer ${accessToken}` },
@@ -97,9 +112,9 @@ export const useChatModalStore = create<ChatModalState>((set, get) => ({
       get().setChatList(response.data);
     } catch (error) {
       console.error("초기 unreadCount 로드 실패:", error);
-      set({ loading: false });
+      set({ error: "초기 unreadCount 로드 실패", loading: false });
     } finally {
-      set({ loading: false });
+      set({ error: "초기 unreadCount 로드 실패", loading: false });
     }
   },
   // 모달 열려 있는 중 재갱신
@@ -111,6 +126,110 @@ export const useChatModalStore = create<ChatModalState>((set, get) => ({
       get().setChatList(response.data);
     } catch (error) {
       console.error("채팅 목록 리로드 실패:", error);
+    }
+  },
+  fetchChatRoom: async (accessToken, chatroomId) => {
+    const { chatList } = get();
+
+    try {
+      set({
+        loading: true,
+        error: null,
+      });
+      const listItem = chatList.find((item) => item.chatroomId === chatroomId);
+
+      if (!listItem) {
+        set({
+          error: "채팅 목록에서 해당 방을 찾을 수 없습니다.",
+          loading: false,
+        });
+        return;
+      }
+      const auctionRes = await api.get(`/auctions/${listItem.auctionId}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      const fullRoomData: ChatRoomProps = {
+        chatroomId: chatroomId,
+        sellerId: auctionRes.data.sellerId,
+        chatroomInfo: {
+          auctionId: listItem.auctionId,
+          auctionImageUrl: listItem.auctionImageUrl,
+          auctionTitle: listItem.auctionTitle,
+          counterpartId: listItem.counterpartId,
+          counterpartNickname: listItem.counterpartNickname,
+          counterpartProfileImageUrl: listItem.counterpartProfileImageUrl,
+        },
+        productInfo: {
+          currentPrice: auctionRes.data.currentPrice,
+          sellingStatus: auctionRes.data.sellingStatus,
+        },
+      };
+      set({ chatRoom: fullRoomData });
+    } catch (error) {
+      console.error("Failed to load chat room detail:", error);
+      set({
+        error: `채팅방을 불러올 수 없습니다: ${error}`,
+        chatRoom: null,
+      });
+    } finally {
+      set({ loading: false });
+    }
+  },
+  makeChatRoomInAuc: async (accessToken, sellerId, auctionId) => {
+    try {
+      set({
+        loading: true,
+        error: null,
+      });
+      const response = await api.get<ChatListItemProps[]>("/chatrooms/list", {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      const listItem = response.data.find(
+        (item) =>
+          item.counterpartId === sellerId && item.auctionId === auctionId
+      );
+
+      if (!listItem) {
+        set({
+          error: "채팅 목록에서 해당 방을 찾을 수 없습니다.",
+          loading: false,
+        });
+        return;
+      }
+
+      const auctionRes = await api.get(`/auctions/${listItem!.auctionId}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+
+      const fullRoomData = {
+        chatroomId: listItem.chatroomId,
+        sellerId: auctionRes.data.sellerId,
+        chatroomInfo: {
+          auctionId: listItem.auctionId,
+          auctionImageUrl: listItem.auctionImageUrl,
+          auctionTitle: listItem.auctionTitle,
+          counterpartId: listItem.counterpartId,
+          counterpartNickname: listItem.counterpartNickname,
+          counterpartProfileImageUrl: listItem.counterpartProfileImageUrl,
+        },
+        productInfo: {
+          currentPrice: auctionRes.data.currentPrice,
+          sellingStatus: auctionRes.data.sellingStatus,
+        },
+      };
+
+      set({ chatRoom: fullRoomData });
+    } catch (error) {
+      console.error("Failed to load chat rooms:", error);
+      set({
+        error: `채팅방을 불러올 수 없습니다: ${error}`,
+        chatRoom: null,
+      });
+    } finally {
+      set({ loading: false });
     }
   },
   // 실시간 전체메시지 읽음 상태 갱신(리스트)

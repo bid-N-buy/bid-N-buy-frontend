@@ -4,7 +4,7 @@ import { useAuthStore } from "../../auth/store/authStore";
 import { useChatModalStore } from "../../../shared/store/ChatModalStore";
 import type { ChatRoomProps, ChatListItemProps } from "../types/ChatType";
 
-export const useChatRoomApi = (chatroomId: number, isEnable: boolean) => {
+export const useChatRoomApi = (chatroomId: number) => {
   const [chatRoom, setChatRoom] = useState<ChatRoomProps>();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -46,7 +46,7 @@ export const useChatRoomApi = (chatroomId: number, isEnable: boolean) => {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      const fullRoomData = {
+      const fullRoomData: ChatRoomProps = {
         chatroomId: chatroomId,
         sellerId: auctionRes.data.sellerId,
         chatroomInfo: {
@@ -72,8 +72,8 @@ export const useChatRoomApi = (chatroomId: number, isEnable: boolean) => {
     }
   }, [chatroomId, token]);
   useEffect(() => {
-    if (isEnable) loadChatRoom();
-  }, [loadChatRoom, isEnable]);
+    loadChatRoom();
+  }, [loadChatRoom]);
 
   return { chatRoom, isLoading, error, refetch: loadChatRoom };
 };

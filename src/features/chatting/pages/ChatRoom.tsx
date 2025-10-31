@@ -39,30 +39,6 @@ const ChatRoom = ({
   // 웹소켓 주소
   const WS_URL = import.meta.env.VITE_WEBSOCKET_URL;
 
-  useEffect(() => {
-    if (!token || !chatroomId) return;
-
-    fetchMessageHistory(chatroomId, token);
-    webSocketLogic();
-
-    // Cleanup
-    return () => {
-      clientRef.current?.deactivate();
-      clientRef.current = null;
-    };
-  }, [chatroomId, token]);
-
-  useEffect(() => {
-    if (!chatroomId || !userId || !isConnected) {
-      return;
-    }
-    if (messages.length === 0) {
-      console.log("메시지 기록이 없어 읽음 요청을 건너뜁니다.");
-      return;
-    }
-    sendReadStatus();
-  }, [chatroomId, userId, isConnected, messages.length]);
-
   // 이전 메시지 로드
   const fetchMessageHistory = async (chatroomId: number, token: string) => {
     try {
@@ -345,6 +321,30 @@ const ChatRoom = ({
       console.error("읽음 상태 전송 실패:", error);
     }
   };
+
+  useEffect(() => {
+    if (!token || !chatroomId) return;
+
+    fetchMessageHistory(chatroomId, token);
+    webSocketLogic();
+
+    // Cleanup
+    return () => {
+      clientRef.current?.deactivate();
+      clientRef.current = null;
+    };
+  }, [chatroomId, token]);
+
+  useEffect(() => {
+    if (!chatroomId || !userId || !isConnected) {
+      return;
+    }
+    if (messages.length === 0) {
+      console.log("메시지 기록이 없어 읽음 요청을 건너뜁니다.");
+      return;
+    }
+    sendReadStatus();
+  }, [chatroomId, userId, isConnected, messages.length]);
 
   return (
     <>
