@@ -11,15 +11,12 @@ import { useAuthStore, type AuthState } from "../../auth/store/authStore";
 import Toast from "../../../shared/components/Toast";
 
 import AddressDetails from "../components/myAddress/AddressDetails";
-import AddressEditorModal, {
-  type AddressDraft,
-} from "../components/myAddress/AddressEditorModal";
+import AddressEditorModal from "../components/myAddress/AddressEditorModal";
+import type { AddressDraft } from "../types/address";
 
 import BankAccountDetails from "../components/bankAccount/BankAccountDetails";
-import BankAccountEditorModal, {
-  type BankAccountDraft,
-} from "../components/bankAccount/BankAccountEditorModal";
-
+import BankAccountEditorModal from "../components/bankAccount/BankAccountEditorModal";
+import type { BankAccountDraft } from "../types/bankAccount";
 /* =======================
  * 타입
  * ======================= */
