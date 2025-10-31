@@ -36,7 +36,7 @@ type ChatModalAction = {
     sellerId: number,
     auctionId: number
   ) => Promise<void>;
-  handleNewChatMessage: (message: ChatMessageProps) => void;
+  handleNewChatMessage: (message: ChatMessageProps) => Promise<void>;
 };
 
 type ChatModalStoreProps = ChatModalAction & ChatModalState;
@@ -128,6 +128,7 @@ export const useChatModalStore = create<ChatModalStoreProps>((set, get) => ({
       console.error("채팅 목록 리로드 실패:", error);
     }
   },
+  // 리스트에서 챗룸 접근 시 작동
   fetchChatRoom: async (accessToken, chatroomId) => {
     const { chatList } = get();
 
@@ -175,6 +176,7 @@ export const useChatModalStore = create<ChatModalStoreProps>((set, get) => ({
       set({ loading: false });
     }
   },
+  // 경매 상세페이지 및 알림에서 챗룸 만들 때 사용
   makeChatRoomInAuc: async (accessToken, sellerId, auctionId) => {
     try {
       set({
@@ -233,7 +235,7 @@ export const useChatModalStore = create<ChatModalStoreProps>((set, get) => ({
     }
   },
   // 실시간 전체메시지 읽음 상태 갱신(리스트)
-  handleNewChatMessage: (message) => {
+  handleNewChatMessage: async (message) => {
     const { chatList, selectedChatroomId } = get();
     const myUserId = getUserId();
 
@@ -261,6 +263,18 @@ export const useChatModalStore = create<ChatModalStoreProps>((set, get) => ({
       // 업데이트된 챗룸 가장 위로 정렬된 새 리스트 정의
       const newChatList = [updatedRoom, ...updatedList];
       updateChatState(newChatList, set);
+    }
+    // unreadCount 갱신
+    try {
+      const response = await api.get("/chatrooms/list", {
+        headers: {
+          Authorization: `Bearer ${useAuthStore.getState().accessToken}`,
+        },
+      });
+      const serverList = response.data;
+      updateChatState(serverList, set);
+    } catch (e) {
+      console.error("채팅 리스트 갱신 실패 (fallback to optimistic):", e);
     }
   },
 }));
