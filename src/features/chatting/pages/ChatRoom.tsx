@@ -84,9 +84,9 @@ const ChatRoom = ({
         const readDestination = `/topic/chat/readstatus/${chatroomId}`;
 
         client.subscribe(receivedDestination, (message) => {
-          handleMessageReceived(message); // 화면 변경
           try {
             const newMessage: ChatMessageProps = JSON.parse(message.body);
+            handleMessageReceived(message); // 화면 변경
             handleNewChatMessage(newMessage); // 실시간 전체 메시지 읽음 상태 관리
           } catch (e) {
             console.error("뱃지 관련 오류:", e);
