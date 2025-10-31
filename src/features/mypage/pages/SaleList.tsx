@@ -5,19 +5,15 @@ import TradeRowCompact from "../components/items/TradeRowCompact";
 import StatusTriFilter, {
   type TriFilterValue,
 } from "../components/filters/StatusTriFilter";
-
-// 진행/종료 + 정렬 util (결제 상태 반영 버전)
 import { isOngoing, compareTradeItems } from "../utils/tradeStatus";
-
 import type { AuctionItem } from "../../auction/types/auctions";
 
 // 정규화 타입
 type NormForFilter = {
-  id: number;
+  id: number | null; // ← null 허용 (안전)
   status: string;
   auctionEnd: string;
 
-  // ⬇ 결제/정산/결과 필드
   paid?: boolean | null;
   paymentStatus?: string | null;
   settlementStatus?: string | null;
@@ -32,6 +28,14 @@ type NormForFilter = {
 const first = <T,>(...vals: (T | null | undefined)[]): T | null =>
   vals.find((v) => v != null) ?? null;
 
+// 렌더 키 유틸: 항상 문자열 + 네임스페이스
+function makeKey(item: NormForFilter, idx: number, scope = "sales") {
+  if (item.id != null) return `${scope}:auc:${String(item.id)}`;
+  // id가 없을 때의 안전망 (index는 최후의 수단)
+  // 그래도 문자열 네임스페이스로 충돌 최소화
+  return `${scope}:tmp:${idx}`;
+}
+
 export default function SaleList() {
   const [filter, setFilter] = useState<TriFilterValue>("all");
   const nav = useNavigate();
@@ -42,10 +46,15 @@ export default function SaleList() {
     sort: "end",
   });
 
-  const normalized: NormForFilter[] = useMemo(
+  // 1) 원본 → 정규화
+  const normalizedRaw: NormForFilter[] = useMemo(
     () =>
       (data ?? []).map((it: any) => {
-        const id = (it.auctionId ?? it.id) as number;
+        const id =
+          (typeof it.auctionId === "number" ? it.auctionId : undefined) ??
+          (typeof it.id === "number" ? it.id : undefined) ??
+          null;
+
         const status = (it.sellingStatus ?? it.status ?? "") as string;
         const auctionEnd = (it.endTime ?? it.auctionEnd ?? "") as string;
 
@@ -82,9 +91,28 @@ export default function SaleList() {
     [data]
   );
 
+  // 2) 중복 제거 (id가 있는 항목들만 id로 dedupe, id가 없는 항목은 그대로 유지)
+  const normalized: NormForFilter[] = useMemo(() => {
+    const seen = new Set<number>();
+    const out: NormForFilter[] = [];
+    for (const row of normalizedRaw) {
+      if (row.id == null) {
+        out.push(row);
+        continue;
+      }
+      if (seen.has(row.id)) {
+        // 같은 auction이 중복 들어온 경우 스킵
+        continue;
+      }
+      seen.add(row.id);
+      out.push(row);
+    }
+    return out;
+  }, [normalizedRaw]);
+
+  // 카운트
   const counts = useMemo(() => {
     const all = normalized.length;
-
     const ongoing = normalized.filter((d) =>
       isOngoing({
         status: d.status,
@@ -97,44 +125,30 @@ export default function SaleList() {
         resultStatus: d.resultStatus,
       } as any)
     ).length;
-
     const ended = all - ongoing;
     return { all, ongoing, ended };
   }, [normalized]);
 
+  // 필터링
   const filtered = useMemo(() => {
     if (filter === "all") return normalized;
-
-    if (filter === "ongoing") {
-      return normalized.filter((d) =>
-        isOngoing({
-          status: d.status,
-          auctionEnd: d.auctionEnd,
-          paid: d.paid,
-          paymentStatus: d.paymentStatus,
-          settlementStatus: d.settlementStatus,
-          payStatus: d.payStatus,
-          depositStatus: d.depositStatus,
-          resultStatus: d.resultStatus,
-        } as any)
-      );
-    }
-
-    return normalized.filter(
-      (d) =>
-        !isOngoing({
-          status: d.status,
-          auctionEnd: d.auctionEnd,
-          paid: d.paid,
-          paymentStatus: d.paymentStatus,
-          settlementStatus: d.settlementStatus,
-          payStatus: d.payStatus,
-          depositStatus: d.depositStatus,
-          resultStatus: d.resultStatus,
-        } as any)
-    );
+    const test = (d: NormForFilter) =>
+      isOngoing({
+        status: d.status,
+        auctionEnd: d.auctionEnd,
+        paid: d.paid,
+        paymentStatus: d.paymentStatus,
+        settlementStatus: d.settlementStatus,
+        payStatus: d.payStatus,
+        depositStatus: d.depositStatus,
+        resultStatus: d.resultStatus,
+      } as any);
+    return filter === "ongoing"
+      ? normalized.filter(test)
+      : normalized.filter((d) => !test(d));
   }, [normalized, filter]);
 
+  // 정렬
   const sorted = useMemo(
     () =>
       [...filtered].sort((a, b) =>
@@ -164,12 +178,13 @@ export default function SaleList() {
     [filtered]
   );
 
+  // 렌더
   const renderList = (list: NormForFilter[]) => (
     <ul className="min-h-[800px]">
-      {list.map(({ id, original }) => (
+      {list.map((row, idx) => (
         <TradeRowCompact
-          key={id}
-          item={original}
+          key={makeKey(row, idx, "sales")}
+          item={row.original}
           onClick={(clickedId) => nav(`/auctions/${clickedId}`)}
         />
       ))}

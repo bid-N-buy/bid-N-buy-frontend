@@ -81,8 +81,6 @@ export function useProfile(userId?: number | string, opts: Options = {}) {
 
         const raw = res.data ?? {};
 
-        console.log("[useProfile] response from", url, raw);
-
         // ---- 온도 처리 (fallback 제거 버전) ----
         // 서버가 그냥 null 주면 그대로 null로 둔다.
         // 절대 임의로 72.5 같은 기본값을 넣지 않는다.
@@ -113,8 +111,6 @@ export function useProfile(userId?: number | string, opts: Options = {}) {
             "",
           temperature: tempNum, // now can be null
         };
-
-        console.log("[useProfile] mapped profile (CLEAN)", mapped);
 
         setData(mapped);
       } catch (e: any) {

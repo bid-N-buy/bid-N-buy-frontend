@@ -27,6 +27,7 @@ import AdminAuctionPost from "../features/admin/pages/AdminAuctionPost";
 import AdminInquiryPost from "../features/admin/pages/AdminInquiryPost";
 import AdminUserDetail from "../features/admin/pages/AdminUserDetail";
 import AuthInitGate from "../features/auth/components/AuthInitGate";
+import ReportDetailPage from "../features/mypage/pages/ReportDetailPage";
 
 // 공통
 const Header = React.lazy(() => import("../shared/components/Header"));
@@ -194,6 +195,7 @@ export default function App() {
                 <Route path="inquiries/new" element={<InquiryReportForm />} />
                 <Route path="reports/new" element={<InquiryReportForm />} />
                 <Route path="inquiries/:id" element={<InquiryDetailPage />} />
+                <Route path="reports/:id" element={<ReportDetailPage />} />
               </Route>
 
               {/* <Route path="inquiries/:id" element={<InquiryDetail />} /> */}
