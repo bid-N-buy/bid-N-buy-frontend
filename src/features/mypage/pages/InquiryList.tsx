@@ -1,4 +1,3 @@
-// src/features/mypage/pages/InquiryList.tsx
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -32,16 +31,14 @@ type ReportApiItem = {
  *        뷰 모델
  * =========================== */
 type Row = {
-  /** 네비게이션용 숫자 id (있을 때만) */
-  id?: number;
-  /** React key로 쓰는, 소스 prefix를 포함한 안정적 문자열 */
-  keyStr: string;
-  /** 소스: 문의(inq) / 신고(rep) */
-  src: "inq" | "rep";
+  id?: number; // 네비게이션용 숫자 id (있을 때만)
+  keyStr: string; // React key (고유 문자열)
+  src: "inq" | "rep"; // 소스: 문의/신고
   typeLabel: "문의" | "신고";
   title: string;
   answered: boolean;
-  createdAt: string; // YY.MM.DD
+  createdAt: string; // 표시용 YY.MM.DD
+  createdAtIso: string; // 정렬용 ISO
 };
 
 /* ===========================
@@ -71,13 +68,16 @@ function isAnswered(status?: string) {
   return s !== "WAITING";
 }
 
-/** 상세 경로: (id가 없는 항목은 비활성) */
+/** ❗상세 경로: 소스별로 분기 */
+const PATH = {
+  inq: (id: number) => `/mypage/support/inquiries/${id}`,
+  rep: (id: number) => `/mypage/support/reports/${id}`,
+};
 const getDetailPath = (row: Row) =>
-  row.id ? `/mypage/support/${row.id}` : undefined;
+  row.id ? PATH[row.src](row.id) : undefined;
 
-/** Fallback key 생성기 (문자열) — 랜덤 금지! */
+/** 안정적 fallback key (랜덤 금지) */
 function makeFallbackKey(prefix: string, title?: string, createdAt?: string) {
-  // title과 createdAt이 모두 비어도 prefix 덕에 충돌 확률 낮음
   return `${prefix}-${(title ?? "").trim()}|${(createdAt ?? "").trim()}`;
 }
 
@@ -125,12 +125,13 @@ const InquiryList: React.FC = () => {
           inqRes.status === "fulfilled"
             ? (inqRes.value.data?.data?.inquiries ?? []).map((it) => ({
                 id: it.inquiriesId,
-                keyStr: `inq-${it.inquiriesId}`, // ✅ 고유 문자열 key
+                keyStr: `inq-${it.inquiriesId}`,
                 src: "inq",
                 typeLabel: mapTypeToLabel(it.type, "문의"),
                 title: it.title,
                 answered: isAnswered(it.status),
                 createdAt: fmtDate(it.createdAt),
+                createdAtIso: it.createdAt ?? "",
               }))
             : [];
 
@@ -140,34 +141,39 @@ const InquiryList: React.FC = () => {
                 const numId =
                   (it.reportId as number | undefined) ??
                   (it.id as number | undefined) ??
-                  undefined; // 숫자 id가 없을 수 있음
+                  undefined;
                 const keyStr =
                   typeof numId === "number"
                     ? `rep-${numId}`
-                    : makeFallbackKey("rep", it.title, it.createdAt); // ✅ 안정적 key (랜덤 금지)
-
+                    : makeFallbackKey("rep", it.title, it.createdAt);
+                const iso = it.createdAt ?? "";
                 return {
-                  id: numId, // 상세 이동은 id 있을 때만
+                  id: numId,
                   keyStr,
                   src: "rep",
                   typeLabel: mapTypeToLabel(it.type, "신고"),
                   title: it.title ?? "(제목 없음)",
                   answered: isAnswered(it.status),
-                  createdAt: fmtDate(it.createdAt),
+                  createdAt: fmtDate(iso),
+                  createdAtIso: iso,
                 };
               })
             : [];
 
-        const merged = [...inqRows, ...repRows].sort((a, b) => {
-          const toDate = (s: string) => {
-            if (!s) return 0;
-            const [yy, mm, dd] = s.split(".").map((v) => parseInt(v, 10));
-            return new Date(2000 + (yy || 0), (mm || 1) - 1, dd || 1).getTime();
-          };
-          return toDate(b.createdAt) - toDate(a.createdAt);
+        // 합치고 keyStr로 중복 제거
+        const merged = [...inqRows, ...repRows];
+        const dedup = Array.from(
+          new Map(merged.map((r) => [r.keyStr, r])).values()
+        );
+
+        // ISO 기준 최신순 정렬
+        dedup.sort((a, b) => {
+          const ta = a.createdAtIso ? Date.parse(a.createdAtIso) : 0;
+          const tb = b.createdAtIso ? Date.parse(b.createdAtIso) : 0;
+          return tb - ta;
         });
 
-        if (mounted) setRows(merged);
+        if (mounted) setRows(dedup);
 
         if (
           inqRes.status === "rejected" &&
@@ -218,7 +224,7 @@ const InquiryList: React.FC = () => {
         {loading ? "불러오는 중…" : `총 ${rows.length}건`}
       </div>
 
-      {/* ---------- 모바일: 카드 리스트 ---------- */}
+      {/* 모바일 카드 */}
       <ul className="flex flex-col gap-3 md:hidden">
         {rows.length === 0 && !loading ? (
           <li className="rounded-lg border border-neutral-200 bg-white py-10 text-center text-neutral-500">
@@ -262,7 +268,7 @@ const InquiryList: React.FC = () => {
         )}
       </ul>
 
-      {/* ---------- 태블릿/PC: 테이블 ---------- */}
+      {/* 데스크탑 테이블 */}
       <div className="hidden md:block">
         <table className="w-full table-fixed border-separate border-spacing-0">
           <colgroup>
@@ -297,7 +303,7 @@ const InquiryList: React.FC = () => {
                 const to = getDetailPath(it);
                 return (
                   <tr
-                    key={it.keyStr} // ✅ 안정적 문자열 key
+                    key={it.keyStr}
                     className={`border-b border-neutral-100 ${
                       to ? "cursor-pointer hover:bg-neutral-50" : "opacity-70"
                     }`}

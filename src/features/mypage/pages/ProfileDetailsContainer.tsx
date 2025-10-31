@@ -22,19 +22,11 @@ const ProfileDetailsContainer: React.FC = () => {
   const { targetUserId } = useParams<{ targetUserId?: string }>();
   const isOtherUserPage = Boolean(targetUserId);
 
-  console.log("[PDC] targetUserId =", targetUserId);
-  console.log(
-    "[PDC] isOtherUserPage =",
-    isOtherUserPage,
-    "myUserId =",
-    myUserId
-  );
 
   // ✅ 내 id로 /users/:id 접근하면 /profile 로 보내 혼동 방지
   React.useEffect(() => {
     if (!targetUserId || myUserId == null) return;
     if (String(myUserId) === String(targetUserId)) {
-      console.log("[PDC] same user id detected. redirect -> /profile");
       nav("/profile", { replace: true });
     }
   }, [targetUserId, myUserId, nav]);
@@ -65,7 +57,6 @@ const ProfileDetailsContainer: React.FC = () => {
         setOtherLoading(true);
         setOtherError(null);
 
-        console.log("[PDC] fetching other profile for", targetUserId);
 
         const { data } = await api.get<OtherProfileRes>(
           `/auth/other/${targetUserId}`,
@@ -75,7 +66,6 @@ const ProfileDetailsContainer: React.FC = () => {
         );
 
         if (!alive) return;
-        console.log("[PDC] /auth/other response =", data);
         setOtherProfile(data ?? null);
       } catch (err) {
         if (!alive) return;
@@ -209,15 +199,6 @@ const ProfileDetailsContainer: React.FC = () => {
   // 미리보기 아이템들
   const soldPreview = isOtherUserPage ? [] : (completedPreviewMine ?? []);
   const sellingPreview = ongoingPreviewRaw ?? [];
-
-  console.log("[PDC] final nickname =", nickname);
-  console.log("[PDC] final email =", email);
-  console.log("[PDC] final otherProfile =", otherProfile);
-  console.log("[PDC] final myProfile =", myProfile);
-  console.log("[PDC] completedPreviewMine =", completedPreviewMine);
-  console.log("[PDC] completedCountMine =", completedCountMine);
-  console.log("[PDC] ongoingPreviewRaw =", ongoingPreviewRaw);
-  console.log("[PDC] ongoingCountRaw =", ongoingCountRaw);
 
   // 6) 핸들러
   const handleClickSoldList = () => {

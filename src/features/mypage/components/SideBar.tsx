@@ -72,7 +72,7 @@ const SideBar: React.FC = () => {
       </div>
 
       {/* ===================== PC(>=md): 기존 사이드바 유지 ===================== */}
-      <div className="hidden h-[514px] w-[225px] flex-col text-neutral-900 md:flex">
+      <div className="mb-[150px] hidden h-[514px] w-[225px] flex-col text-neutral-900 md:flex">
         <NavLink to="/mypage">
           {({ isActive }) => (
             <h1 className={isActive ? "mb-8 font-extrabold" : "mb-8 font-bold"}>

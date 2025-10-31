@@ -112,7 +112,6 @@ const WishList: React.FC = () => {
 
   // 찜 토글 핸들러 (하트)
   const handleToggleLike = (auctionId: number, nextLiked: boolean) => {
-    console.log("toggle like", auctionId, nextLiked);
     // TODO:
     //  nextLiked === false -> DELETE /wishs/:auctionId
     //  nextLiked === true  -> POST /wishs

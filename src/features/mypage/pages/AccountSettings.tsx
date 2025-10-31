@@ -219,7 +219,6 @@ const AccountSettings: React.FC = () => {
           validateStatus: (s) => s >= 200 && s < 500,
         });
 
-        console.log("[address:res]", res.status, res.data);
         const data = res.data;
 
         // 서버 응답 모양 다 커버: 배열 / 단일 / data 래핑
@@ -233,7 +232,6 @@ const AccountSettings: React.FC = () => {
                 ? data.address
                 : null;
 
-        console.log("[address:parsed]", rawAddr);
 
         if (rawAddr) {
           setMainAddress({
@@ -249,7 +247,6 @@ const AccountSettings: React.FC = () => {
 
         setAddrError(null);
       } catch (e: any) {
-        console.log("[address:error]", e?.response?.status, e?.response?.data);
         setAddrError(e?.response ?? e);
       } finally {
         setAddrLoading(false);
