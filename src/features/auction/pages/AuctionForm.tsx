@@ -63,7 +63,6 @@ const AuctionForm = () => {
 
     let shown = false;
     loadTop().catch((err) => {
-      console.error("[Category] useEffect catch (loadTop):", err);
       if (!shown) {
         shown = true;
         showToast("카테고리를 불러오지 못했습니다.", "error");

@@ -21,7 +21,7 @@ const Main = () => {
   const { mains, loadingTop, loadTop } = useCategoryStore();
 
   useEffect(() => {
-    loadTop().catch(console.error);
+    loadTop().catch(() => {});
   }, [loadTop]);
 
   const handleCategoryClick = (mainId: number) => {
