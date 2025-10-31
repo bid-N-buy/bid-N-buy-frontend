@@ -166,6 +166,12 @@ const ProductInfo = ({
       showToast("현재 입찰할 수 없는 상태입니다.", "error");
       return;
     }
+    // 탈퇴회원 가드
+    if (sellerNickname === "탈퇴회원") {
+      showToast("현재 입찰할 수 없는 상태입니다.", "error");
+      return;
+    }
+
     setIsBidModalOpen(true);
   }, [userId, sellerId, sellingStatus, showToast]);
 
@@ -176,13 +182,11 @@ const ProductInfo = ({
         showToast("로그인이 필요합니다.", "error");
         return;
       }
-
       // 최솟값 체크
       if (bidPrice === 0) {
         showToast("입찰 가능 금액 이상 입력해 주세요.", "error");
         return;
       }
-
       // 기본 전제 값 체크
       if (
         !Number.isFinite(auctionId) ||
@@ -206,6 +210,11 @@ const ProductInfo = ({
   const handleChatAdd = async (auctionId: number, sellerId: number) => {
     if (!token) {
       showToast("로그인이 필요합니다.", "error");
+      return;
+    }
+
+    if (sellerNickname === "탈퇴회원") {
+      showToast("탈퇴회원과는 채팅할 수 없습니다.", "error");
       return;
     }
 
@@ -297,6 +306,12 @@ const ProductInfo = ({
           {(sellerNickname || sellerProfileImageUrl) && (
             <Link
               to={userId === sellerId ? "/mypage" : `/users/${sellerId}`}
+              onClick={(e) => {
+                if (sellerNickname === "탈퇴회원") {
+                  e.preventDefault();
+                  showToast("탈퇴한 회원입니다.", "error");
+                }
+              }}
               className="flex cursor-pointer items-center gap-2 sm:gap-3 md:gap-4"
             >
               <div className="bg-g500 h-11 w-11 flex-shrink-0 overflow-hidden rounded-full sm:h-12 sm:w-12 md:h-13 md:w-13 lg:h-17 lg:w-17">
