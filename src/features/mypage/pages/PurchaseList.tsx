@@ -38,14 +38,12 @@ const RatingModal: React.FC<RatingModalProps> = ({
         <h3 className="mb-3 text-base font-semibold text-neutral-900">
           구매 확정 & 별점 주기
         </h3>
-
         <p className="mb-2 text-sm text-neutral-600">
           이번 거래는 만족하셨나요?
         </p>
 
-        {/* 별점 1~10 */}
         <div className="mb-4 flex flex-wrap gap-2">
-          {Array.from({ length: 10 }, (_, idx) => idx + 1).map((score) => (
+          {Array.from({ length: 10 }, (_, i) => i + 1).map((score) => (
             <button
               key={score}
               type="button"
@@ -63,7 +61,6 @@ const RatingModal: React.FC<RatingModalProps> = ({
           ))}
         </div>
 
-        {/* 액션 */}
         <div className="flex justify-end gap-2 text-sm">
           <button
             type="button"
@@ -73,7 +70,6 @@ const RatingModal: React.FC<RatingModalProps> = ({
           >
             취소
           </button>
-
           <button
             type="button"
             className={`rounded border px-3 py-1 font-semibold disabled:opacity-40 ${
@@ -93,74 +89,149 @@ const RatingModal: React.FC<RatingModalProps> = ({
 };
 
 /* =========================================================
- * 진행중 여부 판별
+ * 결제/정산 판별 & 시간 유틸
  * ========================================================= */
+const U = (v?: string | null) => (v ?? "").toString().trim().toUpperCase();
+
+const PAID_KEYWORDS = new Set([
+  // 영문
+  "PAID",
+  "PAY_DONE",
+  "DEPOSIT_DONE",
+  "SETTLED",
+  "SETTLEMENT_DONE",
+  "PAYOUT_DONE",
+  "SUCCESS",
+  "COMPLETED",
+  "DONE",
+  // 국문 (공백/붙임 모두)
+  "결제완료",
+  "입금완료",
+  "정산완료",
+  "거래완료",
+  "결제 완료",
+  "입금 완료",
+  "정산 완료",
+  "거래 완료",
+]);
+
+const ENDED_KEYWORDS = new Set([
+  "COMPLETE",
+  "COMPLETED",
+  "FINISH",
+  "FINISHED",
+  "END",
+  "ENDED",
+  "CANCEL",
+  "CANCELED",
+  "CANCELLED",
+  "FAIL",
+  "FAILED",
+  "DONE",
+  "거래 완료",
+  "거래완료",
+  "정산 완료",
+  "정산완료",
+]);
+
+const parseMs = (iso?: string | null) => {
+  if (!iso) return 0;
+  const t = Date.parse(iso);
+  return Number.isFinite(t) ? t : 0;
+};
+
+const getEndIso = (it: any): string | null =>
+  it?.auctionEnd ?? it?.endTime ?? it?.endAt ?? it?.endDate ?? null;
+
+/** 서버에서 내려올 수 있는 완료 시각 후보를 최대한 흡수 (자동 스캔 포함) */
+const getPaidAtIso = (it: any): string | null => {
+  // 대표 키 우선
+  const direct =
+    it?.paidAt ??
+    it?.paymentAt ??
+    it?.depositAt ??
+    it?.settlementAt ??
+    it?.payoutAt ??
+    it?.resultAt ??
+    it?.orderCompletedAt ??
+    it?.completedAt ??
+    it?.updatedAt ??
+    null;
+  if (direct) return direct;
+
+  // 키 자동 스캔: (paid|pay|deposit|settle|complete|result|payout).*(at|time|date)$
+  const re =
+    /(paid|pay|deposit|settle|complete|result|payout).*(at|time|date)$/i;
+  let bestMs = 0;
+  let bestIso: string | null = null;
+
+  for (const k of Object.keys(it ?? {})) {
+    if (!re.test(k)) continue;
+    const v = (it as any)[k];
+    if (typeof v !== "string") continue;
+    const ms = Date.parse(v);
+    if (Number.isFinite(ms) && ms > bestMs) {
+      bestMs = ms;
+      bestIso = v;
+    }
+  }
+  return bestIso;
+};
+
+/** 서버/로컬 상태를 종합해 결제완료 여부 */
+function isPaidDone(it: any, settledMap: Record<string, boolean>): boolean {
+  const orderId = (it?.orderId ?? it?.id)?.toString();
+  if (orderId && settledMap[orderId]) return true;
+
+  if (
+    it?.settled === true ||
+    it?.paid === true ||
+    it?.isPaid === true ||
+    it?.paymentDone === true
+  )
+    return true;
+
+  const buckets = [
+    U(it?.paymentStatus),
+    U(it?.settlementStatus),
+    U(it?.payStatus),
+    U(it?.depositStatus),
+    U(it?.resultStatus),
+    U(it?.statusText),
+    U(it?.status),
+    U(it?.state),
+  ];
+
+  return buckets.some(
+    (x) => x && (PAID_KEYWORDS.has(x) || ENDED_KEYWORDS.has(x))
+  );
+}
+
+/** 진행중 여부 (결제완료/시간 경과 고려) */
 function isOngoing(
   item: TradeItem,
   settledMap: Record<string, boolean>
 ): boolean {
-  const orderId = (item as any).orderId ?? item.id;
-  if (settledMap[String(orderId)]) {
-    // 내가 방금 구매확정을 눌러 완료 처리한 건 진행중 취급 X
-    return false;
-  }
+  if (isPaidDone(item, settledMap)) return false;
 
-  const rawStatus =
-    (item as any)?.statusText ??
-    (item as any)?.status ??
-    (item as any)?.state ??
-    "";
-
-  const txt = String(rawStatus).toUpperCase();
-
-  // 완료/종료/취소 등 단어가 들어가면 진행중 아님
-  if (
-    txt.includes("COMPLETE") ||
-    txt.includes("COMPLETED") ||
-    txt.includes("FINISH") ||
-    txt.includes("FINISHED") ||
-    txt.includes("END") ||
-    txt.includes("ENDED") ||
-    txt.includes("CANCEL") ||
-    txt.includes("CANCELLED") ||
-    txt.includes("FAIL") ||
-    txt.includes("FAILED") ||
-    txt.includes("DONE") ||
-    txt.includes("거래 완료") ||
-    txt.includes("정산 완료")
-  ) {
-    return false;
-  }
-
-  // 마감 시간이 이미 지났으면 진행중 아님
-  const endIso =
-    (item as any)?.auctionEnd ??
-    (item as any)?.endTime ??
-    (item as any)?.endAt ??
-    (item as any)?.endDate ??
-    null;
-
+  const endIso = getEndIso(item);
   if (endIso) {
-    const t = Date.parse(endIso);
-    if (Number.isFinite(t) && t <= Date.now()) {
-      return false;
-    }
+    const t = parseMs(endIso);
+    if (t && t <= Date.now()) return false;
   }
-
-  // 위 조건에 안 걸리면 진행중
   return true;
 }
 
+/* =========================================================
+ * 메인
+ * ========================================================= */
 const PurchasesPage: React.FC = () => {
-  // 탭 상태: "all" | "ongoing" | "ended"
   const [filter, setFilter] = useState<TriFilterValue>("all");
 
-  // 구매확정 처리 중인 orderId
   const [confirmingId, setConfirmingId] = useState<string | number | null>(
     null
   );
 
-  // 별점 모달 상태
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [reviewTargetId, setReviewTargetId] = useState<string | number | null>(
     null
@@ -168,21 +239,21 @@ const PurchasesPage: React.FC = () => {
   const [rating, setRating] = useState<number>(10);
   const [submittingReview, setSubmittingReview] = useState(false);
 
-  // 이미 정산(구매확정)한 orderId들을 로컬에 저장해서 UI에 즉시 반영
+  // 로컬에서 이미 확정 처리한 주문
   const [settledMap, setSettledMap] = useState<Record<string, boolean>>({});
 
-  // 실제 구매내역 데이터만 사용 (mock 없음)
   const { data, loading, error } = usePurchases({
     page: 0,
     size: 20,
     sort: "end",
   });
 
-  const base: TradeItem[] = useMemo(() => {
-    return Array.isArray(data) ? data : [];
-  }, [data]);
+  const base: TradeItem[] = useMemo(
+    () => (Array.isArray(data) ? data : []),
+    [data]
+  );
 
-  // 카운트 뽑기
+  // 카운트
   const counts = useMemo(() => {
     const all = base.length;
     const ongoing = base.filter((it) => isOngoing(it, settledMap)).length;
@@ -190,40 +261,44 @@ const PurchasesPage: React.FC = () => {
     return { all, ongoing, ended };
   }, [base, settledMap]);
 
-  // 탭 필터링
+  // 탭 필터
   const filtered = useMemo(() => {
-    switch (filter) {
-      case "ongoing":
-        return base.filter((it) => isOngoing(it, settledMap));
-      case "ended":
-        return base.filter((it) => !isOngoing(it, settledMap));
-      case "all":
-      default:
-        return base;
-    }
+    if (filter === "ongoing")
+      return base.filter((it) => isOngoing(it, settledMap));
+    if (filter === "ended")
+      return base.filter((it) => !isOngoing(it, settledMap));
+    return base;
   }, [base, filter, settledMap]);
 
-  // 정렬 (진행중 먼저, 같은 그룹끼리는 종료시각이 더 최근인 순)
+  // ✅ 결제 완료 순 정렬:
+  // 1) 결제완료(true) 먼저
+  // 2) 결제완료끼리는 paidAt 내림차순(최근 결제 우선)
+  //    - paidAt 없으면 endAt으로 대체 (최후 보정)
+  // 3) 미결제끼리는 endAt 내림차순
   const sorted = useMemo(() => {
-    const getEndMs = (it: TradeItem) => {
-      const iso =
-        (it as any)?.auctionEnd ??
-        (it as any)?.endTime ??
-        (it as any)?.endAt ??
-        (it as any)?.endDate ??
-        null;
-      const t = iso ? Date.parse(iso) : 0;
-      return Number.isFinite(t) ? t : 0;
+    const paidRank = (it: any) => (isPaidDone(it, settledMap) ? 0 : 1);
+    const paidAtMs = (it: any) => {
+      const fromServer = parseMs(getPaidAtIso(it));
+      if (fromServer) return fromServer;
+      if (isPaidDone(it, settledMap)) return parseMs(getEndIso(it)); // 결제완료인데 시각없음 → 마감시각 보정
+      return 0;
     };
+    const endMs = (it: any) => parseMs(getEndIso(it));
 
     return [...filtered].sort((a, b) => {
-      const aOngoing = isOngoing(a, settledMap);
-      const bOngoing = isOngoing(b, settledMap);
+      const ra = paidRank(a);
+      const rb = paidRank(b);
+      if (ra !== rb) return ra - rb;
 
-      if (aOngoing && !bOngoing) return -1;
-      if (!aOngoing && bOngoing) return 1;
+      if (ra === 0) {
+        const pa = paidAtMs(a);
+        const pb = paidAtMs(b);
+        if (pa !== pb) return pb - pa; // 최근 결제 우선
+      }
 
-      return getEndMs(b) - getEndMs(a);
+      const ea = endMs(a);
+      const eb = endMs(b);
+      return eb - ea; // 미결제끼리는 마감 최근 우선
     });
   }, [filtered, settledMap]);
 
@@ -231,42 +306,28 @@ const PurchasesPage: React.FC = () => {
   function canShowConfirmButton(item: TradeItem): boolean {
     const orderId = (item as any).orderId ?? item.id;
     const localDone = settledMap[String(orderId)];
-    const serverDone = (item as any).settled === true;
-
-    if (localDone || serverDone) return false;
-    return true;
+    const serverDone =
+      isPaidDone(item, settledMap) || (item as any).settled === true;
+    return !(localDone || serverDone);
   }
 
-  // 구매 확정 누르면 → 별점 모달 열기
+  // 구매 확정 → 별점 모달
   function handleRequestConfirm(orderId: number | string) {
     setReviewTargetId(orderId);
-    setRating(10); // 기본 10점
+    setRating(10);
     setReviewModalOpen(true);
   }
 
-  // 모달 "제출" → 별점 등록 + 구매확정
+  // 별점 제출 + 정산
   async function finalizeConfirmAndReview() {
     if (!reviewTargetId) return;
-
     try {
       setSubmittingReview(true);
       setConfirmingId(reviewTargetId);
-
-      // 1. 별점 보내기
       await submitRating(reviewTargetId, rating);
-
-      // 2. 구매 확정(정산) 처리
       await confirmSettlement(reviewTargetId);
-
-      // 3. 로컬 state 업데이트 (이제 이 거래는 완료 처리)
-      setSettledMap((prev) => ({
-        ...prev,
-        [String(reviewTargetId)]: true,
-      }));
-
-      // 4. 종료 탭으로 전환
+      setSettledMap((prev) => ({ ...prev, [String(reviewTargetId)]: true }));
       setFilter("ended");
-
       alert("구매 확정이 완료되었어요! ⭐");
     } catch (err) {
       console.error("[구매 확정/리뷰 실패]", err);
@@ -279,45 +340,34 @@ const PurchasesPage: React.FC = () => {
     }
   }
 
-  // 리스트 렌더러
   const renderList = (list: TradeItem[]) => (
     <ul className="divide-y divide-neutral-200">
       {list.map((it) => {
         const orderId = (it as any).orderId ?? it.id;
         const settled = !!settledMap[String(orderId)];
-
         return (
           <TradeRowCompact
             key={String(it.id)}
             item={{
               ...it,
-              // 이미 확정된 건 UI에서 바로 '거래 완료'로 보이게
-              statusText: settled ? "거래 완료" : it.statusText,
+              statusText: settled ? "거래 완료" : (it as any).statusText,
             }}
             canConfirm={canShowConfirmButton(it)}
             confirming={confirmingId === orderId}
             onConfirmClick={handleRequestConfirm}
-            onClick={(clickedId) => {
-              console.log("row clicked:", clickedId);
-              // 상세 페이지 이동 필요 시 여기서 nav(`/auctions/${clickedId}`)
-            }}
+            onClick={() => {}}
           />
         );
       })}
     </ul>
   );
 
-  // 빈 상태 UI (+ 쇼핑 유도 CTA)
   const renderEmptyState = () => (
     <div className="flex min-h-[300px] flex-col items-center justify-center gap-4 rounded-xl border border-dashed border-neutral-300 bg-neutral-50 p-10 text-center">
       <p className="text-sm text-neutral-500">구매 내역이 없습니다.</p>
       <button
         type="button"
-        onClick={() => {
-          // 사용자가 물건 보러 갈 수 있는 경로로 수정
-          // 예: 전체 경매 목록 / 카테고리 페이지 등
-          window.location.href = "/auctions";
-        }}
+        onClick={() => (window.location.href = "/auctions")}
         className="rounded-lg bg-gradient-to-r from-purple-600 to-fuchsia-500 px-4 py-2 text-sm font-semibold text-white shadow-md ring-1 ring-purple-500/50 hover:brightness-110 focus:ring-2 focus:ring-purple-400 focus:outline-none"
       >
         지금 구경하러 가기
@@ -329,7 +379,6 @@ const PurchasesPage: React.FC = () => {
     <div className="min-h-[800px] p-4">
       <h2 className="mb-3 text-lg font-semibold">구매 내역</h2>
 
-      {/* 탭 (전체 / 진행중 / 종료) */}
       <StatusTriFilter
         value={filter}
         onChange={setFilter}
@@ -356,7 +405,6 @@ const PurchasesPage: React.FC = () => {
         renderList(sorted)
       )}
 
-      {/* 구매확정 / 별점 모달 */}
       <RatingModal
         open={reviewModalOpen}
         rating={rating}

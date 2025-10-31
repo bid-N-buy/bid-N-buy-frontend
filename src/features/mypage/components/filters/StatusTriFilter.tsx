@@ -2,10 +2,13 @@ import React from "react";
 
 export type TriFilterValue = "all" | "ongoing" | "ended";
 
+type Counts = { all: number; ongoing: number; ended: number };
+
 type Props = {
   value: TriFilterValue;
   onChange: (v: TriFilterValue) => void;
-  counts?: { all?: number; ongoing?: number; ended?: number };
+  /** 탭별 개수 (없으면 0으로 표시) */
+  counts?: Partial<Counts>;
   className?: string;
 };
 
@@ -21,21 +24,24 @@ export default function StatusTriFilter({
   const idle =
     "bg-white text-neutral-800 hover:bg-neutral-50 border border-neutral-200";
 
-  const Tab = (v: TriFilterValue, label: string, count?: number) => (
+  const Tab = (
+    v: TriFilterValue,
+    label: string,
+    count?: number
+  ): React.ReactElement => (
     <button
       type="button"
       className={`${base} ${value === v ? active : idle}`}
       onClick={() => onChange(v)}
+      aria-pressed={value === v}
     >
-      <div className="text-[20px] leading-none">
-        {typeof count === "number" ? count : ""}
-      </div>
+      <div className="text-[20px] leading-none">{count ?? 0}</div>
       <div className="mt-1 text-[13px] opacity-80">{label}</div>
     </button>
   );
 
   return (
-    <div className={`p-2 ${className}`}>
+    <div className={`p-2 ${className}`.trim()}>
       <div className="grid grid-cols-3 gap-2">
         {Tab("all", "전체", counts?.all)}
         {Tab("ongoing", "진행 중", counts?.ongoing)}

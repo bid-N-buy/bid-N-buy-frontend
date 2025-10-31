@@ -1,5 +1,3 @@
-// src/features/mypage/utils/tradeMappers.ts
-
 import type { TradeItem, TradeStatus } from "../types/trade";
 import { toStatus, toKoreanStatusLabel } from "./statusLabel";
 import { isEndedByTime } from "./tradeStatus";
@@ -120,7 +118,7 @@ function normalizeStatusForUi(
 
 function pickThumbUrl(src: any): string | null {
   return (
-    src.itemImageUrl ?? // /mypage/purchase 응답 등 다양한 케이스 대응
+    src.itemImageUrl ??
     src.mainImageUrl ??
     src.thumbnail ??
     src.thumbnailUrl ??
@@ -135,7 +133,15 @@ function pickAuctionStart(res: any): string | undefined {
 }
 
 function pickAuctionEnd(res: any): string | undefined {
-  return res.endTime ?? res.endAt ?? res.endedAt ?? res.closeAt ?? undefined;
+  // ✅ endDate도 후보에 포함 (페이지 정렬에서 endDate를 참조하는 경우 대비)
+  return (
+    res.endTime ??
+    res.endAt ??
+    res.endedAt ??
+    res.closeAt ??
+    res.endDate ??
+    undefined
+  );
 }
 
 // 가격: 없으면 undefined 유지
@@ -162,31 +168,59 @@ function pickPrice(res: any): number | undefined {
 
 /**
  * 구매자 관점에서 보기 좋게 상태 문자열을 정제한다.
- *
- * 규칙:
- * - 서버가 "결제~" 상태를 주는데 아직 정산까지 안 갔다면 → "정산중"
- *   (ex. "결제 완료", "결제 대기 중")
- * - "정산 완료", "거래 완료" 등 이미 끝난 건 그대로 둔다.
+ * - 이미 '완료'류면 그대로
+ * - '결제~'인데 정산 언급 없으면 '정산중'
  */
 function massagePurchaseStatusText(raw: string): string {
   const text = raw?.toString()?.trim() ?? "";
 
-  // 이미 "완료"류인 경우 그대로 둔다.
+  // 완료류(공백 유무 모두 허용)
   if (
-    text.includes("정산") ||
+    text.includes("정산 완료") ||
+    text.includes("정산완료") ||
     text.includes("거래 완료") ||
-    text.includes("완료") // ex. "정산 완료", "거래 완료"
+    text.includes("거래완료") ||
+    text.includes("완료")
   ) {
     return text;
   }
 
-  // 결제 관련인데 아직 정산 언급 없으면 우리 표현으로는 "정산중"
   if (text.includes("결제")) {
     return "정산중";
   }
 
-  // 모를 땐 그대로 주거나 비어있음 → "상태정보없음"
   return text || "상태정보없음";
+}
+
+/* =========================
+ * 내부 헬퍼: 결제완료 시각/플래그 추출
+ * ========================= */
+
+function pickPaidAt(res: any): string | undefined {
+  return (
+    res.paidAt ??
+    res.paymentAt ??
+    res.depositAt ??
+    res.settlementAt ??
+    res.payoutAt ??
+    res.resultAt ??
+    res.orderCompletedAt ??
+    res.completedAt ??
+    res.updatedAt ?? // 완료 시각을 updatedAt에만 실는 케이스
+    undefined
+  );
+}
+
+function pickPaidFlags(res: any) {
+  return {
+    paid: res.paid ?? undefined,
+    isPaid: res.isPaid ?? undefined,
+    paymentDone: res.paymentDone ?? undefined,
+    paymentStatus: res.paymentStatus ?? res.payStatus ?? undefined,
+    settlementStatus: res.settlementStatus ?? undefined,
+    depositStatus: res.depositStatus ?? undefined,
+    resultStatus: res.resultStatus ?? undefined,
+  };
 }
 
 /* =========================
@@ -194,37 +228,27 @@ function massagePurchaseStatusText(raw: string): string {
  * ========================= */
 /**
  * 이 거래가 "이미 구매확정/정산까지 끝난 상태냐?" 를 boolean으로 리턴.
- * true면 버튼 숨겨야 함.
  */
 function computeSettled(
   res: any,
   finalStatus: TradeItem["status"],
   finalText: string
 ): boolean {
-  // 1) 서버가 직접 내려주는 확정 여부 플래그가 최우선
   if (res.settled === true) return true;
   if (res.isSettled === true) return true;
   if (res.confirmed === true) return true;
 
-  // 2) finalStatus가 "COMPLETED"라면
-  //    - 이건 진짜로 '거래 완료'까지 간 상태라고 간주
-  if (finalStatus === "COMPLETED") {
-    return true;
-  }
+  if (finalStatus === "COMPLETED") return true;
 
-  // 3) finalText 안에 '정산 완료', '거래 완료' 등 최종 완료성 문구가 있으면 true
   const txt = (finalText || "").toString();
   if (
     txt.includes("거래 완료") ||
+    txt.includes("거래완료") ||
     txt.includes("정산 완료") ||
     txt.includes("정산완료")
   ) {
     return true;
   }
-
-  // 4) 나머지는 아직 구매확정 가능 상태 (false)
-  //    FINISH(종료)라고 해도 그냥 경매가 끝났다는 뜻일 수 있으니까
-  //    여기서는 false로 둬서 버튼이 뜨게 할 수 있음.
   return false;
 }
 
@@ -278,11 +302,12 @@ export function fromPurchase(res: any): TradeItem {
   // 5. 이 거래가 이미 끝난 거래인지(버튼 숨길지) 계산
   const settled = computeSettled(res, finalStatus, finalText);
 
-  return {
-    // 화면에서 쓸 대표 ID (문자열화)
-    id: String(rawId),
+  // 6. 결제완료 시각/플래그 표준화
+  const paidAt = pickPaidAt(res);
+  const paidLike = pickPaidFlags(res);
 
-    // 구매확정/정산 요청에 쓸 주문/정산 ID 후보들 중 하나
+  const core = {
+    id: String(rawId),
     orderId:
       res.orderId ??
       res.settlementId ??
@@ -290,23 +315,19 @@ export function fromPurchase(res: any): TradeItem {
       res.auctionId ??
       rawId ??
       null,
-
     title,
     thumbUrl: thumbUrl ?? undefined,
     price,
-
     status: finalStatus,
-    // finalText 우선, 비면 adjustedStatusText, 그것도 없으면 "상태정보없음"
     statusText: finalText || adjustedStatusText || "상태정보없음",
-
     counterparty,
-
     auctionStart,
     auctionEnd,
-
-    // 버튼 노출 여부 판단에 쓰일 최종 완료 여부
     settled,
   };
+
+  // TradeItem 타입에 없는 키(paidAt 등)를 함께 실어 보내 정렬이 정확히 되도록 한다.
+  return { ...(core as any), paidAt, ...paidLike } as unknown as TradeItem;
 }
 
 export function fromSale(res: any): TradeItem {
@@ -346,12 +367,14 @@ export function fromSale(res: any): TradeItem {
     res.counterparty ??
     undefined;
 
-  // 판매자 화면에서도 동일하게 최종 완료 여부 뽑을 수 있음
   const settled = computeSettled(res, finalStatus, finalText);
 
-  return {
-    id: String(rawId),
+  // 판매자 쪽도 동일하게 결제완료 정보 실어줌(필요 시 활용)
+  const paidAt = pickPaidAt(res);
+  const paidLike = pickPaidFlags(res);
 
+  const core = {
+    id: String(rawId),
     orderId:
       res.orderId ??
       res.settlementId ??
@@ -359,21 +382,18 @@ export function fromSale(res: any): TradeItem {
       res.auctionId ??
       rawId ??
       null,
-
     title,
     thumbUrl: thumbUrl ?? undefined,
     price,
-
     status: finalStatus,
     statusText: finalText || rawStatusText || "상태정보없음",
-
     counterparty,
-
     auctionStart,
     auctionEnd,
-
     settled,
   };
+
+  return { ...(core as any), paidAt, ...paidLike } as unknown as TradeItem;
 }
 
 // 배열 매핑 헬퍼

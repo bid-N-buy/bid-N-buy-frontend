@@ -11,20 +11,27 @@ type Props = {
   onAuction?: () => void;
 };
 
+// 범위 고정 유틸
+const clamp = (n: number, min: number, max: number) =>
+  Math.max(min, Math.min(max, n));
+
 const ProfilePreview: React.FC<Props> = ({
   nickname = "NickName",
   email = "test123@test.com",
   avatarUrl = "",
-  temperature = 0,
+  temperature,
   onManageProfile,
   onAuction,
 }) => {
-  // 안전 0~100 보정
-  const temp = useMemo(() => {
+  // 안전 0~100 보정 + 소수점 1자리 반올림
+  const temp = useMemo<number | null>(() => {
     const n = Number(temperature);
-    if (!Number.isFinite(n)) return 0;
-    return Math.max(0, Math.min(100, n));
+    if (!Number.isFinite(n)) return null;
+    return parseFloat(clamp(n, 0, 100).toFixed(1)); // ⬅️ 36.4 같은 형식
   }, [temperature]);
+
+  // 게이지 위치 (문자열 %)
+  const knobLeft = temp !== null ? `${temp}%` : "0%";
 
   return (
     <section className="w-[786px] rounded-[20px] bg-[#ECDEF5] p-[20px] shadow-[0_10px_30px_rgba(0,0,0,0.06)]">
@@ -53,33 +60,39 @@ const ProfilePreview: React.FC<Props> = ({
             {email || "—"}
           </div>
 
-          {/* 온도 게이지 (카드 없이 그냥 라인만) */}
+          {/* 온도 게이지 */}
           <div className="mt-5 w-[320px] max-w-full">
-            {/* 라벨 + 현재 온도 */}
             <div className="mb-2 flex items-center justify-between text-[12px] leading-none text-neutral-800">
               <span className="font-medium text-neutral-800">매너온도</span>
-              <span className="font-semibold text-[#8322BF]">
-                {temp}
-                <span className="align-top text-[11px] font-normal text-[#8322BF]">
-                  ℃
+              {temp === null ? (
+                <span className="font-normal text-neutral-500">-</span>
+              ) : (
+                <span className="font-semibold text-[#8322BF]">
+                  {temp}
+                  <span className="align-top text-[11px] font-normal text-[#8322BF]">
+                    ℃
+                  </span>
                 </span>
-              </span>
+              )}
             </div>
 
-            {/* 게이지 바 자체 */}
             <div className="relative h-[12px] w-full rounded-full bg-neutral-800/80 shadow-[inset_0_0_4px_rgba(0,0,0,0.4)]">
               {/* 채워진 부분 */}
-              <div
-                className="absolute inset-y-0 left-0 rounded-full bg-[#8322BF] transition-[width] duration-300"
-                style={{ width: `${temp}%` }}
-              />
+              {temp !== null && (
+                <div
+                  className="absolute inset-y-0 left-0 rounded-full bg-[#8322BF] transition-[width] duration-300"
+                  style={{ width: `${temp}%` }}
+                />
+              )}
 
               {/* 포인터 동그라미 */}
-              <div
-                className="absolute top-1/2 h-[22px] w-[22px] -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px] border-white bg-[#8322BF] shadow-[0_6px_18px_rgba(131,34,191,0.4)] ring-[3px] ring-[#8322BF]/30"
-                style={{ left: `${temp}%` }}
-                aria-hidden="true"
-              />
+              {temp !== null && (
+                <div
+                  className="absolute top-1/2 h-[22px] w-[22px] -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px] border-white bg-[#8322BF] shadow-[0_6px_18px_rgba(131,34,191,0.4)] ring-[3px] ring-[#8322BF]/30"
+                  style={{ left: knobLeft }}
+                  aria-hidden="true"
+                />
+              )}
             </div>
           </div>
         </div>
@@ -106,7 +119,7 @@ const ProfilePreview: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* 모바일 버튼 (데스크탑에선 숨김, 필요하면 md:hidden으로 조건부 처리 가능) */}
+      {/* 모바일 버튼 */}
       <div className="mt-6 grid grid-cols-2 gap-3 md:hidden">
         <Link to="/profile" className="contents">
           <button
