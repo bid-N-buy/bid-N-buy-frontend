@@ -68,6 +68,7 @@ const ProductInfo = ({
 }: ProductInfoProps) => {
   const [isBidModalOpen, setIsBidModalOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const { toast, showToast, hideToast } = useToast();
 
@@ -115,9 +116,10 @@ const ProductInfo = ({
   // 삭제
   const handleDeleteAuction = useCallback(async () => {
     if (!isSeller && !adminToken) return;
-    const ok = window.confirm("경매를 삭제하시겠습니까?");
-    if (!ok) return;
+    setConfirmOpen(true);
+  }, [isSeller, adminToken]);
 
+  const confirmDelete = useCallback(async () => {
     try {
       if (isSeller) await deleteAuction(auctionId);
       if (adminToken) await adminDeleteAuction(auctionId);
@@ -129,6 +131,7 @@ const ProductInfo = ({
       showToast(msg, "error");
     } finally {
       setIsMenuOpen(false);
+      setConfirmOpen(false);
     }
   }, [isSeller, adminToken, auctionId, onDeleteClick, showToast]);
 
@@ -427,6 +430,31 @@ const ProductInfo = ({
       {/* 토스트 */}
       {toast.isVisible && (
         <Toast message={toast.message} type={toast.type} onClose={hideToast} />
+      )}
+
+      {/* 삭제 모달 */}
+      {confirmOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/10">
+          <div className="animate-fade-in w-72 rounded-md bg-white p-6 text-center shadow-sm">
+            <p className="text-g100 mb-5 text-base font-medium">
+              경매를 삭제하시겠습니까?
+            </p>
+            <div className="flex justify-center gap-3">
+              <button
+                onClick={() => setConfirmOpen(false)}
+                className="border-purple text-purple hover:bg-light-purple cursor-pointer rounded-md border px-4 py-2 font-semibold transition-colors"
+              >
+                취소
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="bg-purple hover:bg-deep-purple cursor-pointer rounded-md px-4 py-2 font-semibold text-white transition-colors"
+              >
+                확인
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );
