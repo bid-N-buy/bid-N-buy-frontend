@@ -8,7 +8,7 @@ import api from "../../../shared/api/axiosInstance";
 import { EllipsisVertical } from "lucide-react";
 import { formatDate } from "../../../shared/utils/datetime";
 import { buildImageUrl } from "../../../shared/utils/imageUrl";
-import { useChatRoomAuc } from "../../chatting/api/useChatRoom";
+// import { useChatRoomAuc } from "../../chatting/api/useChatRoom";
 import { useBid } from "../hooks/useBid";
 import WishButton from "../../wish/components/WishButton";
 import { deleteAuction } from "../api/auctions";
@@ -78,7 +78,7 @@ const ProductInfo = ({
 
   const adminToken = useAdminAuthStore((s) => s.accessToken);
 
-  const { loadChatRoom } = useChatRoomAuc(sellerId, auctionId);
+  const { makeChatRoomInAuc } = useChatModalStore();
 
   useEffect(() => {
     if (!isMenuOpen) return;
@@ -233,7 +233,7 @@ const ProductInfo = ({
         }
       );
       const chatroomId = response.data.chatroomId;
-      await loadChatRoom();
+      await makeChatRoomInAuc(token, sellerId, auctionId);
       // 채팅 모달이 헤더에 종속된 컴포넌트이므로 zustand로 상태 변경
       useChatModalStore.getState().openChatRoom(chatroomId);
     } catch (error) {
