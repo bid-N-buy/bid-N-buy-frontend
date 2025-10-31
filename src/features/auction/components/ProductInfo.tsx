@@ -15,6 +15,7 @@ import { deleteAuction } from "../api/auctions";
 import { useAdminAuthStore } from "../../admin/store/adminStore";
 import { adminDeleteAuction } from "../../admin/api/admin";
 import { Link } from "react-router-dom";
+import avatar from "../../../assets/avatar.svg";
 
 export interface ProductInfoProps {
   auctionId: number;
@@ -317,13 +318,15 @@ const ProductInfo = ({
               className="flex cursor-pointer items-center gap-2 sm:gap-3 md:gap-4"
             >
               <div className="bg-g500 h-11 w-11 flex-shrink-0 overflow-hidden rounded-full sm:h-12 sm:w-12 md:h-13 md:w-13 lg:h-17 lg:w-17">
-                {sellerProfileImageUrl && (
-                  <img
-                    src={buildImageUrl(sellerProfileImageUrl) ?? undefined}
-                    alt={sellerNickname ?? "판매자"}
-                    className="h-full w-full object-cover"
-                  />
-                )}
+                <img
+                  src={
+                    (sellerProfileImageUrl &&
+                      buildImageUrl(sellerProfileImageUrl)) ??
+                    avatar
+                  }
+                  alt={sellerNickname ?? "판매자"}
+                  className="h-full w-full object-cover"
+                />
               </div>
               <div className="flex min-w-0 items-center gap-1 sm:gap-2">
                 {sellerNickname && (
