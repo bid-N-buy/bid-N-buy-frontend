@@ -141,48 +141,52 @@ const InquiryReportForm: React.FC = () => {
         />
       )}
 
-      <div className="mx-auto w-[788px] max-w-4xl p-4">
+      {/* 컨테이너 */}
+      <div className="mx-auto w-full max-w-[840px] px-4">
         {/* 헤더 / 탭 */}
-        <div className="mb-6">
-          <h2 className="mb-4 text-xl font-bold text-neutral-900">
+        <div className="mb-5 md:mb-6">
+          <h2 className="mb-3 text-lg font-bold text-neutral-900 sm:text-xl md:text-2xl">
             1:1 문의 / 신고
           </h2>
 
-          <div className="flex gap-2 border-b border-neutral-300">
-            <button
-              type="button"
-              onClick={() => switchTab("inquiry")}
-              className={[
-                "px-4 py-2 text-sm font-medium transition-colors",
-                isInquiry
-                  ? "border-b-2 border-purple-600 text-purple-600"
-                  : "text-neutral-400 hover:text-neutral-700",
-              ].join(" ")}
-            >
-              문의 작성
-            </button>
-            <button
-              type="button"
-              onClick={() => switchTab("report")}
-              className={[
-                "px-4 py-2 text-sm font-medium transition-colors",
-                !isInquiry
-                  ? "border-b-2 border-purple-600 text-purple-600"
-                  : "text-neutral-400 hover:text-neutral-700",
-              ].join(" ")}
-            >
-              신고 접수
-            </button>
+          {/* ✅ 스크롤바 제거: overflow-x-auto / min-w-max 제거 */}
+          <div className="-mx-4 md:mx-0">
+            <div className="flex gap-1.5 border-b border-neutral-300 px-4 md:px-0">
+              <button
+                type="button"
+                onClick={() => switchTab("inquiry")}
+                className={[
+                  "px-3 py-2 text-sm font-medium transition-colors sm:px-4",
+                  isInquiry
+                    ? "border-b-2 border-[#8322BF] text-[#8322BF]"
+                    : "text-neutral-400 hover:text-neutral-700",
+                ].join(" ")}
+              >
+                문의 작성
+              </button>
+              <button
+                type="button"
+                onClick={() => switchTab("report")}
+                className={[
+                  "px-3 py-2 text-sm font-medium transition-colors sm:px-4",
+                  !isInquiry
+                    ? "border-b-2 border-[#8322BF] text-[#8322BF]"
+                    : "text-neutral-400 hover:text-neutral-700",
+                ].join(" ")}
+              >
+                신고 접수
+              </button>
+            </div>
           </div>
         </div>
 
         {/* 폼 카드 */}
         <form
           onSubmit={onSubmit}
-          className="rounded-lg border border-neutral-200 bg-white p-5 shadow-sm"
+          className="rounded-lg border border-neutral-200 bg-white p-4 shadow-sm sm:p-5 md:p-6"
         >
           {/* 안내 영역 */}
-          <div className="mb-5 rounded-md bg-neutral-50 p-4 text-[13px] leading-5 text-neutral-600">
+          <div className="mb-5 rounded-md bg-neutral-50 p-3 text-[13px] leading-5 text-neutral-600 sm:p-4">
             {isInquiry ? (
               <>
                 <div className="font-semibold text-neutral-800">
@@ -209,7 +213,7 @@ const InquiryReportForm: React.FC = () => {
           {/* 제목 */}
           <label className="mb-4 block">
             <span className="mb-1 block text-sm font-medium text-neutral-800">
-              제목<span className="text-purple-600">*</span>
+              제목<span className="text-[#8322BF]">*</span>
             </span>
             <input
               name="title"
@@ -217,7 +221,7 @@ const InquiryReportForm: React.FC = () => {
               onChange={onChange}
               placeholder="제목을 입력하세요"
               maxLength={100}
-              className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-[14px] text-neutral-900 placeholder:text-neutral-400 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 focus:outline-none"
+              className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-[14px] text-neutral-900 placeholder:text-neutral-400 focus:border-[#8322BF] focus:ring-2 focus:ring-[#8322BF]/20 focus:outline-none sm:text-[15px]"
               disabled={loading}
             />
             <div className="mt-1 text-right text-[12px] text-neutral-400">
@@ -229,7 +233,7 @@ const InquiryReportForm: React.FC = () => {
           <label className="mb-6 block">
             <span className="mb-1 block text-sm font-medium text-neutral-800">
               {isInquiry ? "문의 내용" : "신고 내용"}
-              <span className="text-purple-600">*</span>
+              <span className="text-[#8322BF]">*</span>
             </span>
             <textarea
               name="content"
@@ -240,8 +244,8 @@ const InquiryReportForm: React.FC = () => {
                   ? "문의하실 내용을 입력하세요."
                   : "신고 사유 및 상세 내용을 입력하세요."
               }
-              rows={8}
-              className="w-full resize-y rounded-md border border-neutral-300 bg-white px-3 py-2 text-[14px] leading-6 text-neutral-900 placeholder:text-neutral-400 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 focus:outline-none"
+              rows={7}
+              className="md:rows-[9] w-full resize-y rounded-md border border-neutral-300 bg-white px-3 py-2 text-[14px] leading-6 text-neutral-900 placeholder:text-neutral-400 focus:border-[#8322BF] focus:ring-2 focus:ring-[#8322BF]/20 focus:outline-none sm:text-[15px]"
               disabled={loading}
             />
             <div className="mt-1 text-right text-[12px] text-neutral-400">
@@ -249,8 +253,8 @@ const InquiryReportForm: React.FC = () => {
             </div>
           </label>
 
-          {/* 버튼 영역 */}
-          <div className="flex justify-end gap-2 pt-2">
+          {/* 버튼 영역: 모바일 2열 / md부터 오른쪽 정렬 */}
+          <div className="grid grid-cols-2 gap-2 pt-1 md:flex md:justify-end md:gap-2">
             <button
               type="button"
               onClick={() => setForm({ title: "", content: "" })}
@@ -263,12 +267,15 @@ const InquiryReportForm: React.FC = () => {
             <button
               type="submit"
               disabled={loading}
-              className="rounded-md bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 focus:ring-2 focus:ring-purple-300 focus:outline-none disabled:opacity-60"
+              className="rounded-md bg-[#8322BF] px-4 py-2 text-sm font-medium text-white hover:brightness-105 focus:ring-2 focus:ring-[#8322BF]/30 focus:outline-none disabled:opacity-60"
             >
               {loading ? "전송 중..." : isInquiry ? "문의 등록" : "신고 접수"}
             </button>
           </div>
         </form>
+
+        {/* 푸터와 간격 확보 */}
+        <div className="h-12 md:h-16" />
       </div>
     </>
   );

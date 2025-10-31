@@ -4,7 +4,6 @@ import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAuthStore, type AuthState } from "../../auth/store/authStore";
 
-/** 서버 기본 주소 */
 const BASE = import.meta.env.VITE_BACKEND_ADDRESS ?? "http://localhost:8080";
 
 /* ===========================
@@ -15,7 +14,7 @@ type InquiryApiItem = {
   title: string;
   content: string;
   status: string; // WAITING, ANSWERED ...
-  type?: string; // GENERAL, (혹시 REPORT 등)
+  type?: string; // GENERAL, REPORT ...
   createdAt: string; // ISO
 };
 
@@ -24,17 +23,25 @@ type ReportApiItem = {
   id?: number;
   title?: string;
   content?: string;
-  status?: string; // WAITING, ANSWERED ...
-  type?: string; // REPORT, GENERAL 등 (혹시 서버에서 내려줄 수도)
+  status?: string;
+  type?: string; // REPORT, GENERAL ...
   createdAt?: string; // ISO
 };
 
+/* ===========================
+ *        뷰 모델
+ * =========================== */
 type Row = {
-  id: number;
+  /** 네비게이션용 숫자 id (있을 때만) */
+  id?: number;
+  /** React key로 쓰는, 소스 prefix를 포함한 안정적 문자열 */
+  keyStr: string;
+  /** 소스: 문의(inq) / 신고(rep) */
+  src: "inq" | "rep";
   typeLabel: "문의" | "신고";
   title: string;
   answered: boolean;
-  createdAt: string; // YY.MM.DD 포맷
+  createdAt: string; // YY.MM.DD
 };
 
 /* ===========================
@@ -49,8 +56,6 @@ function fmtDate(iso?: string) {
   const dd = String(d.getDate()).padStart(2, "0");
   return `${yy}.${mm}.${dd}`;
 }
-
-/** 서버의 type → UI 라벨 매핑 */
 function mapTypeToLabel(
   apiType: string | undefined,
   fallback: "문의" | "신고"
@@ -60,12 +65,20 @@ function mapTypeToLabel(
   if (t === "REPORT") return "신고";
   return fallback;
 }
-
-/** 상태 → 답변 여부 */
 function isAnswered(status?: string) {
   const s = (status ?? "").toUpperCase();
   if (!s) return false;
   return s !== "WAITING";
+}
+
+/** 상세 경로: (id가 없는 항목은 비활성) */
+const getDetailPath = (row: Row) =>
+  row.id ? `/mypage/support/${row.id}` : undefined;
+
+/** Fallback key 생성기 (문자열) — 랜덤 금지! */
+function makeFallbackKey(prefix: string, title?: string, createdAt?: string) {
+  // title과 createdAt이 모두 비어도 prefix 덕에 충돌 확률 낮음
+  return `${prefix}-${(title ?? "").trim()}|${(createdAt ?? "").trim()}`;
 }
 
 /* ===========================
@@ -90,9 +103,6 @@ const InquiryList: React.FC = () => {
     [accessToken]
   );
 
-  // 통합 상세 페이지 경로
-  const getDetailPath = (row: Row) => `/mypage/support/${row.id}`;
-
   useEffect(() => {
     let mounted = true;
 
@@ -101,7 +111,6 @@ const InquiryList: React.FC = () => {
       setErr(null);
 
       try {
-        // 두 요청 병렬. 하나 실패해도 다른 하나는 살림.
         const [inqRes, repRes] = await Promise.allSettled([
           axios.get<{ data: { inquiries: InquiryApiItem[] } }>(
             `${BASE}/inquiries`,
@@ -112,11 +121,12 @@ const InquiryList: React.FC = () => {
           }),
         ]);
 
-        // 문의 → "문의" 기본, 서버 type 있으면 매핑 우선
         const inqRows: Row[] =
           inqRes.status === "fulfilled"
             ? (inqRes.value.data?.data?.inquiries ?? []).map((it) => ({
                 id: it.inquiriesId,
+                keyStr: `inq-${it.inquiriesId}`, // ✅ 고유 문자열 key
+                src: "inq",
                 typeLabel: mapTypeToLabel(it.type, "문의"),
                 title: it.title,
                 answered: isAnswered(it.status),
@@ -124,16 +134,22 @@ const InquiryList: React.FC = () => {
               }))
             : [];
 
-        // 신고 → "신고" 기본, 서버 type 있으면 매핑 우선
         const repRows: Row[] =
           repRes.status === "fulfilled"
             ? (repRes.value.data?.data?.reports ?? []).map((it) => {
-                const id =
-                  (it.reportId as number) ??
-                  (it.id as number) ??
-                  Math.floor(Math.random() * 1e9); // 안전장치
+                const numId =
+                  (it.reportId as number | undefined) ??
+                  (it.id as number | undefined) ??
+                  undefined; // 숫자 id가 없을 수 있음
+                const keyStr =
+                  typeof numId === "number"
+                    ? `rep-${numId}`
+                    : makeFallbackKey("rep", it.title, it.createdAt); // ✅ 안정적 key (랜덤 금지)
+
                 return {
-                  id,
+                  id: numId, // 상세 이동은 id 있을 때만
+                  keyStr,
+                  src: "rep",
                   typeLabel: mapTypeToLabel(it.type, "신고"),
                   title: it.title ?? "(제목 없음)",
                   answered: isAnswered(it.status),
@@ -142,14 +158,11 @@ const InquiryList: React.FC = () => {
               })
             : [];
 
-        // 최신순 정렬 (createdAt 없는 항목은 뒤로)
         const merged = [...inqRows, ...repRows].sort((a, b) => {
-          if (!a.createdAt && !b.createdAt) return 0;
-          if (!a.createdAt) return 1;
-          if (!b.createdAt) return -1;
           const toDate = (s: string) => {
+            if (!s) return 0;
             const [yy, mm, dd] = s.split(".").map((v) => parseInt(v, 10));
-            return new Date(2000 + yy, (mm ?? 1) - 1, dd ?? 1).getTime();
+            return new Date(2000 + (yy || 0), (mm || 1) - 1, dd || 1).getTime();
           };
           return toDate(b.createdAt) - toDate(a.createdAt);
         });
@@ -182,97 +195,159 @@ const InquiryList: React.FC = () => {
   }, [headers]);
 
   return (
-    <div className="mx-auto min-h-[700px] w-[788px] max-w-4xl p-4">
-      <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-2xl font-bold">1:1 문의 / 신고</h2>
+    <div className="mx-auto w-full max-w-[840px] px-4">
+      {/* 헤더 */}
+      <div className="mb-5 flex items-center justify-between">
+        <h2 className="text-xl font-bold sm:text-2xl">1:1 문의 / 신고</h2>
 
         <Link
           to="/mypage/support/inquiries/new"
-          className="bg-purple hover:bg-deep-purple rounded-md px-4 py-2 font-medium text-white transition-colors"
+          className="rounded-md bg-[#8322BF] px-3 py-2 text-sm font-medium text-white hover:brightness-105 active:translate-y-[1px]"
         >
           문의/신고
         </Link>
       </div>
 
+      {/* 상태/에러 */}
       {err && (
-        <div className="bg-red/10 text-red mb-3 rounded-md px-3 py-2 text-sm">
+        <div className="mb-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-600">
           {err}
         </div>
       )}
-
-      <div className="text-g200 mb-2 text-sm">
+      <div className="mb-3 text-sm text-neutral-500">
         {loading ? "불러오는 중…" : `총 ${rows.length}건`}
       </div>
 
-      <table className="w-full table-fixed border-separate border-spacing-0">
-        <colgroup>
-          <col style={{ width: "12%" }} />
-          <col style={{ width: "56%" }} />
-          <col style={{ width: "12%" }} />
-          <col style={{ width: "20%" }} />
-        </colgroup>
-
-        <thead>
-          <tr>
-            {["분류", "제목", "답변 여부", "작성일"].map((th) => (
-              <th
-                key={th}
-                className="text-g200 border-g400 border-b py-3 text-center text-sm font-semibold"
-              >
-                {th}
-              </th>
-            ))}
-          </tr>
-        </thead>
-
-        <tbody className="text-g100 text-sm">
-          {rows.length === 0 && !loading ? (
-            <tr>
-              <td colSpan={4} className="text-g200 py-10 text-center">
-                등록된 문의/신고가 없습니다.
-              </td>
-            </tr>
-          ) : (
-            rows.map((it) => {
-              const to = getDetailPath(it);
-              return (
-                <tr
-                  key={`${it.typeLabel}-${it.id}`}
-                  className="group border-g400 hover:bg-g500/50 cursor-pointer border-b"
-                  onClick={() => navigate(to)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => e.key === "Enter" && navigate(to)}
+      {/* ---------- 모바일: 카드 리스트 ---------- */}
+      <ul className="flex flex-col gap-3 md:hidden">
+        {rows.length === 0 && !loading ? (
+          <li className="rounded-lg border border-neutral-200 bg-white py-10 text-center text-neutral-500">
+            등록된 문의/신고가 없습니다.
+          </li>
+        ) : (
+          rows.map((it) => {
+            const to = getDetailPath(it);
+            return (
+              <li key={it.keyStr}>
+                <button
+                  type="button"
+                  onClick={() => to && navigate(to)}
+                  disabled={!to}
+                  className="w-full rounded-xl border border-neutral-200 bg-white p-4 text-left shadow-sm transition hover:bg-neutral-50 active:translate-y-[1px] disabled:cursor-not-allowed disabled:opacity-70"
                 >
-                  <td className="py-4 text-center align-middle">
-                    {it.typeLabel}
-                  </td>
-                  <td className="px-2 py-4 align-middle">
-                    <div className="mx-auto max-w-[560px]">
-                      <Link
-                        to={`/mypage/support/inquiries/${it.id}`}
-                        className="block truncate text-center group-hover:underline"
-                        title={it.title}
-                        onClick={(e) => e.stopPropagation()} // tr onClick과 중복 방지
-                      >
-                        {it.title}
-                      </Link>
-                    </div>
-                  </td>
-                  <td className="py-4 text-center align-middle font-semibold">
-                    <span className={it.answered ? "text-green" : "text-red"}>
-                      {it.answered ? "Y" : "N"}
+                  <div className="mb-1 flex items-center gap-2">
+                    <span className="rounded-md bg-neutral-900 px-2 py-0.5 text-xs font-semibold text-white">
+                      {it.typeLabel}
                     </span>
-                  </td>
-                  <td className="text-g200 py-4 text-center align-middle">
-                    {it.createdAt}
-                  </td>
-                </tr>
-              );
-            })
-          )}
-        </tbody>
-      </table>
+                    <span
+                      className={`rounded-md px-2 py-0.5 text-xs font-semibold ${
+                        it.answered
+                          ? "bg-green-100 text-green-700"
+                          : "bg-red-100 text-red-600"
+                      }`}
+                    >
+                      {it.answered ? "답변완료" : "대기"}
+                    </span>
+                    <span className="ml-auto text-xs text-neutral-500">
+                      {it.createdAt}
+                    </span>
+                  </div>
+                  <div className="line-clamp-2 text-sm font-medium text-neutral-900">
+                    {it.title}
+                  </div>
+                </button>
+              </li>
+            );
+          })
+        )}
+      </ul>
+
+      {/* ---------- 태블릿/PC: 테이블 ---------- */}
+      <div className="hidden md:block">
+        <table className="w-full table-fixed border-separate border-spacing-0">
+          <colgroup>
+            <col style={{ width: "12%" }} />
+            <col style={{ width: "56%" }} />
+            <col style={{ width: "12%" }} />
+            <col style={{ width: "20%" }} />
+          </colgroup>
+
+          <thead>
+            <tr>
+              {["분류", "제목", "답변 여부", "작성일"].map((th) => (
+                <th
+                  key={th}
+                  className="border-b border-neutral-200 py-3 text-center text-sm font-semibold text-neutral-700"
+                >
+                  {th}
+                </th>
+              ))}
+            </tr>
+          </thead>
+
+          <tbody className="text-sm">
+            {rows.length === 0 && !loading ? (
+              <tr>
+                <td colSpan={4} className="py-10 text-center text-neutral-500">
+                  등록된 문의/신고가 없습니다.
+                </td>
+              </tr>
+            ) : (
+              rows.map((it) => {
+                const to = getDetailPath(it);
+                return (
+                  <tr
+                    key={it.keyStr} // ✅ 안정적 문자열 key
+                    className={`border-b border-neutral-100 ${
+                      to ? "cursor-pointer hover:bg-neutral-50" : "opacity-70"
+                    }`}
+                    onClick={() => to && navigate(to)}
+                    role={to ? "button" : undefined}
+                    tabIndex={to ? 0 : -1}
+                    onKeyDown={(e) => to && e.key === "Enter" && navigate(to)}
+                  >
+                    <td className="py-4 text-center align-middle text-neutral-900">
+                      {it.typeLabel}
+                    </td>
+                    <td className="px-2 py-4 align-middle">
+                      <div className="mx-auto max-w-[560px]">
+                        {to ? (
+                          <Link
+                            to={to}
+                            className="block truncate text-center text-neutral-900 hover:underline"
+                            title={it.title}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {it.title}
+                          </Link>
+                        ) : (
+                          <span className="block truncate text-center text-neutral-400">
+                            {it.title}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-4 text-center align-middle font-semibold">
+                      <span
+                        className={
+                          it.answered ? "text-green-600" : "text-red-600"
+                        }
+                      >
+                        {it.answered ? "Y" : "N"}
+                      </span>
+                    </td>
+                    <td className="py-4 text-center align-middle text-neutral-500">
+                      {it.createdAt}
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="h-12 md:h-16" />
     </div>
   );
 };
