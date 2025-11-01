@@ -5,6 +5,7 @@ import type { UserDetailProps } from "../types/AdminType";
 import Toast from "../../../shared/components/Toast";
 import useToast from "../../../shared/hooks/useToast";
 import { formatDate } from "../../../shared/utils/datetime";
+import Avatar from "../../../shared/components/Avatar";
 // import { useAuctionDetailStore } from "../../auction/store/auctionDetailStore";
 // import { formatDate } from "../../../shared/utils/datetime";
 
@@ -47,9 +48,7 @@ const AdminUserDetail = () => {
 
       {/* 제목 + 메타 */}
       <div className="flex gap-4 border-b pb-4">
-        {user.profileImageUrl && (
-          <img src={user.profileImageUrl} className="size-20 rounded-full" />
-        )}
+        <Avatar imageUrl={user.profileImageUrl} size={20} />
         <div>
           <h3 className="text-[18px] font-bold text-neutral-900 sm:text-[20px] sm:leading-[1.4]">
             {user.nickname}
