@@ -15,7 +15,7 @@ const AdminAuctionList = ({ auctions }: AdminAuctionListProps) => {
       </colgroup>
       <thead className="border-deep-purple text-deep-purple bg-light-purple border-b">
         <tr>
-          <th>No.</th>
+          <th>id</th>
           <th>대표 이미지</th>
           <th>제목</th>
           <th>등록일시</th>
@@ -23,9 +23,9 @@ const AdminAuctionList = ({ auctions }: AdminAuctionListProps) => {
         </tr>
       </thead>
       <tbody>
-        {auctions.map((item, i) => (
+        {auctions.map((item) => (
           <tr key={item.auctionId} className="border-b border-gray-300">
-            <td>{i + 1}</td>
+            <td>{item.auctionId}</td>
             <td className="flex justify-center">
               <img
                 src={item.mainImageUrl || ""}

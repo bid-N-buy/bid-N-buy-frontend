@@ -2,8 +2,6 @@ import { useRef, useEffect, useState } from "react";
 import api from "../../../shared/api/axiosInstance";
 import { useShallow } from "zustand/shallow";
 import { useAuthStore } from "../../auth/store/authStore";
-// import { useChatListApi } from "../api/useChatList";
-// import { useChatchatRoom } from "../api/useChatRoom";
 import Toast from "../../../shared/components/Toast";
 import useToast from "../../../shared/hooks/useToast";
 import type { ModalProps } from "../../../shared/types/CommonType";
