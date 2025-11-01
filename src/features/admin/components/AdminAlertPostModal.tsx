@@ -64,12 +64,12 @@ const AdminAlertPostModal = ({ onClose }: ModalProps) => {
   return (
     <>
       <div
-        className="border-g500 fixed inset-0 z-51 h-full w-full rounded-md border-1 bg-white text-wrap shadow-lg md:absolute md:inset-auto md:top-[72px] md:left-18 md:h-auto md:w-100 md:rounded-md"
+        className="border-g500 fixed inset-0 z-51 h-full w-full border-1 bg-white text-wrap shadow-lg md:absolute md:inset-auto md:top-[72px] md:left-18 md:h-auto md:w-100 md:rounded-md"
         ref={modalRef}
       >
         <div className="bg-deep-purple flex justify-between rounded-t-md p-3 text-white">
           <p className="font-bold">알림 발송</p>
-          <button onClick={onClose} aria-label="채팅 모달 닫기" className="">
+          <button onClick={onClose} aria-label="모달 닫기" className="">
             <X />
           </button>
         </div>
