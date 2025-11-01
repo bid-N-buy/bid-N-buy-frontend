@@ -5,7 +5,7 @@ import { buildImageUrl } from "../utils/imageUrl";
 
 const Avatar = ({ imageUrl, nickname, size }: AvatarProps) => {
   return (
-    <div className={`size-${size ? size : 12} overflow-hidden rounded-full`}>
+    <div className={`size-${size ? size : 16} overflow-hidden rounded-full`}>
       {
         <img
           src={imageUrl ? buildImageUrl(imageUrl) : avatar}

@@ -56,7 +56,7 @@ const AdminUserDetail = () => {
 
       {/* 제목 + 메타 */}
       <div className="flex gap-4 border-b pb-4">
-        <Avatar imageUrl={user.profileImageUrl} size={20} />
+        <Avatar imageUrl={user.profileImageUrl} size="20" />
         <div>
           <div className="flex items-center gap-4">
             <h3 className="text-[18px] font-bold text-neutral-900 sm:text-[20px] sm:leading-[1.4]">
