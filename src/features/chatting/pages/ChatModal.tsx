@@ -2,8 +2,6 @@ import { useRef, useEffect, useState } from "react";
 import api from "../../../shared/api/axiosInstance";
 import { useShallow } from "zustand/shallow";
 import { useAuthStore } from "../../auth/store/authStore";
-// import { useChatListApi } from "../api/useChatList";
-// import { useChatchatRoom } from "../api/useChatRoom";
 import Toast from "../../../shared/components/Toast";
 import useToast from "../../../shared/hooks/useToast";
 import type { ModalProps } from "../../../shared/types/CommonType";
@@ -25,7 +23,6 @@ const ChatModal = ({ onClose }: ModalProps) => {
     targetView,
     selectedChatroomId,
     chatList,
-    chatListKey,
     chatRoom,
     loading,
     openChatList,
@@ -37,7 +34,6 @@ const ChatModal = ({ onClose }: ModalProps) => {
       targetView: state.targetView,
       selectedChatroomId: state.selectedChatroomId,
       chatList: state.chatList,
-      chatListKey: state.chatListKey,
       chatRoom: state.chatRoom,
       loading: state.loading,
       openChatList: state.openChatList,
@@ -51,7 +47,6 @@ const ChatModal = ({ onClose }: ModalProps) => {
 
   // chatroom에서 해당 채팅방 삭제 메뉴
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  console.log(chatListKey);
 
   // const [isAdOpen, setIsAdOpen] = useState(false); // 주소
   // const [editing, setEditing] = useState<Address | null>(null);
@@ -130,7 +125,7 @@ const ChatModal = ({ onClose }: ModalProps) => {
   return (
     <>
       <div
-        className="border-g500 fixed inset-0 z-51 h-full w-full rounded-md border-1 bg-white text-wrap shadow-lg md:absolute md:inset-auto md:top-[72px] md:right-8 md:h-150 md:w-100"
+        className="border-g500 fixed inset-0 z-51 h-full w-full border-1 bg-white text-wrap shadow-lg md:absolute md:inset-auto md:top-[72px] md:right-8 md:h-150 md:w-100 md:rounded-md"
         ref={modalRef}
       >
         <div className="border-purple flex flex-shrink-0 items-center justify-between border-b p-4">
@@ -201,11 +196,7 @@ const ChatModal = ({ onClose }: ModalProps) => {
         )} */}
         <div className="h-[calc(100%-59px)] overflow-x-hidden overflow-y-auto">
           {currentView === "list" && (
-            <ChatList
-              key={chatListKey}
-              chatList={chatList}
-              onSelectRoom={handleSelectRoom}
-            />
+            <ChatList chatList={chatList} onSelectRoom={handleSelectRoom} />
           )}
           {loading && (
             <p className="flex-column flex h-[100%] items-center justify-center p-4 text-center">

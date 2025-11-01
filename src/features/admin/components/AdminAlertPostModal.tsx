@@ -64,16 +64,16 @@ const AdminAlertPostModal = ({ onClose }: ModalProps) => {
   return (
     <>
       <div
-        className="border-g500 fixed inset-0 z-51 h-full w-full rounded-md border-1 bg-white text-wrap shadow-lg md:absolute md:inset-auto md:top-[72px] md:left-18 md:h-100 md:w-100 md:rounded-md"
+        className="border-g500 fixed inset-0 z-51 h-full w-full border-1 bg-white text-wrap shadow-lg md:absolute md:inset-auto md:top-[72px] md:left-18 md:h-auto md:w-100 md:rounded-md"
         ref={modalRef}
       >
         <div className="bg-deep-purple flex justify-between rounded-t-md p-3 text-white">
           <p className="font-bold">알림 발송</p>
-          <button onClick={onClose} aria-label="채팅 모달 닫기" className="">
+          <button onClick={onClose} aria-label="모달 닫기" className="">
             <X />
           </button>
         </div>
-        <form onSubmit={submitAlert} className="px-4 py-2">
+        <form onSubmit={submitAlert} className="mt-2 mb-4 px-4 py-2">
           <label htmlFor="userId">보낼 회원</label>
           <input
             name="userId"
@@ -99,7 +99,12 @@ const AdminAlertPostModal = ({ onClose }: ModalProps) => {
             style={{ resize: "none" }}
             required
           />
-          <button type="submit">전송</button>
+          <button
+            className="border-purple text-purple w-full rounded-md border py-2"
+            type="submit"
+          >
+            전송
+          </button>
         </form>
       </div>
       {toast.isVisible && (

@@ -28,9 +28,9 @@ export type AdminAuctionListProps = {
   auctions: AuctionItem[];
 };
 
-export interface AdminAlarmPostProps {
-  alarmType: string;
-  content: string;
+export interface AdminPenaltyPostProps {
+  userId: number;
+  onClose: () => void;
 }
 
 export interface AdminPagination<T> extends PageProps {

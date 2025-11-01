@@ -8,7 +8,6 @@ import { useChatModalStore } from "../store/ChatModalStore";
 export const useChatSocket = () => {
   const token = useAuthStore((s) => s.accessToken);
   const clientRef = useRef<Client | null>(null);
-  const { handleNewChatMessage } = useChatModalStore();
 
   useEffect(() => {
     if (!token) return;
