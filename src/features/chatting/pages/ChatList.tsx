@@ -18,7 +18,7 @@ const ChatList = ({ chatList, onSelectRoom }: ChatListProps) => {
           className="border-g400 flex cursor-pointer items-center justify-between border-b p-4 hover:bg-gray-50"
         >
           <div className="flex gap-2">
-            <Avatar imageUrl={chat.counterpartProfileImageUrl} />
+            <Avatar size="15" imageUrl={chat.counterpartProfileImageUrl} />
             <div>
               <p className="mb-1">
                 <span className="font-bold">{chat.counterpartNickname}</span>

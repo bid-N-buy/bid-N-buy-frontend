@@ -23,7 +23,7 @@ export interface ImageProps {
 export interface AvatarProps {
   imageUrl: string | null | undefined;
   nickname?: string;
-  size?: number;
+  size?: string;
 }
 
 export interface ModalProps {

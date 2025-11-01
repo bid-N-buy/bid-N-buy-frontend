@@ -76,7 +76,7 @@ const ChatYou = ({
 
   return messageType === "CHAT" && sellerId === userId ? (
     <div className="mx-2 my-4 flex gap-2">
-      <Avatar imageUrl={counterpartProfileImageUrl} />
+      <Avatar size="10" imageUrl={counterpartProfileImageUrl} />
       <div>
         <p className="mb-2 font-bold">{counterpartNickname}</p>
         <div className="flex items-end">
@@ -90,7 +90,7 @@ const ChatYou = ({
     </div>
   ) : messageType === "REQUEST" ? (
     <div className="mx-2 my-4 flex gap-2">
-      <Avatar imageUrl={counterpartProfileImageUrl} />
+      <Avatar size="10" imageUrl={counterpartProfileImageUrl} />
       <div>
         <p className="mb-2 font-bold">{counterpartNickname}</p>
         <div className="flex items-end">
@@ -129,7 +129,7 @@ const ChatYou = ({
     </div>
   ) : messageType === "IMAGE" ? (
     <div className="mx-2 my-4 flex gap-2">
-      <Avatar imageUrl={counterpartProfileImageUrl} />
+      <Avatar size="10" imageUrl={counterpartProfileImageUrl} />
       <div>
         <p className="mb-2 font-bold">{counterpartNickname}</p>
         <div className="flex items-end">
@@ -149,7 +149,7 @@ const ChatYou = ({
     </div>
   ) : (
     <div className="mx-2 my-4 flex gap-2">
-      <Avatar imageUrl={counterpartProfileImageUrl} />
+      <Avatar size="10" imageUrl={counterpartProfileImageUrl} />
       <div>
         <p className="mb-2 font-bold">{counterpartNickname}</p>
         <div className="flex items-end">
