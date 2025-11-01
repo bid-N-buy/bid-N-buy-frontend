@@ -40,13 +40,16 @@ const Main = () => {
       {/* 카테고리 */}
       <section className="hidden py-[54px] md:block">
         <div className="container">
-          <div className="flex items-center justify-between gap-4 overflow-x-auto md:overflow-visible">
+          <div className="grid grid-cols-5 gap-x-3 gap-y-5 overflow-x-auto md:gap-x-4 md:overflow-visible lg:flex lg:items-center lg:justify-between lg:gap-2">
             {/* 스켈레톤 */}
             {loadingTop
               ? Array.from({ length: 10 }).map((_, i) => (
-                  <div key={i} className="flex flex-col items-center gap-3">
-                    <div className="bg-g500/60 h-[90px] w-[90px] animate-pulse rounded-full" />
-                    <div className="bg-g500/60 h-[16px] w-[48px] animate-pulse" />
+                  <div
+                    key={i}
+                    className="flex flex-col items-center gap-2 lg:gap-3"
+                  >
+                    <div className="bg-g500/60 h-[72px] w-[72px] animate-pulse rounded-full lg:h-[90px] lg:w-[90px]" />
+                    <div className="bg-g500/60 h-[14px] w-[40px] animate-pulse lg:h-[16px] lg:w-[48px]" />
                   </div>
                 ))
               : mains.map((c) => {
@@ -55,13 +58,13 @@ const Main = () => {
                     <button
                       key={c.categoryId}
                       onClick={() => handleCategoryClick(c.categoryId)}
-                      className="group flex min-w-[96px] cursor-pointer flex-col items-center gap-3 transition-all"
+                      className="group flex cursor-pointer flex-col items-center gap-2 transition-all lg:min-w-[96px] lg:gap-3"
                       aria-label={`${c.categoryName} 카테고리로 이동`}
                     >
-                      <div className="group-hover:bg-light-purple flex h-[90px] w-[90px] items-center justify-center rounded-full bg-white shadow-[0_0_15px_rgba(0,0,0,0.09)] transition-all group-hover:shadow-[0_0_20px_rgba(0,0,0,0.12)]">
-                        <Icon className="text-purple h-10 w-10 transition-transform group-hover:scale-110" />
+                      <div className="group-hover:bg-light-purple flex h-[72px] w-[72px] items-center justify-center rounded-full bg-white shadow-[0_0_15px_rgba(0,0,0,0.09)] transition-all group-hover:shadow-[0_0_20px_rgba(0,0,0,0.12)] lg:h-[90px] lg:w-[90px]">
+                        <Icon className="text-purple h-8 w-8 transition-transform group-hover:scale-110 lg:h-10 lg:w-10" />
                       </div>
-                      <span className="text-g100 group-hover:text-purple text-h7 font-medium transition-colors">
+                      <span className="text-g100 group-hover:text-purple text-h8 lg:text-h7 font-medium transition-colors">
                         {c.categoryName}
                       </span>
                     </button>
