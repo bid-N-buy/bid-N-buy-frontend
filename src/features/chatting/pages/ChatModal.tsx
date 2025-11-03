@@ -85,8 +85,6 @@ const ChatModal = ({ onClose }: ModalProps) => {
   // list에서 각 Chat 누를 시 채팅방으로 넘어가는 함수
   const handleSelectRoom = (chatroomId: number) => {
     const roomInfo = chatList.find((chat) => chat.chatroomId === chatroomId);
-    console.log(roomInfo);
-    console.log(chatList);
     if (roomInfo) {
       fetchChatRoom(token, chatroomId);
       openChatRoom(chatroomId);

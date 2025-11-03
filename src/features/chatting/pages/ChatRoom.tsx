@@ -49,7 +49,6 @@ const ChatRoom = ({
       });
       setMessages(response.data);
     } catch (error) {
-      console.error("Failed to load chat log:", error);
       setError(`채팅 로그를 불러올 수 없습니다: ${error}`);
     }
   };
@@ -57,7 +56,6 @@ const ChatRoom = ({
   // 웹소켓 전체 로직
   const webSocketLogic = () => {
     if (clientRef.current?.connected) {
-      console.log("재연결 방지");
       return;
     }
 
@@ -77,7 +75,6 @@ const ChatRoom = ({
 
       onConnect: () => {
         setIsConnected(true);
-        console.log("✅ WebSocket Connected!");
 
         // 연결 성공 시 채팅방 구독
         const receivedDestination = `/topic/chat/room/${chatroomId}`;
@@ -89,7 +86,7 @@ const ChatRoom = ({
             handleMessageReceived(message); // 화면 변경
             handleNewChatMessage(newMessage); // 실시간 전체 메시지 읽음 상태 관리
           } catch (e) {
-            console.error("뱃지 관련 오류:", e);
+            return;
           }
         });
 
@@ -116,13 +113,13 @@ const ChatRoom = ({
                 .reverse();
             });
           } catch (e) {
-            console.error("읽음 상태 파싱 오류:", e);
+            return;
           }
         });
       },
       onStompError: (frame) => {
-        console.error("STOMP Error:", frame);
         setIsConnected(false);
+        return;
       },
 
       onWebSocketClose: () => {
@@ -143,7 +140,7 @@ const ChatRoom = ({
         return [...prevMessages, messageBody];
       });
     } catch (e) {
-      console.error("메시지 파싱 오류:", e, message.body);
+      return;
     }
   };
   // 새 메시지 생길 시 자동 스크롤 이동
@@ -162,7 +159,6 @@ const ChatRoom = ({
 
     // 유효성 검사
     if (!client || !client.connected) {
-      console.warn("연결 상태가 좋지 않습니다.");
       return;
     }
     const messageAddress = {
@@ -193,7 +189,6 @@ const ChatRoom = ({
 
     // 유효성 검사
     if (!client || !client.connected) {
-      console.warn("연결 상태가 좋지 않습니다.");
       return;
     }
     const messagePayload = {
@@ -219,7 +214,6 @@ const ChatRoom = ({
     const client = clientRef.current;
 
     if (!client || !client.connected) {
-      console.warn("연결 상태가 좋지 않습니다.");
       return;
     }
 
@@ -242,7 +236,6 @@ const ChatRoom = ({
 
       uploadedImageUrl = url.data;
     } catch (e) {
-      console.error("이미지 업로드 실패:", e);
       return;
     }
 
@@ -265,7 +258,6 @@ const ChatRoom = ({
     const client = clientRef.current;
 
     if (!client || !client.connected || !inputMessage.trim()) {
-      console.warn("연결되지 않았거나 메시지가 비어있습니다.");
       return;
     }
     // 메시지 생성
@@ -295,7 +287,6 @@ const ChatRoom = ({
       .find((msg) => msg.senderId !== userId && !msg.read);
 
     if (!latestUnreadMessage) {
-      console.log("읽을 상대방 메시지가 없거나 모두 읽었습니다.");
       refetchChatList(token);
       return;
     }
@@ -316,9 +307,8 @@ const ChatRoom = ({
       );
       markAsRead(chatroomId);
       refetchChatList(token);
-      console.log("채팅 읽음 상태 전송 및 채팅 목록 갱신 완료");
     } catch (error) {
-      console.error("읽음 상태 전송 실패:", error);
+      return;
     }
   };
 
@@ -340,7 +330,6 @@ const ChatRoom = ({
       return;
     }
     if (messages.length === 0) {
-      console.log("메시지 기록이 없어 읽음 요청을 건너뜁니다.");
       return;
     }
     sendReadStatus();

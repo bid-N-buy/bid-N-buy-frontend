@@ -23,9 +23,8 @@ const AdminUserDetail = () => {
     try {
       const userInfo = (await adminApi.get(`/admin/users/${id}`)).data;
       setUser(userInfo);
-    } catch (error) {
+    } catch (e) {
       setUser(null);
-      console.error("데이터 불러오기 실패:", error);
       showToast("회원 데이터를 불러오는 데에 실패했습니다.", "error");
     }
   };
@@ -40,7 +39,6 @@ const AdminUserDetail = () => {
   }
 
   if (!modalRoot) {
-    console.error("Portal root element '#modal-root' not found.");
     return null;
   }
 

@@ -32,7 +32,6 @@ const AdminAsideMenu = () => {
   };
 
   if (!modalRoot) {
-    console.error("Portal root element '#modal-root' not found.");
     return null;
   }
   return (

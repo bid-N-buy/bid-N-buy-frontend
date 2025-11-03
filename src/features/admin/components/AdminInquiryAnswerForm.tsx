@@ -48,9 +48,9 @@ const AdminInquiryAnswerForm = () => {
       showToast("문의가 등록되었습니다.", "success");
 
       setForm({ title: "", content: "" });
-    } catch (error) {
-      console.error("답변 처리 중 오류 발생:", error);
+    } catch (e) {
       showToast("답변 처리 중 오류가 발생했습니다.", "error");
+      return;
     } finally {
       setLoading(false);
     }

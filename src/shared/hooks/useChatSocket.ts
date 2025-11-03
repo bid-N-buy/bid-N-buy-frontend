@@ -17,8 +17,6 @@ export const useChatSocket = () => {
       connectHeaders: { "Auth-Token": token },
       reconnectDelay: 5000,
       onConnect: () => {
-        console.log("✅ Global WebSocket connected");
-
         // 서버에 있는 모든 방 구독
         // → 서버가 어떤 방에 내가 속했는지 push 안 해주므로
         //    초기 한 번 /chatrooms/list 불러서 구독 목록 구성
@@ -27,7 +25,8 @@ export const useChatSocket = () => {
             headers: { Authorization: `Bearer ${token}` },
           })
           .then((res) => {
-            res.data.forEach((room) => {
+            // room 부분 수정했으므로 배포 후 다시 볼 것
+            res.data.forEach((room: { chatroomId: number }) => {
               client.subscribe(`/topic/chat/room/${room.chatroomId}`, (msg) => {
                 const data = JSON.parse(msg.body);
                 useChatModalStore.getState().handleNewChatMessage(data);

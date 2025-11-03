@@ -23,15 +23,13 @@ const AdminPenaltyPostModal = ({ userId, onClose }: AdminPenaltyPostProps) => {
       userId: form.userId,
       type: form.type,
     };
-    console.log(data);
 
     try {
       await adminApi.post(`/admin/penalty`, data, {
         withCredentials: true,
       });
       showToast("패널티 추가되었습니다.", "success");
-    } catch (error) {
-      console.error("패널티 추가 실패:", error);
+    } catch (e) {
       showToast("패널티 추가에 실패했습니다.", "error");
       return;
     } finally {
