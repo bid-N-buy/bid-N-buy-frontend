@@ -49,8 +49,8 @@ const RatingModal: React.FC<RatingModalProps> = ({
               type="button"
               className={`flex h-8 w-8 items-center justify-center rounded border text-sm font-semibold ${
                 score === rating
-                  ? "border-purple-600 text-purple-600"
-                  : "border-neutral-300 text-neutral-500 hover:border-purple-400 hover:text-purple-400"
+                  ? "border-purple text-purple"
+                  : "hover:border-purple hover:text-purple border-neutral-300 text-neutral-500"
               }`}
               onClick={() => onChangeRating(score)}
               disabled={submitting}
@@ -75,7 +75,7 @@ const RatingModal: React.FC<RatingModalProps> = ({
             className={`rounded border px-3 py-1 font-semibold disabled:opacity-40 ${
               submitting
                 ? "cursor-not-allowed border-neutral-300 bg-neutral-100 text-neutral-400"
-                : "border-purple-600 text-purple-600 hover:bg-purple-50"
+                : "border-purple text-purple hover:bg-purple-50"
             }`}
             onClick={onSubmit}
             disabled={submitting}
@@ -368,7 +368,7 @@ const PurchasesPage: React.FC = () => {
       <button
         type="button"
         onClick={() => (window.location.href = "/auctions")}
-        className="rounded-lg bg-gradient-to-r from-purple-600 to-fuchsia-500 px-4 py-2 text-sm font-semibold text-white shadow-md ring-1 ring-purple-500/50 hover:brightness-110 focus:ring-2 focus:ring-purple-400 focus:outline-none"
+        className="rounded-lg bg-purple px-4 py-2 text-sm font-semibold text-white shadow-md ring-1 ring-purple hover:bg-purple-700 focus:ring-2 focus:ring-purple-400 focus:outline-none"
       >
         지금 구경하러 가기
       </button>

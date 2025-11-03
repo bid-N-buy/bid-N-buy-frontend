@@ -1,6 +1,7 @@
 // src/features/mypage/components/profile/ProfilePreview.tsx
 import React, { useMemo } from "react";
 import { Link } from "react-router-dom";
+import defaultAvatar from "../../../../assets/avatar.svg";
 
 type Props = {
   nickname?: string;
@@ -47,15 +48,13 @@ const ProfilePreview: React.FC<Props> = ({
       {/* 본문: 모바일 세로, md부터 가로 */}
       <div className="flex min-w-0 flex-col items-stretch gap-4 md:flex-row md:items-start md:gap-6">
         {/* 아바타 */}
-        <div className="size-20 flex-shrink-0 overflow-hidden rounded-full bg-neutral-700/90 sm:size-24 md:size-[120px] lg:size-[150px]">
-          {avatarUrl ? (
-            <img
-              src={avatarUrl}
-              alt={`${nickname} avatar`}
-              className="h-full w-full object-cover"
-              loading="lazy"
-            />
-          ) : null}
+        <div className="size-20 flex-shrink-0 overflow-hidden rounded-full bg-neutral-200 sm:size-24 md:size-[120px] lg:size-[150px]">
+          <img
+            src={avatarUrl || defaultAvatar}
+            alt={`${nickname} avatar`}
+            className="h-full w-full object-cover"
+            loading="lazy"
+          />
         </div>
 
         {/* 가운데 정보 */}

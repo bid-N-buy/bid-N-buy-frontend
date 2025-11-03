@@ -14,6 +14,13 @@ const BankAccountDetails: React.FC<Props> = ({
   error,
   onEdit,
 }) => {
+  /* 버튼 토큰 (AccountSettings와 동일 규칙) */
+  const btnBase =
+    "inline-flex items-center justify-center rounded-md h-9 px-4 text-[13px] font-medium " +
+    "transition-colors disabled:opacity-60 whitespace-nowrap leading-[1.1] min-w-[72px]";
+  const btnPrimary = `${btnBase} bg-purple text-white hover:bg-deep-purple`;
+  const btnGhost = `${btnBase} border border-neutral-300 text-neutral-800 hover:bg-neutral-50`;
+
   if (loading) {
     return (
       <div className="rounded-lg border border-neutral-200 bg-white p-4 text-[14px] text-neutral-500">
@@ -38,8 +45,9 @@ const BankAccountDetails: React.FC<Props> = ({
         </div>
         <button
           type="button"
-          className="rounded-full bg-purple-600 px-3 py-[6px] text-[13px] text-white hover:opacity-90"
+          className={btnPrimary}
           onClick={onEdit}
+          aria-label="정산 계좌 등록"
         >
           계좌 등록
         </button>
@@ -64,10 +72,11 @@ const BankAccountDetails: React.FC<Props> = ({
 
         <button
           type="button"
-          className="rounded-md border border-neutral-300 bg-white px-3 py-[6px] text-[13px] text-neutral-700 hover:bg-neutral-50 active:bg-neutral-100"
+          className={btnGhost}
           onClick={onEdit}
+          aria-label="정산 계좌 변경"
         >
-          수정
+          변경
         </button>
       </div>
     </div>

@@ -29,7 +29,7 @@ const SideBar: React.FC = () => {
   return (
     <>
       {/* ===================== 모바일(<=md): 3열 꽉 채우기, 스크롤/최소폭 제거 ===================== */}
-      <div className="w-full md:hidden">
+      <div className="w-full md:hidden ">
         <div className="grid w-full grid-cols-3 gap-x-3 gap-y-3">
           {/* 1행: 제목 */}
           <h3 className="col-span-1 text-center text-sm font-extrabold">

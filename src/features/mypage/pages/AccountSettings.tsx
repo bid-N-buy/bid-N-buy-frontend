@@ -1,3 +1,4 @@
+// src/features/mypage/pages/AccountSettings.tsx
 import React, {
   useCallback,
   useEffect,
@@ -17,6 +18,10 @@ import type { AddressDraft } from "../types/address";
 import BankAccountDetails from "../components/bankAccount/BankAccountDetails";
 import BankAccountEditorModal from "../components/bankAccount/BankAccountEditorModal";
 import type { BankAccountDraft } from "../types/bankAccount";
+
+// ✅ 기본 아바타 (assets)
+import defaultAvatar from "../../../assets/avatar.svg";
+
 /* =======================
  * 타입
  * ======================= */
@@ -47,19 +52,15 @@ export type BankAccount = {
 
 const MAX_IMG_MB = 5;
 
-const DEFAULT_AVATAR =
-  "https://bid-1024-aws-prac.s3.ap-northeast-2.amazonaws.com/user-profiles/default-profile.png";
+// ✅ 기본 이미지: 로컬 에셋(svg)
+const DEFAULT_AVATAR = defaultAvatar as string;
 
+/** 서버가 상대경로를 줄 때도 안전하게 처리 */
 function makeAbsolute(u?: string | null): string | null {
   if (!u) return null;
-  if (/^https?:\/\//i.test(u)) return u;
-  try {
-    const base = new URL(DEFAULT_AVATAR);
-    const path = u.startsWith("/") ? u : `/${u}`;
-    return `${base.origin}${path}`;
-  } catch {
-    return u;
-  }
+  if (/^https?:\/\//i.test(u)) return u; // 절대경로는 그대로
+  if (u.startsWith("/")) return u; // 루트 상대경로는 그대로 사용
+  return `/${u}`; // 그 외엔 루트에 붙여줌
 }
 
 /* =======================
@@ -93,6 +94,8 @@ const AccountSettings: React.FC = () => {
   const [imgPreview, setImgPreview] = useState<string | null>(null);
   const [imgFile, setImgFile] = useState<File | null>(null);
   const [imgLoading, setImgLoading] = useState(false);
+
+  // ✅ 현재 표시할 이미지 (기본 svg로 시작)
   const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(
     DEFAULT_AVATAR
   );
@@ -201,6 +204,7 @@ const AccountSettings: React.FC = () => {
           const { data } = await api.get(`/auth/${uid}/profile`);
           const raw = data?.profileImageUrl ?? null;
           const abs = makeAbsolute(raw) ?? DEFAULT_AVATAR;
+          // 캐시 버스트
           const bust = `${abs}${abs.includes("?") ? "&" : "?"}v=${Date.now()}`;
           setCurrentImageUrl(bust);
         } catch {
@@ -231,7 +235,6 @@ const AccountSettings: React.FC = () => {
               : data?.address
                 ? data.address
                 : null;
-
 
         if (rawAddr) {
           setMainAddress({
@@ -546,12 +549,16 @@ const AccountSettings: React.FC = () => {
   /* 디자인 토큰 */
   const lineInput =
     "w-full rounded-none border-0 border-b border-neutral-300 bg-transparent px-0 py-[10px] text-[15px] placeholder:text-neutral-400 focus:border-neutral-800 focus:ring-0";
-  const ghostBtn =
-    "rounded-md border border-neutral-300 bg-white px-3 py-[6px] text-[13px] text-neutral-700 hover:bg-neutral-50 active:bg-neutral-100";
-  const purpleBtn =
-    "rounded-md bg-purple-600 px-3 py-[6px] text-[13px] text-white hover:opacity-90 disabled:opacity-60";
-  const dangerBtn =
-    "rounded-md bg-rose-600 px-3 py-[6px] text-[13px] text-white hover:opacity-90 disabled:opacity-60";
+
+  // ✅ 버튼 토큰(통일)
+  const btnBase =
+    "inline-flex items-center justify-center rounded-md h-9 px-4 text-[13px] font-medium \
+   transition-colors disabled:opacity-60 whitespace-nowrap leading-[1.1] min-w-[72px]";
+  const btnPrimary = `${btnBase} bg-purple text-white hover:bg-deep-purple`;
+  const btnGhost = `${btnBase} border border-neutral-300 text-neutral-800 hover:bg-neutral-50`;
+  const btnDanger = `${btnBase} bg-rose-600 text-white hover:bg-rose-700`;
+  const btnLinkMuted =
+    "rounded-md px-2 py-1 text-[12px] text-neutral-400 hover:text-rose-600";
 
   return (
     <div className="mx-auto w-full max-w-[720px]">
@@ -592,7 +599,7 @@ const AccountSettings: React.FC = () => {
           </div>
 
           <div className="mt-2">
-            <button type="button" onClick={onPickImage} className={ghostBtn}>
+            <button type="button" onClick={onPickImage} className={btnGhost}>
               이미지 변경
             </button>
 
@@ -609,7 +616,7 @@ const AccountSettings: React.FC = () => {
                 type="button"
                 onClick={submitImage}
                 disabled={imgLoading}
-                className="ml-2 rounded-md bg-neutral-900 px-3 py-[6px] text-[13px] text-white hover:opacity-90 disabled:opacity-60"
+                className={`${btnPrimary} ml-2`}
               >
                 {imgLoading ? "업로드 중…" : "저장"}
               </button>
@@ -642,13 +649,13 @@ const AccountSettings: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsEditName(true)}
-                className={ghostBtn}
+                className={btnGhost}
               >
                 변경
               </button>
             </div>
           ) : (
-            <div className="items end flex gap-2">
+            <div className="flex items-center gap-2">
               <input
                 className={lineInput}
                 value={nickname}
@@ -662,7 +669,7 @@ const AccountSettings: React.FC = () => {
                   setNickname(profile?.nickname ?? "NickName");
                   setIsEditName(false);
                 }}
-                className={ghostBtn}
+                className={btnGhost}
               >
                 취소
               </button>
@@ -671,7 +678,7 @@ const AccountSettings: React.FC = () => {
                 type="button"
                 onClick={submitNickname}
                 disabled={nickLoading}
-                className={ghostBtn}
+                className={btnPrimary}
               >
                 {nickLoading ? "변경 중…" : "변경"}
               </button>
@@ -732,7 +739,7 @@ const AccountSettings: React.FC = () => {
             />
           </div>
 
-          <div className="items=end mt-4 flex gap-2">
+          <div className="mt-4 flex items-center gap-2">
             <div className="flex-1">
               <label className="mb-1 block text-[12px] text-neutral-500">
                 새 비밀번호 확인
@@ -757,7 +764,7 @@ const AccountSettings: React.FC = () => {
               type="button"
               onClick={submitPassword}
               disabled={pwLoading}
-              className={purpleBtn}
+              className={btnPrimary}
               aria-busy={pwLoading}
             >
               {pwLoading ? "변경 중…" : "변경"}
@@ -770,16 +777,6 @@ const AccountSettings: React.FC = () => {
       <section className="mb-10">
         <div className="mb-3 flex items-center justify-between">
           <h5 className="text-[16px] font-bold text-neutral-900">주소</h5>
-
-          {/* <button
-            type="button"
-            className="rounded-full bg-purple-600 px-3 py-[6px] text-[13px] text-white hover:opacity-90"
-            onClick={() => {
-              setAddrOpen(true);
-            }}
-          >
-            {mainAddress ? "수정" : "등록"}
-          </button> */}
         </div>
 
         {addrError && !mainAddress && (
@@ -800,16 +797,6 @@ const AccountSettings: React.FC = () => {
       <section className="mb-10">
         <div className="mb-3 flex items-center justify-between">
           <h5 className="text-[16px] font-bold text-neutral-900">정산 계좌</h5>
-
-          {/* <button
-            type="button"
-            className="rounded-full bg-purple-600 px-3 py-[6px] text-[13px] text-white hover:opacity-90"
-            onClick={() => {
-              setBankOpen(true);
-            }}
-          >
-            {bankAccount ? "수정" : "등록"}
-          </button> */}
         </div>
 
         {bankError && !bankAccount && (
@@ -831,7 +818,7 @@ const AccountSettings: React.FC = () => {
         <button
           type="button"
           onClick={() => setDeleteOpen(true)}
-          className="rounded-md px-2 py-1 text-[12px] text-neutral-400 hover:text-rose-600"
+          className={btnLinkMuted}
         >
           탈퇴하기
         </button>
@@ -874,7 +861,7 @@ const AccountSettings: React.FC = () => {
             <div className="mt-4 flex justify-end gap-2">
               <button
                 type="button"
-                className={ghostBtn}
+                className={btnGhost}
                 onClick={() => setDeleteOpen(false)}
               >
                 취소
@@ -882,7 +869,7 @@ const AccountSettings: React.FC = () => {
 
               <button
                 type="button"
-                className={dangerBtn}
+                className={btnDanger}
                 onClick={submitDelete}
                 disabled={delLoading}
                 aria-busy={delLoading}

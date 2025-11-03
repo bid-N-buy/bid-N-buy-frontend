@@ -184,7 +184,7 @@ const AddressEditorModal: React.FC<Props> = ({
 
           <button
             type="button"
-            className="rounded-md bg-purple-600 px-3 py-[6px] text-[13px] text-white hover:opacity-90 disabled:opacity-60"
+            className="rounded-md bg-purple px-3 py-[6px] text-[13px] text-white hover:opacity-90 disabled:opacity-60"
             onClick={handleSave}
             disabled={submitting || saving}
           >

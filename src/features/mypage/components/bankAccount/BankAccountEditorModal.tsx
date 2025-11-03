@@ -43,7 +43,7 @@ const BankAccountEditorModal: React.FC<Props> = ({
   const ghostBtn =
     "rounded-md border border-neutral-300 bg-white px-3 py-[6px] text-[13px] text-neutral-700 hover:bg-neutral-50 active:bg-neutral-100";
   const purpleBtn =
-    "rounded-md bg-purple-600 px-3 py-[6px] text-[13px] text-white hover:opacity-90 disabled:opacity-60";
+    "rounded-md bg-purple px-3 py-[6px] text-[13px] text-white hover:opacity-90 disabled:opacity-60";
 
   return (
     <div
