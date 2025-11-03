@@ -26,7 +26,7 @@ export const useChatSocket = () => {
           })
           .then((res) => {
             // room 부분 수정했으므로 배포 후 다시 볼 것
-            res.data.forEach((room: { chatroomId: number }) => {
+            res.data.forEach((room: any) => {
               client.subscribe(`/topic/chat/room/${room.chatroomId}`, (msg) => {
                 const data = JSON.parse(msg.body);
                 useChatModalStore.getState().handleNewChatMessage(data);
