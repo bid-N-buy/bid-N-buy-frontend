@@ -6,49 +6,33 @@ import NotiList from "./NotiList";
 import { X } from "lucide-react";
 import api from "../../../shared/api/axiosInstance";
 import { useAuthStore } from "../../auth/store/authStore";
-
-// const notiList: NotiListProps[] = [
-//   {
-//     notification_id: BigInt(101),
-//     type: "alert",
-//     content:
-//       "일반 알림일반 알림일반 알림일반 알림일반 알림일반 알림일반 알림일반 알림일반 알림일반 알림일반 알림일반 알림일반 알림일반 알림일반 알림일반 알림일반 알림일반 알림일반 알림일반 알림일반 알림",
-//     created_at: Date(),
-//     is_read: false,
-//     deleted_at: "x",
-//   },
-//   {
-//     notification_id: BigInt(102),
-//     type: "notice",
-//     content: "공지사항",
-//     created_at: Date(),
-//     is_read: false,
-//     deleted_at: "x",
-//   },
-//   {
-//     notification_id: BigInt(103),
-//     type: "warn",
-//     content: "경고",
-//     created_at: Date(),
-//     is_read: false,
-//     deleted_at: "x",
-//   },
-//   // ...
-// ];  
-
-// state를 빈 배열로 시작
-
-// ✅ 알림 목록 API 호출
-
+import { useNotiStore } from "../store/notiStore"; 
+import { useChatModalStore } from "../../../shared/store/ChatModalStore";
 
 const NotiModal = ({ onClose, onDelete }: ModalProps) => {
   const modalRef = useRef<HTMLDivElement>(null);
+  const { makeChatRoomInAuc } = useChatModalStore();
+  const token = useAuthStore((s) => s.accessToken);
 
-  // state를 빈 배열로 시작
   const [notis, setNotis] = useState<NotiListProps[]>([]);
-
-  // store에서 토큰 꺼내오기
   const accessToken = useAuthStore((state) => state.accessToken);
+  const { notis: realtimeNotis } = useNotiStore(); // 실시간 알림 접근
+
+  // 클릭시 채팅방 생성
+  // ✅ 클릭 시 채팅방 생성 함수
+  const handleChatAdd = async (auctionId: number, sellerId: number) => {
+    if (!token) return;
+    try {
+      const response = await api.post(`/chatrooms/${auctionId}`, { sellerId }, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const chatroomId = response.data.chatroomId;
+      await makeChatRoomInAuc(token, sellerId, auctionId);
+      useChatModalStore.getState().openChatRoom(chatroomId);
+    } catch (err) {
+      console.error("❌ 채팅방 생성 실패", err);
+    }
+  };
 
   // 전체 삭제
   const handleDeleteAll = async () => {
@@ -57,14 +41,14 @@ const NotiModal = ({ onClose, onDelete }: ModalProps) => {
       await api.delete("/notifications", {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
-      setNotis([]); // UI 반영
-      if (onDelete) onDelete(); // 부모 prop도 그대로 호출해서 기존 흐름 유지
+      setNotis([]);
+      if (onDelete) onDelete();
     } catch (err) {
       console.error("전체 삭제 실패:", err);
     }
   };
 
-  // (추가)모달 열릴 때 전체 읽음 처리
+  // 모달 열릴 때 전체 읽음 처리
   useEffect(() => {
     const markAllAsRead = async () => {
       if (!accessToken) return;
@@ -72,7 +56,6 @@ const NotiModal = ({ onClose, onDelete }: ModalProps) => {
         await api.patch("/notifications/read-all", null, {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
-        // 프론트에서도 상태 업데이트
         setNotis((prev) => prev.map((n) => ({ ...n, read: true })));
       } catch (err) {
         console.error("전체 읽음 처리 실패:", err);
@@ -80,9 +63,9 @@ const NotiModal = ({ onClose, onDelete }: ModalProps) => {
     };
 
     markAllAsRead();
-  }, [accessToken]); // 모달이 mount 될 때 실행됨
+  }, [accessToken]);
 
-  // 알림 조회
+  // ✅ 서버 알림 + 실시간 알림 병합
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
@@ -97,33 +80,40 @@ const NotiModal = ({ onClose, onDelete }: ModalProps) => {
         });
 
         if (!data || (data as any).status === 401) {
-          console.warn(" 세션 만료");
+          console.warn("세션 만료");
           setNotis([]);
           return;
         }
 
-        setNotis(
-          data.map((n) => ({
-            notificationId: BigInt(n.notificationId),
-            userId: n.userId ? BigInt(n.userId) : undefined,
-            type: n.type,
-            content: n.content,
-            read: n.read,
-            createdAt: n.createdAt,
-            deletedAt: n.deletedAt,
-          }))
-        );
+        const serverNotis = data.map((n) => ({
+          notificationId: BigInt(n.notificationId),
+          userId: n.userId ? BigInt(n.userId) : undefined,
+          type: n.type,
+          content: n.content,
+          read: n.read,
+          createdAt: n.createdAt,
+          deletedAt: n.deletedAt,
+          data: n.data ?? { auctionId: n.auctionId, sellerId: n.sellerId }, // ✅ data가 없어도 기본 객체 유지
+        }));
+
+        // ✅ 서버 + 실시간 알림 병합 (중복 제거)
+        const merged = [...serverNotis, ...realtimeNotis].reduce((acc, cur) => {
+          if (!acc.some((n) => n.notificationId === cur.notificationId)) {
+            acc.push(cur);
+          }
+          return acc;
+        }, [] as NotiListProps[]);
+
+        setNotis(merged);
       } catch (err) {
         console.error("알림 조회 실패:", err);
       }
     };
 
     fetchNotifications();
-  }, [accessToken]);
+  }, [accessToken, realtimeNotis]); // ✅ 실시간 알림 들어오면 다시 렌더링
 
-
-
-  // modal창 닫기: 여백 누를 시 꺼지도록
+  // 모달 닫기 (외부 클릭 시)
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
@@ -153,7 +143,7 @@ const NotiModal = ({ onClose, onDelete }: ModalProps) => {
           </button>
         </div>
       </div>
-      <NotiList notis={notis} />
+      <NotiList notis={notis} onChatAdd={handleChatAdd}/>
     </div>
   );
 };

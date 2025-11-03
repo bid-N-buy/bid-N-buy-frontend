@@ -15,7 +15,13 @@ const FcmInitializer = () => {
 
   useEffect(() => {
     // 로그인 상태일 때만 실행
-    if (!accessToken || !userId || !adminId) return;
+    const isUserLoggedIn = accessToken && userId;
+    const isAdminLoggedIn = accessToken && adminId;
+
+    if (!isUserLoggedIn && !isAdminLoggedIn) {
+      console.warn("🚫 로그인 정보 없음 → FCM 등록 중단");
+      return;
+    }
 
     const registerFcm = async () => {
       try {
