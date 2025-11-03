@@ -1,4 +1,5 @@
 import React from "react";
+import defaultAvatar from "../../../../assets/avatar.svg";
 
 export type Item = {
   id: string | number;
@@ -36,7 +37,7 @@ function Initials({ name }: { name: string }) {
   const initials = (first + second).toUpperCase() || "U";
 
   return (
-    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-purple-500 to-indigo-600 text-4xl font-bold text-white">
+    <div className="from-purple flex h-full w-full items-center justify-center bg-gradient-to-br to-indigo-600 text-4xl font-bold text-white">
       {initials}
     </div>
   );
@@ -61,7 +62,7 @@ const ItemRowList: React.FC<{
           <button
             type="button"
             onClick={onClickStartAuction}
-            className="rounded-lg bg-gradient-to-r from-purple-600 to-fuchsia-500 px-4 py-2 text-sm font-semibold text-white shadow-md ring-1 ring-purple-500/50 hover:brightness-110 focus:ring-2 focus:ring-purple-400 focus:outline-none"
+            className="bg-purple rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-md ring-1 ring-purple-500/50 hover:bg-purple-700 focus:ring-2 focus:ring-purple-400 focus:outline-none"
           >
             경매 등록
           </button>
@@ -141,7 +142,7 @@ const SectionHeader: React.FC<{
   <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
     <h3 className="text-base font-semibold text-gray-900">
       {label}{" "}
-      <span className="font-bold text-purple-600" aria-live="polite">
+      <span className="text-purple font-bold" aria-live="polite">
         {count}
       </span>
       <span className="text-gray-700"> 건</span>
@@ -213,7 +214,11 @@ const ProfileDetails: React.FC<Props> = ({
               loading="lazy"
             />
           ) : (
-            <Initials name={nickname} />
+            <img
+              src={defaultAvatar}
+              alt="default avatar"
+              className="h-full w-full object-cover p-2"
+            />
           )}
         </div>
 
@@ -234,9 +239,9 @@ const ProfileDetails: React.FC<Props> = ({
               {temp === null ? (
                 <span className="font-normal text-gray-400">-</span>
               ) : (
-                <span className="font-semibold text-purple-600">
+                <span className="text-purple font-semibold">
                   {temp}
-                  <span className="align-top text-[10px] font-normal text-purple-600">
+                  <span className="text-purple align-top text-[10px] font-normal">
                     ℃
                   </span>
                 </span>
@@ -248,7 +253,7 @@ const ProfileDetails: React.FC<Props> = ({
                 <>
                   {/* 진행 바 */}
                   <div
-                    className="absolute inset-y-0 left-0 rounded-full bg-purple-500 transition-[width] duration-300"
+                    className="bg-purple absolute inset-y-0 left-0 rounded-full transition-[width] duration-300"
                     style={{ width: `${temp}%` }}
                   />
                   {/* 노브 */}

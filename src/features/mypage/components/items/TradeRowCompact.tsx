@@ -192,7 +192,7 @@ const TradeRowCompact: React.FC<Props> = ({
                 type="button"
                 aria-label={liked ? "찜 해제" : "찜 하기"}
                 aria-pressed={liked}
-                className="mb-2 inline-flex items-center justify-center rounded-full p-1 hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
+                className="focus-visible:ring-purple mb-2 inline-flex items-center justify-center rounded-full p-1 hover:bg-neutral-50 focus:outline-none focus-visible:ring-2"
                 onClick={() => {
                   if (id == null) return;
                   onToggleLike?.(Number(id), !liked);
@@ -223,7 +223,7 @@ const TradeRowCompact: React.FC<Props> = ({
               className={`rounded-[6px] border px-2 py-1 text-xs font-semibold ${
                 confirming
                   ? "cursor-not-allowed border-neutral-300 bg-neutral-100 text-neutral-400"
-                  : "border-purple-600 text-purple-600 hover:bg-purple-50"
+                  : "border-purple text-purple hover:bg-purple-50"
               }`}
             >
               {confirming ? "처리 중..." : confirmLabel}
