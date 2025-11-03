@@ -8,6 +8,7 @@ const Avatar = ({ imageUrl, nickname, size }: AvatarProps) => {
     <div className={`size-${size ? size : 16} overflow-hidden rounded-full`}>
       {
         <img
+          className="size-full"
           src={imageUrl ? buildImageUrl(imageUrl) : avatar}
           alt={`${nickname}의 프로필 사진`}
         />

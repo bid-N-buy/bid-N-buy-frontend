@@ -20,7 +20,10 @@ const ChatProductInfo = ({
       className="bg-light-purple flex justify-between gap-2 p-4"
     >
       <div className="bg-g300 size-15">
-        <img className="w-100" src={auctionImageUrl ? auctionImageUrl : ""} />
+        <img
+          className="size-full"
+          src={auctionImageUrl ? auctionImageUrl : ""}
+        />
       </div>
       <div className="flex w-[72%] flex-col gap-1 text-sm md:w-[60%]">
         <p className="text-xs">{sellingStatus}</p>
