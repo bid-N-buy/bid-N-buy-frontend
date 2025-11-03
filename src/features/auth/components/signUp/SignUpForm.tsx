@@ -131,7 +131,7 @@ const SignUpForm: React.FC = () => {
       setIsVerified(true);
       setLeftSec(0);
       setToast({
-        message: "이메일 인증이 완료되었습니다. ✅",
+        message: "이메일 인증이 완료되었습니다.",
         type: "success",
       });
     } catch (e) {
@@ -227,7 +227,7 @@ const SignUpForm: React.FC = () => {
             <h5 className="text-h5 font-bold">이메일</h5>
             {isVerified ? (
               <span className="text-[13px] text-green-600">
-                이메일 인증이 완료되었습니다. ✅
+                이메일 인증이 완료되었습니다.
               </span>
             ) : (
               !isEmailFormat(email) &&
@@ -265,7 +265,7 @@ const SignUpForm: React.FC = () => {
               </span>
             )}
             {isVerified && (
-              <span className="text-[13px] text-green-600">인증 완료 ✅</span>
+              <span className="text-[13px] text-green-600">인증 완료</span>
             )}
           </div>
 
