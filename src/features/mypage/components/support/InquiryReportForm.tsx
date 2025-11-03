@@ -258,7 +258,7 @@ const InquiryReportForm: React.FC = () => {
             <button
               type="button"
               onClick={() => setForm({ title: "", content: "" })}
-              className="rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-50 disabled:opacity-60"
+              className="border-purple rounded-md border bg-white px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-50 disabled:opacity-60"
               disabled={loading}
             >
               초기화
