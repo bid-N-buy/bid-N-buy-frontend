@@ -4,6 +4,8 @@ import adminApi from "../api/adminAxiosInstance";
 import { useNavigate } from "react-router-dom";
 import type { AdminProps } from "../types/AdminType";
 import { ChevronRight } from "lucide-react";
+import Toast from "../../../shared/components/Toast";
+import useToast from "../../../shared/hooks/useToast";
 
 type ApiErr = { message?: string; error?: string };
 
@@ -18,6 +20,7 @@ const AdminSignUpForm = () => {
 
   const [loadingSubmit, setLoadingSubmit] = useState<boolean>(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const { toast, showToast, hideToast } = useToast();
 
   const handleIpConsentAgreed = (e) => {
     const isChecked = e.target.checked;
@@ -53,13 +56,11 @@ const AdminSignUpForm = () => {
       });
 
       if (data?.email) {
-        // ✅ 가입 성공 → 로그인 페이지로 이동 (+ 배너 표시용 쿼리)
-        navigate("/admin/login", { replace: true });
         setMsg("회원가입이 완료되었습니다.");
-        // 필요 시 이동:
-        // window.location.href = "/login";
+        navigate("/admin/login", { replace: true });
       } else {
         setMsg("회원가입 처리에 실패했습니다.");
+        showToast("회원가입에 실패하였습니다.", "error");
       }
     } catch (e) {
       const err = e as AxiosError<ApiErr>;
@@ -161,6 +162,9 @@ const AdminSignUpForm = () => {
       >
         {loadingSubmit ? "가입 중..." : "회원가입 하기"}
       </button>
+      {toast.isVisible && (
+        <Toast message={toast.message} type={toast.type} onClose={hideToast} />
+      )}
     </form>
   );
 };

@@ -48,7 +48,7 @@ const AdminAsideMenu = () => {
             <div className="py-4">
               <Link
                 to="/admin"
-                className="t group text-purple relative flex justify-center rounded-sm bg-purple-50 px-2 py-1.5"
+                className="t group text-purple bg-light-purple relative flex justify-center rounded-sm px-2 py-1.5"
               >
                 <LayoutDashboard color="#8322bf" />
 

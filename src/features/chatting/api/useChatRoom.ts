@@ -65,7 +65,6 @@ export const useChatRoomApi = (chatroomId: number) => {
 
       setChatRoom(fullRoomData);
     } catch (error) {
-      console.error("Failed to load chat rooms:", error);
       setError(`채팅방을 불러올 수 없습니다: ${error}`);
     } finally {
       setIsLoading(false);
@@ -137,7 +136,6 @@ export const useChatRoomAuc = (sellerId: number, auctionId: number) => {
 
       setChatRoom(fullRoomData);
     } catch (error) {
-      console.error("Failed to load chat rooms:", error);
       setError(`채팅방을 불러올 수 없습니다: ${error}`);
     } finally {
       setIsLoading(false);

@@ -65,7 +65,7 @@ const AdminInquiryAnswerForm = () => {
         {/* 제목 */}
         <label className="mb-4 block">
           <span className="mb-1 block text-sm font-medium text-neutral-800">
-            답변 제목 <span className="text-purple-600">*</span>
+            답변 제목 <span className="text-purple">*</span>
           </span>
           <input
             name="title"
@@ -73,7 +73,7 @@ const AdminInquiryAnswerForm = () => {
             onChange={onChange}
             placeholder="제목을 입력하세요"
             maxLength={100}
-            className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-[14px] text-neutral-900 placeholder:text-neutral-400 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 focus:outline-none"
+            className="focus:border-purple focus:ring-light-purple w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-[14px] text-neutral-900 placeholder:text-neutral-400 focus:ring-2 focus:outline-none"
             disabled={loading}
           />
           <div className="mt-1 text-right text-[12px] text-neutral-400">
@@ -84,7 +84,7 @@ const AdminInquiryAnswerForm = () => {
         {/* 내용 */}
         <label className="mb-6 block">
           <span className="mb-1 block text-sm font-medium text-neutral-800">
-            답변 내용 <span className="text-purple-600">*</span>
+            답변 내용 <span className="text-purple">*</span>
           </span>
           <textarea
             name="content"
@@ -92,7 +92,7 @@ const AdminInquiryAnswerForm = () => {
             onChange={onChange}
             placeholder={"답변을 입력하세요"}
             rows={8}
-            className="w-full resize-y rounded-md border border-neutral-300 bg-white px-3 py-2 text-[14px] leading-6 text-neutral-900 placeholder:text-neutral-400 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 focus:outline-none"
+            className="focus:border-purple focus:ring-light-purple w-full resize-y rounded-md border border-neutral-300 bg-white px-3 py-2 text-[14px] leading-6 text-neutral-900 placeholder:text-neutral-400 focus:ring-2 focus:outline-none"
             disabled={loading}
           />
           <div className="mt-1 text-right text-[12px] text-neutral-400">
@@ -114,7 +114,7 @@ const AdminInquiryAnswerForm = () => {
           <button
             type="submit"
             disabled={loading}
-            className="rounded-md bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 focus:ring-2 focus:ring-purple-300 focus:outline-none disabled:opacity-60"
+            className="bg-purple hover:bg-deep-purple focus:ring-light-purple rounded-md px-4 py-2 text-sm font-medium text-white focus:ring-2 focus:outline-none disabled:opacity-60"
           >
             {loading ? "전송 중..." : "답변 등록"}
           </button>
