@@ -5,6 +5,7 @@ import { useAuthStore } from "../../auth/store/authStore";
 //토스페이먼츠
 import { loadTossPayments } from "@tosspayments/tosspayments-sdk";
 import { formatTime } from "../../../shared/utils/datetime";
+import api from "../../../shared/api/axiosInstance";
 
 // TODO: 추후 배포단계에서 .env로 옮길 예정
 const clientKey = "test_ck_DpexMgkW36PwLbonEpqwrGbR5ozO";
@@ -31,31 +32,21 @@ const ChatYou = ({
       });
 
       // 백엔드에 주문 생성 (buyerId는 현재 로그인 유저)
-      const orderResponse = await fetch("http://localhost:8080/orders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          sellerId,
-          buyerId: userId,
-          type: "ESCROW",
-          auctionId,
-        }),
+      const orderResponse = await api.post("/orders", {
+        sellerId,
+        buyerId: userId,
+        type: "ESCROW",
+        auctionId,
       });
 
-      if (!orderResponse.ok) throw new Error("Order 생성 실패");
-      const orderData = await orderResponse.json();
-      const orderId = orderData.orderId;
+      const orderId = orderResponse.data.orderId;
 
       // 금액 저장
       const merchantOrderId = "ORDER_" + Date.now();
-      await fetch("http://localhost:8080/payments/saveAmount", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          orderId,
-          merchantOrderId,
-          amount: currentPrice,
-        }),
+       await api.post("/payments/saveAmount", {
+        orderId,
+        merchantOrderId,
+        amount: currentPrice,
       });
 
       // 결제창 실행
