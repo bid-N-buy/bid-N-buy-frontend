@@ -32,6 +32,7 @@ const AdminAsideMenu = () => {
   };
 
   if (!modalRoot) {
+    console.error("포탈 사용할 div 불러오기 실패");
     return null;
   }
   return (

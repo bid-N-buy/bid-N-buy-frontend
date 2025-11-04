@@ -30,6 +30,7 @@ const AdminAlertPostModal = ({ onClose }: ModalProps) => {
       });
       showToast("알림이 발송되었습니다.", "success");
     } catch (error) {
+      console.error("알림 발송 실패:", error);
       showToast("알림 발송에 실패했습니다.", "error");
       return;
     } finally {

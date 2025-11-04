@@ -19,6 +19,7 @@ const AdminDashboard = () => {
       getUserList(0);
       getAuctionsList();
     } catch (e) {
+      console.error("데이터 불러오기 실패:", e);
       return;
     }
   }, []);

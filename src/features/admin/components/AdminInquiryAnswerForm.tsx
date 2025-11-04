@@ -49,6 +49,7 @@ const AdminInquiryAnswerForm = () => {
 
       setForm({ title: "", content: "" });
     } catch (e) {
+      console.error("답변 처리 중 오류 발생:", e);
       showToast("답변 처리 중 오류가 발생했습니다.", "error");
       return;
     } finally {

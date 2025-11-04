@@ -49,6 +49,7 @@ const ChatRoom = ({
       });
       setMessages(response.data);
     } catch (error) {
+      console.error("채팅 로그 불러오기 실패:", error);
       setError(`채팅 로그를 불러올 수 없습니다: ${error}`);
     }
   };
@@ -86,6 +87,7 @@ const ChatRoom = ({
             handleMessageReceived(message); // 화면 변경
             handleNewChatMessage(newMessage); // 실시간 전체 메시지 읽음 상태 관리
           } catch (e) {
+            console.error("메시지 실시간 상태 오류:", e);
             return;
           }
         });
@@ -113,11 +115,13 @@ const ChatRoom = ({
                 .reverse();
             });
           } catch (e) {
+            console.error("읽음 상태 파싱 오류:", e);
             return;
           }
         });
       },
       onStompError: (frame) => {
+        console.error("STOMP Error:", frame);
         setIsConnected(false);
         return;
       },
@@ -140,6 +144,7 @@ const ChatRoom = ({
         return [...prevMessages, messageBody];
       });
     } catch (e) {
+      console.error("메시지 파싱 오류:", e, message.body);
       return;
     }
   };
@@ -159,6 +164,7 @@ const ChatRoom = ({
 
     // 유효성 검사
     if (!client || !client.connected) {
+      console.warn("연결 상태가 좋지 않습니다.");
       return;
     }
     const messageAddress = {
@@ -189,6 +195,7 @@ const ChatRoom = ({
 
     // 유효성 검사
     if (!client || !client.connected) {
+      console.warn("연결 상태가 좋지 않습니다.");
       return;
     }
     const messagePayload = {
@@ -214,6 +221,7 @@ const ChatRoom = ({
     const client = clientRef.current;
 
     if (!client || !client.connected) {
+      console.warn("연결 상태가 좋지 않습니다.");
       return;
     }
 
@@ -236,6 +244,7 @@ const ChatRoom = ({
 
       uploadedImageUrl = url.data;
     } catch (e) {
+      console.error("이미지 업로드 실패:", e);
       return;
     }
 
@@ -262,6 +271,7 @@ const ChatRoom = ({
     const client = clientRef.current;
 
     if (!client || !client.connected || !inputMessage.trim()) {
+      console.warn("연결되지 않았거나 메시지가 비어있습니다.");
       return;
     }
     // 메시지 생성
@@ -311,7 +321,8 @@ const ChatRoom = ({
       );
       markAsRead(chatroomId);
       refetchChatList(token);
-    } catch (error) {
+    } catch (e) {
+      console.error("읽음 상태 전송 실패:", e);
       return;
     }
   };

@@ -30,6 +30,7 @@ const AdminPenaltyPostModal = ({ userId, onClose }: AdminPenaltyPostProps) => {
       });
       showToast("패널티 추가되었습니다.", "success");
     } catch (e) {
+      console.error("패널티 추가 실패:", e);
       showToast("패널티 추가에 실패했습니다.", "error");
       return;
     } finally {
