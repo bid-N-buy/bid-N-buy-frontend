@@ -166,14 +166,12 @@ const LoginForm: React.FC = () => {
   /** 소셜 로그인 */
   const startKakao = useCallback(() => {
     if (loading) return;
-    window.location.assign(
-      "https://kauth.kakao.com/oauth/authorize?response_type=code&client_id=3ca9c59cb383f463525c62ffb4615195&redirect_uri=http://localhost:8080/auth/kakao"
-    );
+    window.location.assign("http://52.79.192.165:8080/auth/kakao");
   }, [loading]);
 
   const startNaver = useCallback(() => {
     if (loading) return;
-    window.location.assign(`${API_BASE}/auth/naver/loginstart`);
+    window.location.assign(`http://52.79.192.165:8080/auth/naver/loginstart`);
   }, [loading]);
 
   return (

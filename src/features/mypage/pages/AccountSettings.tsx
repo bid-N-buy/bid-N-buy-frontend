@@ -555,7 +555,7 @@ const AccountSettings: React.FC = () => {
     "inline-flex items-center justify-center rounded-md h-9 px-4 text-[13px] font-medium \
    transition-colors disabled:opacity-60 whitespace-nowrap leading-[1.1] min-w-[72px]";
   const btnPrimary = `${btnBase} bg-purple text-white hover:bg-deep-purple`;
-  const btnGhost = `${btnBase} border border-purple text-neutral-800 hover:bg-neutral-50`;
+  const btnGhost = `${btnBase} border border-purple text-purple hover:bg-neutral-50`;
   const btnDanger = `${btnBase} bg-rose-600 text-white hover:bg-rose-700`;
   const btnLinkMuted =
     "rounded-md px-2 py-1 text-[12px] text-neutral-400 hover:text-rose-600";

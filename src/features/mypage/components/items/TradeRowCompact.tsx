@@ -223,7 +223,7 @@ const TradeRowCompact: React.FC<Props> = ({
               className={`rounded-[6px] border px-2 py-1 text-xs font-semibold ${
                 confirming
                   ? "cursor-not-allowed border-neutral-300 bg-neutral-100 text-neutral-400"
-                  : "border-purple text-purple hover:bg-purple-50"
+                  : "border-purple text-purple hover:bg-deep-purple"
               }`}
             >
               {confirming ? "처리 중..." : confirmLabel}
