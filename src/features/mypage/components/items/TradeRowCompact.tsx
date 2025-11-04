@@ -13,20 +13,17 @@ type Props = {
   subtitleTop?: string;
   subtitleBottom?: string;
   className?: string;
-
-  // 구매 확정 (별점 → 정산) 버튼 노출 여부
   canConfirm?: boolean;
-
-  // 구매 확정 버튼 눌렀을 때 부모에서 처리 (모달 오픈 등)
   onConfirmClick?: (orderId: number | string) => void;
-
-  // 이 아이템만 로딩 중인지 여부
   confirming?: boolean;
 };
 
 function fmtDateTime(iso?: string) {
   if (!iso) return "";
-  const t = Date.parse(iso);
+  const normalized = /\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}/.test(iso)
+    ? iso.replace(/\s+/, "T")
+    : iso;
+  const t = Date.parse(normalized);
   if (!Number.isFinite(t)) return "";
   const d = new Date(t);
   const p2 = (n: number) => String(n).padStart(2, "0");
@@ -50,7 +47,6 @@ const TradeRowCompact: React.FC<Props> = ({
 }) => {
   const nav = useNavigate();
 
-  // 서버에서 내려온 필드들
   const {
     id,
     title,
@@ -64,29 +60,20 @@ const TradeRowCompact: React.FC<Props> = ({
     winningPrice,
   } = item as any;
 
-  // 구매확정/정산 API 호출 때 사용할 식별자
   const orderId = (item as any).orderId ?? item.id;
 
-  // row 전체 클릭 시
   const handleRowClick = () => {
     if (id == null) return;
-    if (onClick) {
-      onClick(id);
-    } else {
-      nav(`/auctions/${id}`);
-    }
+    if (onClick) onClick(id);
+    else nav(`/auctions/${id}`);
   };
 
-  // 왼쪽 본문 보조 텍스트
   const topText =
     subtitleTop ?? (counterparty ? `판매자: ${counterparty}` : "");
   const bottomText =
     subtitleBottom ?? (auctionEnd ? `마감: ${fmtDateTime(auctionEnd)}` : "");
-
-  // 우측 상태 텍스트 기본
   const fallbackRightNode = rightText ?? statusText ?? "";
 
-  // 💰 가격 계산
   const numericPrice: number | undefined =
     typeof price === "number"
       ? price
@@ -105,20 +92,19 @@ const TradeRowCompact: React.FC<Props> = ({
     return undefined;
   }, [numericPrice]);
 
-  // 찜 화면일 때는 우측 하트 모드
+  // (현재는 더미 true. 위시리스트에서 실제 liked 상태를 prop으로 받게 바꿀 수 있음)
   const liked = true;
 
-  // 구매 확정 버튼 text (상태에 따라 조금 느낌 다르게)
   const confirmLabel = useMemo(() => {
     const txt = String(statusText || "");
     if (txt.includes("정산")) return "거래 완료하기";
     if (txt.includes("결제")) return "수령 완료";
+    if (txt.includes("구매확정")) return "구매 확정";
     return "구매 확정";
   }, [statusText]);
 
-  // 구매 확정 버튼 클릭
   const handleConfirmClick = (e: React.MouseEvent) => {
-    e.stopPropagation(); // 행 전체 클릭 방지
+    e.stopPropagation();
     if (confirming) return;
     onConfirmClick?.(orderId);
   };
@@ -169,12 +155,11 @@ const TradeRowCompact: React.FC<Props> = ({
           {topText && (
             <p className="mt-1 text-sm text-neutral-600">{topText}</p>
           )}
-
           {bottomText && (
             <p className="text-sm text-neutral-600">{bottomText}</p>
           )}
 
-          {/* 찜 모드가 아닐 때만 가격 노출 */}
+          {/* 찜 화면이 아닐 때만 가격 */}
           {priceStr && !wishStyle && (
             <p className="mt-1 text-sm text-neutral-700">{priceStr}</p>
           )}
@@ -183,11 +168,11 @@ const TradeRowCompact: React.FC<Props> = ({
         {/* 우측 영역 */}
         <div
           className="shrink-0 pl-2 text-right text-sm text-neutral-700"
-          onClick={(e) => e.stopPropagation()} // 우측 클릭은 row 클릭 막음
+          onClick={(e) => e.stopPropagation()}
         >
           {wishStyle ? (
             <>
-              {/* 찜/하트 영역 */}
+              {/* 찜/하트 */}
               <button
                 type="button"
                 aria-label={liked ? "찜 해제" : "찜 하기"}
@@ -215,7 +200,6 @@ const TradeRowCompact: React.FC<Props> = ({
               </div>
             </>
           ) : canConfirm ? (
-            // 구매 확정 버튼
             <button
               type="button"
               onClick={handleConfirmClick}
@@ -223,19 +207,17 @@ const TradeRowCompact: React.FC<Props> = ({
               className={`rounded-[6px] border px-2 py-1 text-xs font-semibold ${
                 confirming
                   ? "cursor-not-allowed border-neutral-300 bg-neutral-100 text-neutral-400"
-                  : "border-purple text-purple hover:bg-deep-purple"
+                  : "border-purple text-purple hover:bg-deep-purple hover:text-white"
               }`}
             >
               {confirming ? "처리 중..." : confirmLabel}
             </button>
           ) : (
-            // 그냥 상태 텍스트
             <div className="text-sm text-neutral-700">{fallbackRightNode}</div>
           )}
         </div>
       </div>
 
-      {/* row 하단 구분선 */}
       <div className="h-px w-full bg-neutral-200" />
     </li>
   );
