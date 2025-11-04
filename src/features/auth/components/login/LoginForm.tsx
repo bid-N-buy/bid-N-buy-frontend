@@ -166,7 +166,7 @@ const LoginForm: React.FC = () => {
   /** 소셜 로그인 */
   const startKakao = useCallback(() => {
     if (loading) return;
-    window.location.assign(`${API_BASE}/auth/kakao`);
+    window.location.assign(`${API_BASE}/auth/kakao/loginstart`);
   }, [loading]);
 
   const startNaver = useCallback(() => {
