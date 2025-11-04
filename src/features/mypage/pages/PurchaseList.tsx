@@ -9,7 +9,7 @@ import type { TradeItem } from "../types/trade";
 import { confirmSettlement } from "../api/confirmSettlement";
 import { submitRating } from "../api/rating";
 
-/* ---------- 별점 모달 (동일) ---------- */
+/* ---------- 별점 모달 ---------- */
 type RatingModalProps = {
   open: boolean;
   rating: number;
@@ -81,32 +81,10 @@ const RatingModal: React.FC<RatingModalProps> = ({
   );
 };
 
-/* ---------- 유틸 (동일) ---------- */
+/* ---------- 유틸 ---------- */
 const U = (v?: string | null) => (v ?? "").toString().trim().toUpperCase();
 
-const PAID_KEYWORDS = new Set([
-  "PAID",
-  "PAY_DONE",
-  "DEPOSIT_DONE",
-  "SETTLED",
-  "SETTLEMENT_DONE",
-  "PAYOUT_DONE",
-  "SUCCESS",
-  "COMPLETED",
-  "DONE",
-  "결제완료",
-  "입금완료",
-  "정산완료",
-  "거래완료",
-  "결제 완료",
-  "입금 완료",
-  "정산 완료",
-  "거래 완료",
-]);
-
 const ENDED_KEYWORDS = new Set([
-  "COMPLETE",
-  "COMPLETED",
   "FINISH",
   "FINISHED",
   "END",
@@ -114,67 +92,63 @@ const ENDED_KEYWORDS = new Set([
   "CANCEL",
   "CANCELED",
   "CANCELLED",
-  "FAIL",
-  "FAILED",
-  "DONE",
-  "거래 완료",
-  "거래완료",
-  "정산 완료",
+  "유찰",
+  "종료",
+  "마감",
+]);
+
+/** ✅ '정산/거래완료'에만 한정(모호한 COMPLETED/DONE 제거) */
+const SETTLED_KEYWORDS = new Set([
+  "SETTLED",
+  "SETTLEMENT_DONE",
+  "PAYOUT_DONE",
   "정산완료",
+  "거래완료",
+  "구매확정",
+  "수취완료",
 ]);
 
 const parseMs = (iso?: string | null) => {
   if (!iso) return 0;
-  const t = Date.parse(iso);
+  const s = iso.includes(" ") ? iso.replace(" ", "T") : iso;
+  const t = Date.parse(s);
   return Number.isFinite(t) ? t : 0;
 };
 
 const getEndIso = (it: any): string | null =>
-  it?.auctionEnd ?? it?.endTime ?? it?.endAt ?? it?.endDate ?? null;
+  it?.auctionEnd ??
+  it?.endTime ??
+  it?.endAt ??
+  it?.deadline ??
+  it?.deadlineAt ??
+  it?.endDate ??
+  null;
 
-const getPaidAtIso = (it: any): string | null => {
-  const direct =
-    it?.paidAt ??
-    it?.paymentAt ??
-    it?.depositAt ??
-    it?.settlementAt ??
-    it?.payoutAt ??
-    it?.resultAt ??
-    it?.orderCompletedAt ??
-    it?.completedAt ??
-    it?.updatedAt ??
-    null;
-  if (direct) return direct;
-  const re =
-    /(paid|pay|deposit|settle|complete|result|payout).*(at|time|date)$/i;
-  let bestMs = 0;
-  let bestIso: string | null = null;
-  for (const k of Object.keys(it ?? {})) {
-    if (!re.test(k)) continue;
-    const v = (it as any)[k];
-    if (typeof v !== "string") continue;
-    const ms = Date.parse(v);
-    if (Number.isFinite(ms) && ms > bestMs) {
-      bestMs = ms;
-      bestIso = v;
-    }
-  }
-  return bestIso;
-};
+const getPaidAtIso = (it: any): string | null =>
+  it?.paidAt ??
+  it?.paymentAt ??
+  it?.depositAt ??
+  it?.settlementAt ??
+  it?.payoutAt ??
+  it?.orderCompletedAt ??
+  it?.completedAt ??
+  null;
 
-function isPaidDone(it: any, settledMap: Record<string, boolean>): boolean {
+function isSettledOrDone(
+  it: any,
+  settledMap: Record<string, boolean>
+): boolean {
   const orderId = (it?.orderId ?? it?.id)?.toString();
   if (orderId && settledMap[orderId]) return true;
-  if (
-    it?.settled === true ||
-    it?.paid === true ||
-    it?.isPaid === true ||
-    it?.paymentDone === true
-  )
+
+  // 명시 플래그
+  if (it?.settled === true || it?.isPaid === true || it?.paymentDone === true)
     return true;
+
+  // 상태 문자열에서만 엄격 판정
   const buckets = [
-    U(it?.paymentStatus),
     U(it?.settlementStatus),
+    U(it?.paymentStatus),
     U(it?.payStatus),
     U(it?.depositStatus),
     U(it?.resultStatus),
@@ -182,25 +156,28 @@ function isPaidDone(it: any, settledMap: Record<string, boolean>): boolean {
     U(it?.status),
     U(it?.state),
   ];
-  return buckets.some(
-    (x) => x && (PAID_KEYWORDS.has(x) || ENDED_KEYWORDS.has(x))
-  );
+  return buckets.some((x) => x && SETTLED_KEYWORDS.has(x));
 }
 
+function isEndedByTime(it: TradeItem): boolean {
+  const endIso = getEndIso(it);
+  if (!endIso) return false;
+  const t = parseMs(endIso);
+  return t !== 0 && t <= Date.now();
+}
+
+/** 진행중: 아직 정산 안 됨 && (마감시간이 없거나 미래) */
 function isOngoing(
   item: TradeItem,
   settledMap: Record<string, boolean>
 ): boolean {
-  if (isPaidDone(item, settledMap)) return false;
+  if (isSettledOrDone(item, settledMap)) return false;
   const endIso = getEndIso(item);
-  if (endIso) {
-    const t = parseMs(endIso);
-    if (t && t <= Date.now()) return false;
-  }
-  return true;
+  if (!endIso) return true;
+  return parseMs(endIso) > Date.now();
 }
 
-/* ---------- 메인 (무한스크롤 적용) ---------- */
+/* ---------- 메인 (무한스크롤) ---------- */
 const PAGE_SIZE = 20;
 
 const PurchasesPage: React.FC = () => {
@@ -218,72 +195,54 @@ const PurchasesPage: React.FC = () => {
   // 로컬 확정 맵
   const [settledMap, setSettledMap] = useState<Record<string, boolean>>({});
 
-  // ▼▼▼ 무한스크롤 핵심 상태 ▼▼▼
+  // 무한스크롤 상태
   const [page, setPage] = useState(0);
   const [items, setItems] = useState<TradeItem[]>([]);
   const [hasMore, setHasMore] = useState(true);
   const [initialLoaded, setInitialLoaded] = useState(false);
 
-  // 현재 페이지 데이터만 가져옴
+  // 현재 페이지 데이터만 호출
   const { data, loading, error } = usePurchases({
     page,
     size: PAGE_SIZE,
     sort: "end",
   });
 
-  // 페이지 결과를 누적
+  // 페이지 누적
   useEffect(() => {
     if (!data) return;
-
-    // 중복 제거(같은 id) 방지
     const next = [...items];
-    const seen = new Set(next.map((d) => String(d.id)));
+    const seen = new Set(next.map((d) => String((d as any).id)));
     for (const row of data) {
-      const key = String(row.id);
+      const key = String((row as any).id);
       if (!seen.has(key)) {
         next.push(row);
         seen.add(key);
       }
     }
     setItems(next);
-
-    // 더 불러올 수 있는지 판단: 반환 개수가 PAGE_SIZE보다 작으면 마지막 페이지
     setHasMore(Array.isArray(data) && data.length === PAGE_SIZE);
-
     if (!initialLoaded) setInitialLoaded(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
-  // 필터가 바뀌면 스크롤 위치는 그대로 두되, 보여주는 배열만 바꿔서 UX 부드럽게
-  // (필요시 "필터 변경 시 첫 페이지부터 재조회"가 맞다면 여길 reset로 바꾸세요)
-  // reset 예: setPage(0); setItems([]); setHasMore(true);
-  // 지금은 요청 부담 줄이기 위해 누적데이터에서 필터링만 수행
-
-  // 감시자(IntersectionObserver)
+  // 센티넬
   const sentinelRef = useRef<HTMLDivElement | null>(null);
-  const isFetchingNext = loading && initialLoaded; // 처음 로딩 제외하고만 '추가 로딩'으로 취급
+  const isFetchingNext = loading && initialLoaded;
 
   useEffect(() => {
     if (!hasMore || isFetchingNext) return;
     const el = sentinelRef.current;
     if (!el) return;
-
     const obs = new IntersectionObserver(
-      (entries) => {
-        const last = entries[0];
-        if (last.isIntersecting) {
-          // 다음 페이지 요청
-          setPage((p) => p + 1);
-        }
-      },
-      { root: null, rootMargin: "200px", threshold: 0 } // 미리 당겨서 로드
+      (entries) => entries[0].isIntersecting && setPage((p) => p + 1),
+      { root: null, rootMargin: "200px", threshold: 0 }
     );
-
     obs.observe(el);
     return () => obs.disconnect();
   }, [hasMore, isFetchingNext]);
 
-  // 카운트 (누적 배열 기준)
+  // 카운트
   const counts = useMemo(() => {
     const all = items.length;
     const ongoing = items.filter((it) => isOngoing(it, settledMap)).length;
@@ -300,38 +259,30 @@ const PurchasesPage: React.FC = () => {
     return items;
   }, [items, filter, settledMap]);
 
-  // 결제 완료 우선 정렬
+  // 정렬
   const sorted = useMemo(() => {
-    const paidRank = (it: any) => (isPaidDone(it, settledMap) ? 0 : 1);
-    const paidAtMs = (it: any) => {
-      const fromServer = parseMs(getPaidAtIso(it));
-      if (fromServer) return fromServer;
-      if (isPaidDone(it, settledMap)) return parseMs(getEndIso(it));
-      return 0;
-    };
-    const endMs = (it: any) => parseMs(getEndIso(it));
+    const rank = (it: TradeItem) => (isSettledOrDone(it, settledMap) ? 0 : 1);
+    const paidAtMs = (it: TradeItem) => parseMs(getPaidAtIso(it));
+    const endMs = (it: TradeItem) => parseMs(getEndIso(it));
     return [...filtered].sort((a, b) => {
-      const ra = paidRank(a),
-        rb = paidRank(b);
-      if (ra !== rb) return ra - rb;
+      const ra = rank(a),
+        rb = rank(b);
+      if (ra !== rb) return ra - rb; // 정산완료 먼저
       if (ra === 0) {
         const pa = paidAtMs(a),
           pb = paidAtMs(b);
-        if (pa !== pb) return pb - pa;
+        if (pa !== pb) return pb - pa; // 정산완료끼리는 최근 우선
       }
-      const ea = endMs(a),
-        eb = endMs(b);
-      return eb - ea;
+      // 그 외는 마감 임박 우선
+      return endMs(b) - endMs(a);
     });
   }, [filtered, settledMap]);
 
-  // 구매 확정 버튼 노출
+  /** ✅ 버튼 노출: "마감 지남 && 아직 정산 아님" */
   function canShowConfirmButton(item: TradeItem): boolean {
-    const orderId = (item as any).orderId ?? item.id;
-    const localDone = settledMap[String(orderId)];
-    const serverDone =
-      isPaidDone(item, settledMap) || (item as any).settled === true;
-    return !(localDone || serverDone);
+    const notSettled = !isSettledOrDone(item, settledMap);
+    const auctionEnded = isEndedByTime(item);
+    return notSettled && auctionEnded;
   }
 
   function handleRequestConfirm(orderId: number | string) {
@@ -347,6 +298,7 @@ const PurchasesPage: React.FC = () => {
       setConfirmingId(reviewTargetId);
       await submitRating(reviewTargetId, rating);
       await confirmSettlement(reviewTargetId);
+
       setSettledMap((prev) => ({ ...prev, [String(reviewTargetId)]: true }));
       setFilter("ended");
       alert("구매 확정이 완료되었어요! ⭐");
@@ -360,19 +312,28 @@ const PurchasesPage: React.FC = () => {
     }
   }
 
+  // 표시용 statusText 보정
+  const displayStatus = (it: TradeItem): string => {
+    if (isSettledOrDone(it, settledMap)) return "거래 완료";
+    if (isEndedByTime(it)) return "종료";
+    return "진행 중";
+  };
+
   const renderList = (list: TradeItem[]) => (
     <ul className="divide-y divide-neutral-200">
       {list.map((it) => {
         const orderId = (it as any).orderId ?? it.id;
-        const settled = !!settledMap[String(orderId)];
+        const showConfirm = canShowConfirmButton(it);
+
         return (
           <TradeRowCompact
             key={String(it.id)}
             item={{
               ...it,
-              statusText: settled ? "거래 완료" : (it as any).statusText,
+              // ✅ statusText가 비어 있어도 보정해서 전달
+              statusText: it.statusText ?? displayStatus(it),
             }}
-            canConfirm={canShowConfirmButton(it)}
+            canConfirm={showConfirm}
             confirming={confirmingId === orderId}
             onConfirmClick={handleRequestConfirm}
             onClick={() => {}}
@@ -402,15 +363,10 @@ const PurchasesPage: React.FC = () => {
       <StatusTriFilter
         value={filter}
         onChange={setFilter}
-        counts={{
-          all: counts.all,
-          ongoing: counts.ongoing,
-          ended: counts.ended,
-        }}
+        counts={counts}
         className="mb-3"
       />
 
-      {/* 첫 페이지 로딩 상태 */}
       {!initialLoaded && loading ? (
         <p className="text-sm text-neutral-500">불러오는 중…</p>
       ) : error && sorted.length === 0 ? (
@@ -425,16 +381,12 @@ const PurchasesPage: React.FC = () => {
       ) : (
         <>
           {renderList(sorted)}
-
-          {/* 로딩 스피너 / 더 없음 표시 */}
           <div ref={sentinelRef} className="h-[1px]" />
-
           {isFetchingNext && (
             <div className="py-4 text-center text-sm text-neutral-500">
               추가 로딩 중…
             </div>
           )}
-
           {!hasMore && initialLoaded && (
             <div className="py-4 text-center text-xs text-neutral-400">
               마지막 페이지입니다

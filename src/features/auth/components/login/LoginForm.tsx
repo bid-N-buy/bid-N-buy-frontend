@@ -171,7 +171,7 @@ const LoginForm: React.FC = () => {
 
   const startNaver = useCallback(() => {
     if (loading) return;
-    window.location.assign(`${API_BASE}/naver/loginstart`);
+    window.location.assign(`${API_BASE}/auth/naver/loginstart`);
   }, [loading]);
 
   return (

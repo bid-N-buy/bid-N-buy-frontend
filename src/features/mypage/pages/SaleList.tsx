@@ -1,280 +1,242 @@
-// src/features/mypage/pages/WishList.tsx
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useWishlist } from "../hooks/useWishlist";
+import React, { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useSales } from "../hooks/useSales";
 import TradeRowCompact from "../components/items/TradeRowCompact";
-import StatusTriFilter, { type TriFilterValue } from "../components/filters/StatusTriFilter";
-import type { TradeItem } from "../types/trade";
+import StatusTriFilter, {
+  type TriFilterValue,
+} from "../components/filters/StatusTriFilter";
+import { isOngoing, compareTradeItems } from "../utils/tradeStatus";
+import type { AuctionItem } from "../../auction/types/auctions";
 
-/* =========================================================
- * 날짜/상태 유틸
- * ========================================================= */
-const U = (v?: string | null) => (v ?? "").toString().trim().toUpperCase();
+// 정규화 타입
+type NormForFilter = {
+  id: number | null; // ← null 허용 (안전)
+  status: string;
+  auctionEnd: string;
 
-const ENDED_KEYWORDS = new Set([
-  "COMPLETE","COMPLETED","FINISH","FINISHED","END","ENDED",
-  "CANCEL","CANCELED","CANCELLED","FAIL","FAILED","DONE",
-  // 한글
-  "거래 완료","거래완료","종료","판매 종료","판매종료","유찰",
-  "낙찰","구매확정","정산완료","수취완료", // ✅ 추가: 완료류 한국어 키워드 보강
-]);
+  paid?: boolean | null;
+  paymentStatus?: string | null;
+  settlementStatus?: string | null;
+  payStatus?: string | null;
+  depositStatus?: string | null;
+  resultStatus?: string | null;
 
-const ONGOING_KEYWORDS = new Set([
-  "SALE","SELLING","BIDDING","입찰","판매중","ON_SALE","RUNNING",
-  "PROGRESS","IN PROGRESS","진행중","결제","배송","발송","PROCESS","SHIP","PAID","PAY",
-  "OPEN","START","STARTED" // ✅ '오픈/시작' 류 보강
-]);
-
-/** "YYYY-MM-DD HH:mm[:ss]" → "YYYY-MM-DDTHH:mm[:ss]" 로컬 시간 파싱
- *  Safari/Firefox 호환 & "YYYY/MM/DD HH:mm" 도 커버
- */
-const normalizeDate = (s?: string) => {
-  if (!s) return undefined;
-  const t = s.trim()
-    .replace(/\//g, "-")            // ✅ 2025/11/29 → 2025-11-29
-    .replace(/\.\d{3}Z?$/, "");     // strip ms if any
-  return /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}(:\d{2})?$/.test(t)
-    ? t.replace(" ", "T")
-    : t;
+  original: AuctionItem | any;
 };
 
-const toMs = (v?: string) => {
-  const s = normalizeDate(v);
-  if (!s) return NaN;
-  const t = new Date(s).getTime();
-  return Number.isFinite(t) ? t : NaN;
-};
+// null 병합 유틸: 첫 번째 non-null 반환
+const first = <T,>(...vals: (T | null | undefined)[]): T | null =>
+  vals.find((v) => v != null) ?? null;
 
-const endedByTime = (it: TradeItem) => {
-  const end = toMs((it as any).auctionEnd);
-  return Number.isFinite(end) && end <= Date.now();
-};
-
-const endedByStatus = (it: TradeItem) => {
-  const cands = [
-    (it as any)?.statusText,
-    (it as any)?.status,
-    (it as any)?.state,
-  ].map(U).filter(Boolean);
-  return cands.some((txt) =>
-    Array.from(ENDED_KEYWORDS).some((kw) => txt.includes(U(kw)))
-  );
-};
-
-const ongoingByStatus = (it: TradeItem) => {
-  const cands = [
-    (it as any)?.statusText,
-    (it as any)?.status,
-    (it as any)?.state,
-  ].map(U).filter(Boolean);
-  return cands.some((txt) =>
-    Array.from(ONGOING_KEYWORDS).some((kw) => txt.includes(U(kw)))
-  );
-};
-
-const isEndedWishlist = (it: TradeItem) => endedByTime(it) || endedByStatus(it);
-
-/** 진행중 정책 */
-const isOngoingWishlist = (it: TradeItem): boolean => {
-  if (isEndedWishlist(it)) return false;
-
-  const s = toMs((it as any).auctionStart);
-  const e = toMs((it as any).auctionEnd);
-  const now = Date.now();
-
-  if (Number.isFinite(s) && Number.isFinite(e)) return s <= now && now < e;
-  if (Number.isFinite(s) && !Number.isFinite(e)) return s <= now;
-
-  // ✅ 시작시간 없으면 진행중 제외(기본 정책)
-  return false;
-
-  // 👉 상태문구 기반으로 진행중을 인정하려면 윗줄 대신 아래 라인으로 교체
-  // return ongoingByStatus(it);
-};
-
-/** 진행중 우선, 같은 군에서는 마감시각 최신 우선 */
-function compareTradeItems(a: TradeItem, b: TradeItem) {
-  const aOn = isOngoingWishlist(a);
-  const bOn = isOngoingWishlist(b);
-  if (aOn && !bOn) return -1;
-  if (!aOn && bOn) return 1;
-
-  const ta = toMs((a as any).auctionEnd);
-  const tb = toMs((b as any).auctionEnd);
-
-  if (Number.isFinite(ta) && Number.isFinite(tb)) return tb - ta;
-
-  // ✅ 보조 정렬: end 없으면 start 기준
-  const sa = toMs((a as any).auctionStart);
-  const sb = toMs((b as any).auctionStart);
-  if (Number.isFinite(sa) && Number.isFinite(sb)) return sb - sa;
-
-  // 최후 fallback: id string 비교 (안 겹치도록)
-  return String((b as any).id).localeCompare(String((a as any).id));
+// 렌더 키 유틸: 항상 문자열 + 네임스페이스
+function makeKey(item: NormForFilter, idx: number, scope = "sales") {
+  if (item.id != null) return `${scope}:auc:${String(item.id)}`;
+  // id가 없을 때의 안전망 (index는 최후의 수단)
+  // 그래도 문자열 네임스페이스로 충돌 최소화
+  return `${scope}:tmp:${idx}`;
 }
 
-/* =========================================================
- * 무한 스크롤 적용 본문
- * ========================================================= */
-const PAGE_SIZE = 20;
-
-const WishList: React.FC = () => {
+export default function SaleList() {
   const [filter, setFilter] = useState<TriFilterValue>("all");
+  const nav = useNavigate();
 
-  // ▼▼▼ 무한 스크롤 핵심 상태 ▼▼▼
-  const [page, setPage] = useState(0);
-  const [items, setItems] = useState<TradeItem[]>([]);
-  const [hasMore, setHasMore] = useState(true);
-  const [initialLoaded, setInitialLoaded] = useState(false);
-
-  // 현재 페이지 분량만 호출
-  const { data, loading, error } = useWishlist({
-    page,
-    size: PAGE_SIZE,
+  const { data, loading, error } = useSales({
+    page: 0,
+    size: 20,
     sort: "end",
   });
 
-  // 결과 누적(중복 id 제거)
-  useEffect(() => {
-    if (!data) return;
-    setItems((prev) => {
-      const seen = new Set(prev.map((d) => String((d as any).id)));
-      const merged: TradeItem[] = [...prev];
-      for (const row of data) {
-        const key = String((row as any).id ?? "");
-        if (!key) continue; // ✅ id 없으면 스킵
-        if (!seen.has(key)) {
-          merged.push(row);
-          seen.add(key);
-        }
+  // 1) 원본 → 정규화
+  const normalizedRaw: NormForFilter[] = useMemo(
+    () =>
+      (data ?? []).map((it: any) => {
+        const id =
+          (typeof it.auctionId === "number" ? it.auctionId : undefined) ??
+          (typeof it.id === "number" ? it.id : undefined) ??
+          null;
+
+        const status = (it.sellingStatus ?? it.status ?? "") as string;
+        const auctionEnd = (it.endTime ?? it.auctionEnd ?? "") as string;
+
+        const paid =
+          typeof it.paid === "boolean"
+            ? it.paid
+            : it.isPaid === true
+              ? true
+              : it.paymentDone === true
+                ? true
+                : null;
+
+        const paymentStatus = first(
+          it.paymentStatus,
+          it.payStatus,
+          it.depositStatus
+        );
+        const settlementStatus = first(it.settlementStatus);
+        const resultStatus = first(it.resultStatus, it.tradeResult);
+
+        return {
+          id,
+          status,
+          auctionEnd,
+          paid,
+          paymentStatus,
+          settlementStatus,
+          payStatus: it.payStatus ?? null,
+          depositStatus: it.depositStatus ?? null,
+          resultStatus,
+          original: it,
+        } as NormForFilter;
+      }),
+    [data]
+  );
+
+  // 2) 중복 제거 (id가 있는 항목들만 id로 dedupe, id가 없는 항목은 그대로 유지)
+  const normalized: NormForFilter[] = useMemo(() => {
+    const seen = new Set<number>();
+    const out: NormForFilter[] = [];
+    for (const row of normalizedRaw) {
+      if (row.id == null) {
+        out.push(row);
+        continue;
       }
-      return merged;
-    });
+      if (seen.has(row.id)) {
+        // 같은 auction이 중복 들어온 경우 스킵
+        continue;
+      }
+      seen.add(row.id);
+      out.push(row);
+    }
+    return out;
+  }, [normalizedRaw]);
 
-    // ✅ hasMore: == 대신 >= (서버가 마지막에 size 초과 반환하거나 중복이 섞여도 안전)
-    setHasMore(Array.isArray(data) && data.length >= PAGE_SIZE);
-    if (!initialLoaded) setInitialLoaded(true);
-  }, [data, initialLoaded]);
-
-  // 필요하다면 필터 변경 시 서버 재조회(지금은 누적에서 필터링)
-  // useEffect(() => {
-  //   setPage(0);
-  //   setItems([]);
-  //   setHasMore(true);
-  //   setInitialLoaded(false);
-  // }, [filter]);
-
-  // 센티넬 관찰자
-  const sentinelRef = useRef<HTMLDivElement | null>(null);
-  const isFetchingNext = loading && initialLoaded;
-
-  useEffect(() => {
-    if (!hasMore || isFetchingNext) return;
-    const el = sentinelRef.current;
-    if (!el) return;
-
-    const obs = new IntersectionObserver(
-      (entries) => {
-        const last = entries[0];
-        if (last.isIntersecting) {
-          // ✅ 연속 증분 방지: 한 번 증가시키면 잠깐 관찰 해제 후 재관찰
-          setPage((p) => p + 1);
-          obs.unobserve(el);
-          setTimeout(() => obs.observe(el), 0);
-        }
-      },
-      { root: null, rootMargin: "200px", threshold: 0 }
-    );
-
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, [hasMore, isFetchingNext]);
-
+  // 카운트
   const counts = useMemo(() => {
-    const all = items.length;
-    const ongoing = items.filter(isOngoingWishlist).length;
-    const ended = items.filter(isEndedWishlist).length;
+    const all = normalized.length;
+    const ongoing = normalized.filter((d) =>
+      isOngoing({
+        status: d.status,
+        auctionEnd: d.auctionEnd,
+        paid: d.paid,
+        paymentStatus: d.paymentStatus,
+        settlementStatus: d.settlementStatus,
+        payStatus: d.payStatus,
+        depositStatus: d.depositStatus,
+        resultStatus: d.resultStatus,
+      } as any)
+    ).length;
+    const ended = all - ongoing;
     return { all, ongoing, ended };
-  }, [items]);
+  }, [normalized]);
 
+  // 필터링
   const filtered = useMemo(() => {
-    if (filter === "all") return items;
-    if (filter === "ongoing") return items.filter(isOngoingWishlist);
-    return items.filter(isEndedWishlist);
-  }, [items, filter]);
+    if (filter === "all") return normalized;
+    const test = (d: NormForFilter) =>
+      isOngoing({
+        status: d.status,
+        auctionEnd: d.auctionEnd,
+        paid: d.paid,
+        paymentStatus: d.paymentStatus,
+        settlementStatus: d.settlementStatus,
+        payStatus: d.payStatus,
+        depositStatus: d.depositStatus,
+        resultStatus: d.resultStatus,
+      } as any);
+    return filter === "ongoing"
+      ? normalized.filter(test)
+      : normalized.filter((d) => !test(d));
+  }, [normalized, filter]);
 
-  const sorted = useMemo(() => [...filtered].sort(compareTradeItems), [filtered]);
+  // 정렬
+  const sorted = useMemo(
+    () =>
+      [...filtered].sort((a, b) =>
+        compareTradeItems(
+          {
+            status: a.status,
+            auctionEnd: a.auctionEnd,
+            paid: a.paid,
+            paymentStatus: a.paymentStatus,
+            settlementStatus: a.settlementStatus,
+            payStatus: a.payStatus,
+            depositStatus: a.depositStatus,
+            resultStatus: a.resultStatus,
+          } as any,
+          {
+            status: b.status,
+            auctionEnd: b.auctionEnd,
+            paid: b.paid,
+            paymentStatus: b.paymentStatus,
+            settlementStatus: b.settlementStatus,
+            payStatus: b.payStatus,
+            depositStatus: b.depositStatus,
+            resultStatus: b.resultStatus,
+          } as any
+        )
+      ),
+    [filtered]
+  );
 
-  const handleToggleLike = () => {};
+  // 렌더
+  const renderList = (list: NormForFilter[]) => (
+    <ul className="min-h-[800px]">
+      {list.map((row, idx) => (
+        <TradeRowCompact
+          key={makeKey(row, idx, "sales")}
+          item={row.original}
+          onClick={(clickedId) => nav(`/auctions/${clickedId}`)}
+        />
+      ))}
+    </ul>
+  );
 
-  const showInitialLoading = !initialLoaded && loading;
-  const isTrulyEmpty = !showInitialLoading && sorted.length === 0;
+  const renderEmptyState = () => (
+    <div className="flex min-h-[400px] flex-col items-center justify-center gap-4 rounded-xl border border-dashed border-gray-300 bg-gray-50 p-10 text-center">
+      <p className="text-sm text-gray-600">판매 내역이 없습니다.</p>
+      <button
+        type="button"
+        onClick={() => nav("/auctions/new")}
+        className="bg-purple hover:bg-deep-purple rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-md focus:outline-none"
+      >
+        경매 등록하기
+      </button>
+    </div>
+  );
 
-  // ✅ 개발 모드 디버그: 실제 분류 상태 확인용 (원하면 주석 해제)
-  // if (import.meta.env.MODE !== "production") {
-  //   console.table(sorted.map((it) => ({
-  //     id: (it as any).id,
-  //     start: (it as any).auctionStart,
-  //     end: (it as any).auctionEnd,
-  //     status: (it as any).statusText ?? (it as any).status,
-  //     endedByTime: endedByTime(it),
-  //     endedByStatus: endedByStatus(it),
-  //     isEnded: isEndedWishlist(it),
-  //     isOngoing: isOngoingWishlist(it),
-  //   })));
-  // }
+  if (error && !loading && normalized.length === 0) {
+    return (
+      <div className="min-h-[800px] p-4">
+        <h2 className="mb-3 text-lg font-semibold">판매 내역</h2>
+        <StatusTriFilter
+          value={filter}
+          onChange={setFilter}
+          counts={{ all: 0, ongoing: 0, ended: 0 }}
+          className="mb-3"
+        />
+        {renderEmptyState()}
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[800px] p-4">
-      <h2 className="mb-4 text-2xl font-bold">찜 목록</h2>
+      <h2 className="text-lg font-semibold">판매 내역</h2>
 
       <StatusTriFilter
         value={filter}
         onChange={setFilter}
         counts={counts}
-        className="mb-4"
+        className="mb-3"
       />
 
-      {error && items.length === 0 && (
-        <p className="mb-3 text-sm text-red-600">찜 목록을 불러오지 못했어요.</p>
-      )}
-
-      {showInitialLoading ? (
-        <p className="text-sm text-neutral-500">불러오는 중…</p>
-      ) : isTrulyEmpty ? (
-        <div className="flex min-h-[300px] flex-col items-center justify-center gap-4 rounded-xl border border-dashed border-neutral-300 bg-neutral-50 p-10 text-center">
-          <p className="text-sm text-neutral-500">찜한 항목이 없습니다.</p>
-        </div>
+      {loading ? (
+        <p className="text-neutral-500">불러오는 중…</p>
+      ) : sorted.length === 0 ? (
+        renderEmptyState()
       ) : (
-        <>
-          <ul role="list" aria-label="찜한 상품 목록">
-            {sorted.map((it, idx) => (
-              <TradeRowCompact
-                key={String((it as any).id ?? idx)} // ✅ id 누락 대비
-                item={it}
-                wishStyle={true}
-                onToggleLike={handleToggleLike}
-              />
-            ))}
-          </ul>
-
-          {/* 무한 스크롤 센티넬 */}
-          <div ref={sentinelRef} className="h-[1px]" />
-
-          {/* 추가 로딩/마지막 표시 */}
-          {isFetchingNext && (
-            <div className="py-4 text-center text-sm text-neutral-500">
-              추가 로딩 중…
-            </div>
-          )}
-          {!hasMore && initialLoaded && (
-            <div className="py-4 text-center text-xs text-neutral-400">
-              마지막 페이지입니다
-            </div>
-          )}
-        </>
+        renderList(sorted)
       )}
     </div>
   );
-};
-
-export default WishList;
+}
