@@ -117,7 +117,7 @@ const NotiModal = ({ onClose, onDelete }: ModalProps) => {
           </button>
         </div>
       </div>
-      <div className="overflow-x-hidden overflow-y-auto">
+      <div className="overflow-hidden">
         <NotiList notis={notis} />
       </div>
     </div>
