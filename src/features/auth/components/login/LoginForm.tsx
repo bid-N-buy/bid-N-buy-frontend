@@ -166,12 +166,12 @@ const LoginForm: React.FC = () => {
   /** 소셜 로그인 */
   const startKakao = useCallback(() => {
     if (loading) return;
-    window.location.assign("http://52.79.192.165:8080/auth/kakao");
+    window.location.assign(`${API_BASE}/auth/kakao`);
   }, [loading]);
 
   const startNaver = useCallback(() => {
     if (loading) return;
-    window.location.assign(`http://52.79.192.165:8080/auth/naver/loginstart`);
+    window.location.assign(`${API_BASE}/naver/loginstart`);
   }, [loading]);
 
   return (

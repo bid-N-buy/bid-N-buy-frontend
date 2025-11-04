@@ -27,7 +27,10 @@ const ChatProductInfo = ({
       </div>
       <div className="flex w-[72%] flex-col gap-1 text-sm md:w-[60%]">
         <p className="text-xs">{sellingStatus}</p>
-        <p className="font-bold">{auctionTitle}</p>
+        <p className="font-bold">
+          {auctionTitle.substring(0, 20)}
+          {auctionTitle.length > 20 ? "..." : null}
+        </p>
         <p className="text-g300">{currentPrice.toString()}</p>
       </div>
       <div className="flex w-[15%] flex-col gap-2">
