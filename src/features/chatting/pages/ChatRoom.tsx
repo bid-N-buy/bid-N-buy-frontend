@@ -246,11 +246,13 @@ const ChatRoom = ({
       messageType: "IMAGE",
     };
 
-    client.publish({
-      destination: `/app/chat/message`,
-      body: JSON.stringify(messageImage),
-      headers: { "content-type": "application/json" },
-    });
+    useChatModalStore.getState().handleNewChatMessage(messageImage.imageUrl);
+
+    // client.publish({
+    //   destination: `/app/chat/message`,
+    //   body: JSON.stringify(messageImage),
+    //   headers: { "content-type": "multipart/form-data" },
+    // });
   };
 
   // [전송] 채팅(기본) 메시지

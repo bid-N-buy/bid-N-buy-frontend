@@ -36,7 +36,7 @@ type ChatModalAction = {
     sellerId: number,
     auctionId: number
   ) => Promise<void>;
-  handleNewChatMessage: (message: ChatMessageProps) => Promise<void>;
+  handleNewChatMessage: (message: ChatMessageProps | string) => Promise<void>;
 };
 
 type ChatModalStoreProps = ChatModalAction & ChatModalState;

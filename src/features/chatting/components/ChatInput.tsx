@@ -52,8 +52,8 @@ const ChatInput = ({
   const submitMessage = (e: FormEvent) => {
     e.preventDefault();
     if (file) {
-      removeImage(); // 이미지 제거 및 input 초기화 함수
       handleSendImage(file);
+      removeImage(); // 이미지 제거 및 input 초기화 함수
     } else if (inputMessage.trim()) {
       sendMessage();
     }
