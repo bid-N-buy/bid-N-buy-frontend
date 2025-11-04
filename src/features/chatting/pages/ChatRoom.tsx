@@ -246,8 +246,10 @@ const ChatRoom = ({
       messageType: "IMAGE",
     };
 
+    // 낙관적 업데이트
     useChatModalStore.getState().handleNewChatMessage(messageImage.imageUrl);
 
+    // 이중 전송됨
     // client.publish({
     //   destination: `/app/chat/message`,
     //   body: JSON.stringify(messageImage),
