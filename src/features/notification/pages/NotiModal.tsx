@@ -6,7 +6,7 @@ import NotiList from "./NotiList";
 import { X } from "lucide-react";
 import api from "../../../shared/api/axiosInstance";
 import { useAuthStore } from "../../auth/store/authStore";
-import { useNotiStore } from "../store/notiStore"; 
+import { useNotiStore } from "../store/notiStore";
 import { useChatModalStore } from "../../../shared/store/ChatModalStore";
 
 const NotiModal = ({ onClose, onDelete }: ModalProps) => {
@@ -18,21 +18,6 @@ const NotiModal = ({ onClose, onDelete }: ModalProps) => {
   const accessToken = useAuthStore((state) => state.accessToken);
   const { notis: realtimeNotis } = useNotiStore(); // 실시간 알림 접근
 
-  // 클릭시 채팅방 생성
-  // ✅ 클릭 시 채팅방 생성 함수
-  const handleChatAdd = async (auctionId: number, sellerId: number) => {
-    if (!token) return;
-    try {
-      const response = await api.post(`/chatrooms/${auctionId}`, { sellerId }, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const chatroomId = response.data.chatroomId;
-      await makeChatRoomInAuc(token, sellerId, auctionId);
-      useChatModalStore.getState().openChatRoom(chatroomId);
-    } catch (err) {
-      console.error("❌ 채팅방 생성 실패", err);
-    }
-  };
 
   // 전체 삭제
   const handleDeleteAll = async () => {
@@ -93,7 +78,8 @@ const NotiModal = ({ onClose, onDelete }: ModalProps) => {
           read: n.read,
           createdAt: n.createdAt,
           deletedAt: n.deletedAt,
-          data: n.data ?? { auctionId: n.auctionId, sellerId: n.sellerId }, // ✅ data가 없어도 기본 객체 유지
+          auctionId: n.auctionId ? Number(n.auctionId) : undefined,
+          sellerId: n.sellerId ? Number(n.sellerId) : undefined,
         }));
 
         // ✅ 서버 + 실시간 알림 병합 (중복 제거)
@@ -143,7 +129,7 @@ const NotiModal = ({ onClose, onDelete }: ModalProps) => {
           </button>
         </div>
       </div>
-      <NotiList notis={notis} onChatAdd={handleChatAdd}/>
+      <NotiList notis={notis} />
     </div>
   );
 };

@@ -12,5 +12,5 @@ interface NotiState {
 export const useNotiStore = create<NotiState>((set) => ({
   notis: [],
   setNotis: (list) => set({ notis: list }),
-  addNoti: (noti) => set((s) => ({ notis: [noti, ...s.notis] })),
+  addNoti: (noti) => set((state) => ({ notis: [noti, ...state.notis] })),
 }));
