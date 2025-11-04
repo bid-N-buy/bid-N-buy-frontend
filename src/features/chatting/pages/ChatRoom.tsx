@@ -351,7 +351,7 @@ const ChatRoom = ({
   }, [chatroomId, userId, isConnected, messages.length]);
 
   return (
-    <>
+    <div className="overflow-hidden">
       <ChatProductInfo
         auctionInfo={chatroomInfo}
         sellerId={sellerId}
@@ -399,7 +399,7 @@ const ChatRoom = ({
         sendMessage={sendMessage}
         handleSendImage={handleSendImage}
       />
-    </>
+    </div>
   );
 };
 
