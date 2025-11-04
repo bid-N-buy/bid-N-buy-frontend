@@ -1,18 +1,15 @@
 // src/features/mypage/pages/PurchasesPage.tsx
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { usePurchases } from "../hooks/usePurchases";
 import TradeRowCompact from "../components/items/TradeRowCompact";
 import StatusTriFilter, {
   type TriFilterValue,
 } from "../components/filters/StatusTriFilter";
 import type { TradeItem } from "../types/trade";
-
 import { confirmSettlement } from "../api/confirmSettlement";
 import { submitRating } from "../api/rating";
 
-/* =========================================================
- * 별점 모달
- * ========================================================= */
+/* ---------- 별점 모달 (동일) ---------- */
 type RatingModalProps = {
   open: boolean;
   rating: number;
@@ -21,7 +18,6 @@ type RatingModalProps = {
   onSubmit: () => void;
   submitting?: boolean;
 };
-
 const RatingModal: React.FC<RatingModalProps> = ({
   open,
   rating,
@@ -31,7 +27,6 @@ const RatingModal: React.FC<RatingModalProps> = ({
   submitting = false,
 }) => {
   if (!open) return null;
-
   return (
     <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/40">
       <div className="w-[320px] rounded-lg bg-white p-4 shadow-lg">
@@ -41,7 +36,6 @@ const RatingModal: React.FC<RatingModalProps> = ({
         <p className="mb-2 text-sm text-neutral-600">
           이번 거래는 만족하셨나요?
         </p>
-
         <div className="mb-4 flex flex-wrap gap-2">
           {Array.from({ length: 10 }, (_, i) => i + 1).map((score) => (
             <button
@@ -60,7 +54,6 @@ const RatingModal: React.FC<RatingModalProps> = ({
             </button>
           ))}
         </div>
-
         <div className="flex justify-end gap-2 text-sm">
           <button
             type="button"
@@ -88,13 +81,10 @@ const RatingModal: React.FC<RatingModalProps> = ({
   );
 };
 
-/* =========================================================
- * 결제/정산 판별 & 시간 유틸
- * ========================================================= */
+/* ---------- 유틸 (동일) ---------- */
 const U = (v?: string | null) => (v ?? "").toString().trim().toUpperCase();
 
 const PAID_KEYWORDS = new Set([
-  // 영문
   "PAID",
   "PAY_DONE",
   "DEPOSIT_DONE",
@@ -104,7 +94,6 @@ const PAID_KEYWORDS = new Set([
   "SUCCESS",
   "COMPLETED",
   "DONE",
-  // 국문 (공백/붙임 모두)
   "결제완료",
   "입금완료",
   "정산완료",
@@ -143,9 +132,7 @@ const parseMs = (iso?: string | null) => {
 const getEndIso = (it: any): string | null =>
   it?.auctionEnd ?? it?.endTime ?? it?.endAt ?? it?.endDate ?? null;
 
-/** 서버에서 내려올 수 있는 완료 시각 후보를 최대한 흡수 (자동 스캔 포함) */
 const getPaidAtIso = (it: any): string | null => {
-  // 대표 키 우선
   const direct =
     it?.paidAt ??
     it?.paymentAt ??
@@ -158,13 +145,10 @@ const getPaidAtIso = (it: any): string | null => {
     it?.updatedAt ??
     null;
   if (direct) return direct;
-
-  // 키 자동 스캔: (paid|pay|deposit|settle|complete|result|payout).*(at|time|date)$
   const re =
     /(paid|pay|deposit|settle|complete|result|payout).*(at|time|date)$/i;
   let bestMs = 0;
   let bestIso: string | null = null;
-
   for (const k of Object.keys(it ?? {})) {
     if (!re.test(k)) continue;
     const v = (it as any)[k];
@@ -178,11 +162,9 @@ const getPaidAtIso = (it: any): string | null => {
   return bestIso;
 };
 
-/** 서버/로컬 상태를 종합해 결제완료 여부 */
 function isPaidDone(it: any, settledMap: Record<string, boolean>): boolean {
   const orderId = (it?.orderId ?? it?.id)?.toString();
   if (orderId && settledMap[orderId]) return true;
-
   if (
     it?.settled === true ||
     it?.paid === true ||
@@ -190,7 +172,6 @@ function isPaidDone(it: any, settledMap: Record<string, boolean>): boolean {
     it?.paymentDone === true
   )
     return true;
-
   const buckets = [
     U(it?.paymentStatus),
     U(it?.settlementStatus),
@@ -201,19 +182,16 @@ function isPaidDone(it: any, settledMap: Record<string, boolean>): boolean {
     U(it?.status),
     U(it?.state),
   ];
-
   return buckets.some(
     (x) => x && (PAID_KEYWORDS.has(x) || ENDED_KEYWORDS.has(x))
   );
 }
 
-/** 진행중 여부 (결제완료/시간 경과 고려) */
 function isOngoing(
   item: TradeItem,
   settledMap: Record<string, boolean>
 ): boolean {
   if (isPaidDone(item, settledMap)) return false;
-
   const endIso = getEndIso(item);
   if (endIso) {
     const t = parseMs(endIso);
@@ -222,16 +200,14 @@ function isOngoing(
   return true;
 }
 
-/* =========================================================
- * 메인
- * ========================================================= */
+/* ---------- 메인 (무한스크롤 적용) ---------- */
+const PAGE_SIZE = 20;
+
 const PurchasesPage: React.FC = () => {
   const [filter, setFilter] = useState<TriFilterValue>("all");
-
   const [confirmingId, setConfirmingId] = useState<string | number | null>(
     null
   );
-
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [reviewTargetId, setReviewTargetId] = useState<string | number | null>(
     null
@@ -239,70 +215,117 @@ const PurchasesPage: React.FC = () => {
   const [rating, setRating] = useState<number>(10);
   const [submittingReview, setSubmittingReview] = useState(false);
 
-  // 로컬에서 이미 확정 처리한 주문
+  // 로컬 확정 맵
   const [settledMap, setSettledMap] = useState<Record<string, boolean>>({});
 
+  // ▼▼▼ 무한스크롤 핵심 상태 ▼▼▼
+  const [page, setPage] = useState(0);
+  const [items, setItems] = useState<TradeItem[]>([]);
+  const [hasMore, setHasMore] = useState(true);
+  const [initialLoaded, setInitialLoaded] = useState(false);
+
+  // 현재 페이지 데이터만 가져옴
   const { data, loading, error } = usePurchases({
-    page: 0,
-    size: 20,
+    page,
+    size: PAGE_SIZE,
     sort: "end",
   });
 
-  const base: TradeItem[] = useMemo(
-    () => (Array.isArray(data) ? data : []),
-    [data]
-  );
+  // 페이지 결과를 누적
+  useEffect(() => {
+    if (!data) return;
 
-  // 카운트
+    // 중복 제거(같은 id) 방지
+    const next = [...items];
+    const seen = new Set(next.map((d) => String(d.id)));
+    for (const row of data) {
+      const key = String(row.id);
+      if (!seen.has(key)) {
+        next.push(row);
+        seen.add(key);
+      }
+    }
+    setItems(next);
+
+    // 더 불러올 수 있는지 판단: 반환 개수가 PAGE_SIZE보다 작으면 마지막 페이지
+    setHasMore(Array.isArray(data) && data.length === PAGE_SIZE);
+
+    if (!initialLoaded) setInitialLoaded(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data]);
+
+  // 필터가 바뀌면 스크롤 위치는 그대로 두되, 보여주는 배열만 바꿔서 UX 부드럽게
+  // (필요시 "필터 변경 시 첫 페이지부터 재조회"가 맞다면 여길 reset로 바꾸세요)
+  // reset 예: setPage(0); setItems([]); setHasMore(true);
+  // 지금은 요청 부담 줄이기 위해 누적데이터에서 필터링만 수행
+
+  // 감시자(IntersectionObserver)
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const isFetchingNext = loading && initialLoaded; // 처음 로딩 제외하고만 '추가 로딩'으로 취급
+
+  useEffect(() => {
+    if (!hasMore || isFetchingNext) return;
+    const el = sentinelRef.current;
+    if (!el) return;
+
+    const obs = new IntersectionObserver(
+      (entries) => {
+        const last = entries[0];
+        if (last.isIntersecting) {
+          // 다음 페이지 요청
+          setPage((p) => p + 1);
+        }
+      },
+      { root: null, rootMargin: "200px", threshold: 0 } // 미리 당겨서 로드
+    );
+
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [hasMore, isFetchingNext]);
+
+  // 카운트 (누적 배열 기준)
   const counts = useMemo(() => {
-    const all = base.length;
-    const ongoing = base.filter((it) => isOngoing(it, settledMap)).length;
+    const all = items.length;
+    const ongoing = items.filter((it) => isOngoing(it, settledMap)).length;
     const ended = all - ongoing;
     return { all, ongoing, ended };
-  }, [base, settledMap]);
+  }, [items, settledMap]);
 
   // 탭 필터
   const filtered = useMemo(() => {
     if (filter === "ongoing")
-      return base.filter((it) => isOngoing(it, settledMap));
+      return items.filter((it) => isOngoing(it, settledMap));
     if (filter === "ended")
-      return base.filter((it) => !isOngoing(it, settledMap));
-    return base;
-  }, [base, filter, settledMap]);
+      return items.filter((it) => !isOngoing(it, settledMap));
+    return items;
+  }, [items, filter, settledMap]);
 
-  // ✅ 결제 완료 순 정렬:
-  // 1) 결제완료(true) 먼저
-  // 2) 결제완료끼리는 paidAt 내림차순(최근 결제 우선)
-  //    - paidAt 없으면 endAt으로 대체 (최후 보정)
-  // 3) 미결제끼리는 endAt 내림차순
+  // 결제 완료 우선 정렬
   const sorted = useMemo(() => {
     const paidRank = (it: any) => (isPaidDone(it, settledMap) ? 0 : 1);
     const paidAtMs = (it: any) => {
       const fromServer = parseMs(getPaidAtIso(it));
       if (fromServer) return fromServer;
-      if (isPaidDone(it, settledMap)) return parseMs(getEndIso(it)); // 결제완료인데 시각없음 → 마감시각 보정
+      if (isPaidDone(it, settledMap)) return parseMs(getEndIso(it));
       return 0;
     };
     const endMs = (it: any) => parseMs(getEndIso(it));
-
     return [...filtered].sort((a, b) => {
-      const ra = paidRank(a);
-      const rb = paidRank(b);
+      const ra = paidRank(a),
+        rb = paidRank(b);
       if (ra !== rb) return ra - rb;
-
       if (ra === 0) {
-        const pa = paidAtMs(a);
-        const pb = paidAtMs(b);
-        if (pa !== pb) return pb - pa; // 최근 결제 우선
+        const pa = paidAtMs(a),
+          pb = paidAtMs(b);
+        if (pa !== pb) return pb - pa;
       }
-
-      const ea = endMs(a);
-      const eb = endMs(b);
-      return eb - ea; // 미결제끼리는 마감 최근 우선
+      const ea = endMs(a),
+        eb = endMs(b);
+      return eb - ea;
     });
   }, [filtered, settledMap]);
 
-  // 구매 확정 버튼 노출 여부
+  // 구매 확정 버튼 노출
   function canShowConfirmButton(item: TradeItem): boolean {
     const orderId = (item as any).orderId ?? item.id;
     const localDone = settledMap[String(orderId)];
@@ -311,14 +334,12 @@ const PurchasesPage: React.FC = () => {
     return !(localDone || serverDone);
   }
 
-  // 구매 확정 → 별점 모달
   function handleRequestConfirm(orderId: number | string) {
     setReviewTargetId(orderId);
     setRating(10);
     setReviewModalOpen(true);
   }
 
-  // 별점 제출 + 정산
   async function finalizeConfirmAndReview() {
     if (!reviewTargetId) return;
     try {
@@ -329,7 +350,7 @@ const PurchasesPage: React.FC = () => {
       setSettledMap((prev) => ({ ...prev, [String(reviewTargetId)]: true }));
       setFilter("ended");
       alert("구매 확정이 완료되었어요! ⭐");
-    } catch (err) {
+    } catch {
       alert("처리 중 오류가 발생했습니다.");
     } finally {
       setSubmittingReview(false);
@@ -367,7 +388,7 @@ const PurchasesPage: React.FC = () => {
       <button
         type="button"
         onClick={() => (window.location.href = "/auctions")}
-        className="bg-purple hover:bg-deep-purple rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-md "
+        className="bg-purple hover:bg-deep-purple rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-md"
       >
         지금 구경하러 가기
       </button>
@@ -389,7 +410,8 @@ const PurchasesPage: React.FC = () => {
         className="mb-3"
       />
 
-      {loading ? (
+      {/* 첫 페이지 로딩 상태 */}
+      {!initialLoaded && loading ? (
         <p className="text-sm text-neutral-500">불러오는 중…</p>
       ) : error && sorted.length === 0 ? (
         <>
@@ -401,7 +423,24 @@ const PurchasesPage: React.FC = () => {
       ) : sorted.length === 0 ? (
         renderEmptyState()
       ) : (
-        renderList(sorted)
+        <>
+          {renderList(sorted)}
+
+          {/* 로딩 스피너 / 더 없음 표시 */}
+          <div ref={sentinelRef} className="h-[1px]" />
+
+          {isFetchingNext && (
+            <div className="py-4 text-center text-sm text-neutral-500">
+              추가 로딩 중…
+            </div>
+          )}
+
+          {!hasMore && initialLoaded && (
+            <div className="py-4 text-center text-xs text-neutral-400">
+              마지막 페이지입니다
+            </div>
+          )}
+        </>
       )}
 
       <RatingModal
