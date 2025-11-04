@@ -70,7 +70,7 @@ const ChatYou = ({
         customerName: profile?.nickname,
       });
     } catch (err) {
-      console.error("결제 요청 실패:", err);
+      return;
     }
   }
 

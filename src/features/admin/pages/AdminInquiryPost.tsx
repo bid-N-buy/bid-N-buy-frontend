@@ -17,7 +17,7 @@ const AdminInquiryPost = () => {
       setInquiry(post);
     } catch (error) {
       setInquiry(null);
-      console.error("데이터 불러오기 실패:", error);
+      return;
     }
   };
 
