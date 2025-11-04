@@ -6,7 +6,7 @@ import type {
   PurchaseResponseItem,
   SaleResponseItem,
 } from "../types/trade";
-import { fromPurchase, fromSale } from "../types/trade";
+import  {  fromPurchase, fromSale } from "../types/trade";
 
 /* ------------------ 내부 유틸 ------------------ */
 const safeDate = (v?: string | number | null) =>
