@@ -125,7 +125,13 @@ const ProfileDetailsContainer: React.FC = () => {
     size: 3,
     sort: "end",
     enabled: ongoingEnabled,
-    ownerUserId: isOtherUserPage ? targetUserId : myUserId,
+    ...(isOtherUserPage
+      ? targetUserId != null
+        ? { ownerUserId: targetUserId }
+        : {}
+      : myUserId != null
+        ? { ownerUserId: myUserId }
+        : {}),
     ownerNickname: isOtherUserPage
       ? otherProfile?.nickname
       : myProfile?.nickname,
