@@ -12,24 +12,35 @@ export const formatDate = (dateString: string) => {
 
 // 채팅용 시간 나타내는 함수: 당일은 시간, 지나간 날짜는 시일으로 표시
 export const formatTime = (dateString: string) => {
-  // ISO 문자열을 Date 객체로 변환
   const thisDate = new Date(dateString);
-  const now = new Date();
+  // const now = new Date();
 
   // 날짜만 비교하기 위해 시, 분, 초, 밀리초를 0으로 설정
-  const thisDay = new Date(
-    thisDate.getFullYear(),
-    thisDate.getMonth(),
-    thisDate.getDate()
-  );
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  // const thisDay = new Date(
+  //   thisDate.getFullYear(),
+  //   thisDate.getMonth(),
+  //   thisDate.getDate()
+  // );
+  // const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
+  // 서버에서 UTC 기준으로 보낼 때 한국 기준으로 바꾸기
+  const kstTime = thisDate.getTime() + 9 * 60 * 60 * 1000;
+  const kstDate = new Date(kstTime);
+  const thisDayKst = new Date(
+    kstDate.getFullYear(),
+    kstDate.getMonth(),
+    kstDate.getDate()
+  );
   // 오늘 날짜인지 확인
-  const isToday = thisDay.getTime() === today.getTime();
+  // const isToday = thisDay.getTime() === today.getTime();
+  const isToday = kstDate.getTime() === thisDayKst.getTime();
 
   if (isToday) {
     // 오늘 날짜인 경우: 오전/오후 - 시간:분 형식
-    return thisDate.toLocaleTimeString("ko-KR", {
+    // return thisDate.toLocaleTimeString("ko-KR", {
+    return kstDate.toLocaleTimeString("ko-KR", {
+      // UTC 기준일 때
+      // UTC 기준일 때
       hour: "2-digit",
       minute: "2-digit",
       hour12: true, // 오전/오후 표시
