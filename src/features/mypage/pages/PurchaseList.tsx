@@ -330,7 +330,6 @@ const PurchasesPage: React.FC = () => {
       setFilter("ended");
       alert("구매 확정이 완료되었어요! ⭐");
     } catch (err) {
-      console.error("[구매 확정/리뷰 실패]", err);
       alert("처리 중 오류가 발생했습니다.");
     } finally {
       setSubmittingReview(false);

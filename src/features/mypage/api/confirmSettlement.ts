@@ -31,10 +31,7 @@ export async function confirmSettlement(
       }
     );
 
-    if (import.meta.env.DEV) {
-      console.debug("[confirmSettlement] raw response:", res.status, res.data);
-    }
-
+   
     const data = res?.data;
 
     // 0) 완전 빈 응답 / 204

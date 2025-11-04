@@ -4,23 +4,47 @@ import api from "../../../shared/api/axiosInstance";
 import type { TradeItem, TradeStatus } from "../types/trade";
 
 /* =========================
- * 상태 문자열 -> 내부 상태 코드
+ * 날짜 유틸
  * ========================= */
-const toStatus = (raw?: string): TradeStatus => {
+const toMs = (v?: string) => {
+  if (!v) return NaN;
+  const t = new Date(v).getTime();
+  return Number.isFinite(t) ? t : NaN;
+};
+const nowMs = () => Date.now();
+
+/* =========================
+ * 상태 문자열 + 시간 -> 내부 상태 코드
+ *  - end <= now  → FINISH
+ *  - start > now → BEFORE
+ *  - 그 외 키워드 매핑
+ *  - 모호하면 SALE(가시성 보수적)
+ * ========================= */
+const toStatus = (
+  raw?: string,
+  startAt?: string,
+  endAt?: string
+): TradeStatus => {
   const s = (raw ?? "").toString().trim().toUpperCase();
 
-  // 명확한 완료/종료 우선
+  // 0) 시간 우선 보정
+  const start = toMs(startAt);
+  const end = toMs(endAt);
+
+  if (Number.isFinite(end) && end <= nowMs()) return "FINISH";
+  if (Number.isFinite(start) && start > nowMs()) return "BEFORE";
+
+  // 1) 명확한 완료/종료
   if (
     /COMPLETED|COMPLETE|TRANSACTION COMPLETE|거래완료|구매확정|수취완료|정산완료|완료됨/.test(
       s
     )
   )
     return "COMPLETED";
-
   if (/FINISH|FINISHED|CLOSED|CLOSE|ENDED|END|종료|마감|유찰/.test(s))
     return "FINISH";
 
-  // 결제/배송/진행 단계
+  // 2) 결제/배송/진행
   if (
     /PROGRESS|IN PROGRESS|WAIT|결제|배송|발송|처리중|진행중|PROCESS|SHIP|PAID|PAY/.test(
       s
@@ -28,11 +52,12 @@ const toStatus = (raw?: string): TradeStatus => {
   )
     return "PROGRESS";
 
+  // 3) 판매/입찰 중
   if (/SALE|SELLING|BIDDING|입찰|판매중/.test(s)) return "SALE";
   if (/BEFORE|대기|준비중|등록전|비공개|검수/.test(s)) return "BEFORE";
 
-  // 알 수 없으면 위시에서는 보수적으로 종료 취급(리스트에서 사라진 경우 등)
-  return "FINISH";
+  // 4) 모호하면 '진행/판매 중'으로 표기
+  return "SALE";
 };
 
 /* =========================
@@ -102,13 +127,7 @@ const pickThumbUrl = (r: any): string | null => {
 
 const pickPrice = (r: any): number | undefined => {
   const raw =
-    r.currentPrice ??
-    r.finalPrice ??
-    r.price ??
-    r.myBidPrice ??
-    r.bidPrice ??
-    undefined;
-
+    r.currentPrice ?? r.finalPrice ?? r.price ?? r.myBidPrice ?? r.bidPrice;
   if (typeof raw === "number") return raw;
   if (typeof raw === "string" && raw.trim() !== "") {
     const n = Number(raw);
@@ -128,8 +147,11 @@ const fromWish = (r: any): TradeItem => {
   const thumbUrl = pickThumbUrl(r);
   const price = pickPrice(r);
 
+  const auctionStart = pickAuctionStart(r);
+  const auctionEnd = pickAuctionEnd(r);
+
   const statusText = r.statusText ?? r.sellingStatus ?? r.status ?? undefined;
-  const status = toStatus(statusText);
+  const status = toStatus(statusText, auctionStart, auctionEnd);
 
   const counterparty =
     r.sellerNickname ??
@@ -138,9 +160,6 @@ const fromWish = (r: any): TradeItem => {
     r.sellerName ??
     r.nickname ??
     undefined;
-
-  const auctionStart = pickAuctionStart(r);
-  const auctionEnd = pickAuctionEnd(r);
 
   return {
     id: String(id),
