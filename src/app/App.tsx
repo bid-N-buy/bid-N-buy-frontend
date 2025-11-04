@@ -91,15 +91,32 @@ const AdminAuctionBoard = React.lazy(
   () => import("../features/admin/pages/AdminAuctionBoard")
 );
 
-// 관리자 가드(임의) - 에러로 약간 수정
+// 관리자 가드
 function AdminProtectedRoute() {
-  const adminToken = useAdminAuthStore.getState().accessToken;
-  if (!adminToken) return <Navigate to="/admin/login" replace />;
+  const accessToken = useAdminAuthStore((s) => s.accessToken);
+
+  const hasHydrated =
+    (useAdminAuthStore as any).persist?.hasHydrated?.() ?? true;
+
+  if (!hasHydrated) {
+    return <div className="p-6 text-center">로그인 상태 확인 중…</div>;
+  }
+
+  if (!accessToken) return <Navigate to="/admin/login" replace />;
   return <Outlet />;
 }
+
 function AdminGuestOnlyRoute() {
-  const adminToken = useAdminAuthStore.getState().accessToken;
-  if (adminToken) return <Navigate to="/admin" replace />;
+  const accessToken = useAdminAuthStore((s) => s.accessToken);
+
+  const hasHydrated =
+    (useAdminAuthStore as any).persist?.hasHydrated?.() ?? true;
+
+  if (!hasHydrated) {
+    return <div className="p-6 text-center">로그인 상태 확인 중…</div>;
+  }
+
+  if (accessToken) return <Navigate to="/admin" replace />;
   return <Outlet />;
 }
 
