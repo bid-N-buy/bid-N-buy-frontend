@@ -75,7 +75,7 @@ const RatingModal: React.FC<RatingModalProps> = ({
             className={`rounded border px-3 py-1 font-semibold disabled:opacity-40 ${
               submitting
                 ? "cursor-not-allowed border-neutral-300 bg-neutral-100 text-neutral-400"
-                : "border-purple text-purple hover:bg-purple-50"
+                : "border-purple text-purple hover:bg-deep-purple"
             }`}
             onClick={onSubmit}
             disabled={submitting}
@@ -367,7 +367,7 @@ const PurchasesPage: React.FC = () => {
       <button
         type="button"
         onClick={() => (window.location.href = "/auctions")}
-        className="rounded-lg bg-purple px-4 py-2 text-sm font-semibold text-white shadow-md ring-1 ring-purple hover:bg-purple-700 focus:ring-2 focus:ring-purple-400 focus:outline-none"
+        className="bg-purple hover:bg-deep-purple rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-md "
       >
         지금 구경하러 가기
       </button>

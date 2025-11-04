@@ -197,8 +197,7 @@ export default function SaleList() {
       <button
         type="button"
         onClick={() => nav("/auctions/new")}
-        className="rounded-lg bg-purple px-4 py-2 text-sm font-semibold text-white shadow-md ring-1 ring-purple-500/50 hover:bg-purple-700 focus:ring-2 focus:ring-purple focus:outline-none"
-
+        className="bg-purple hover:bg-deep-purple rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-md focus:outline-none"
       >
         경매 등록하기
       </button>

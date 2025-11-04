@@ -106,7 +106,7 @@ const ProfilePreview: React.FC<Props> = ({
           <Link to="/profile">
             <button
               onClick={onManageProfile}
-              className="border-purple min-w-[110px] rounded-[10px] border bg-white/90 px-4 py-2.5 text-[13px] font-bold text-neutral-900 shadow-[0_6px_16px_rgba(0,0,0,0.08)] transition hover:bg-white active:translate-y-[2px] lg:py-3 lg:text-[14px]"
+              className="border-purple text-purple min-w-[110px] rounded-[10px] border bg-white/90 px-4 py-2.5 text-[13px] font-bold transition hover:bg-white active:translate-y-[2px] lg:py-3 lg:text-[14px]"
             >
               프로필보기
             </button>
@@ -114,7 +114,7 @@ const ProfilePreview: React.FC<Props> = ({
           <Link to="/auctions/new">
             <button
               onClick={onAuction}
-              className="border-purple min-w-[110px] rounded-[10px] border bg-white/90 px-4 py-2.5 text-[13px] font-bold text-neutral-900 shadow-[0_6px_16px_rgba(0,0,0,0.08)] transition hover:bg-white active:translate-y-[2px] lg:py-3 lg:text-[14px]"
+              className="border-purple text-purple min-w-[110px] rounded-[10px] border bg-white/90 px-4 py-2.5 text-[13px] font-bold transition hover:bg-white active:translate-y-[2px] lg:py-3 lg:text-[14px]"
             >
               경매등록
             </button>
@@ -127,7 +127,7 @@ const ProfilePreview: React.FC<Props> = ({
         <Link to="/profile" className="contents">
           <button
             onClick={onManageProfile}
-            className="rounded-2xl bg-white/90 px-3 py-2.5 text-sm font-bold text-neutral-900 shadow-[0_6px_16px_rgba(0,0,0,0.08)] transition hover:bg-white active:translate-y-[1px] sm:px-4 sm:py-3"
+            className="text-purple rounded-2xl bg-white/90 px-3 py-2.5 text-sm font-bold transition hover:bg-white active:translate-y-[1px] sm:px-4 sm:py-3"
           >
             프로필 보기
           </button>
@@ -135,7 +135,7 @@ const ProfilePreview: React.FC<Props> = ({
         <Link to="/auctions/new" className="contents">
           <button
             onClick={onAuction}
-            className="rounded-2xl bg-white/90 px-3 py-2.5 text-sm font-bold text-neutral-900 shadow-[0_6px_16px_rgba(0,0,0,0.08)] transition hover:bg-white active:translate-y-[1px] sm:px-4 sm:py-3"
+            className="text-purple rounded-2xl bg-white/90 px-3 py-2.5 text-sm font-bold transition hover:bg-white active:translate-y-[1px] sm:px-4 sm:py-3"
           >
             경매 등록
           </button>

@@ -62,7 +62,7 @@ const ItemRowList: React.FC<{
           <button
             type="button"
             onClick={onClickStartAuction}
-            className="bg-purple rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-md ring-1 ring-purple-500/50 hover:bg-purple-700 focus:ring-2 focus:ring-purple-400 focus:outline-none"
+            className="bg-purple hover:bg-deep-purple rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-md focus:outline-none"
           >
             경매 등록
           </button>
@@ -258,7 +258,7 @@ const ProfileDetails: React.FC<Props> = ({
                   />
                   {/* 노브 */}
                   <div
-                    className="absolute top-1/2 h-[18px] w-[18px] -translate-x-1/2 -translate-y-1/2 rounded-full border-[2px] border-white bg-purple-500 shadow-[0_4px_12px_rgba(131,34,191,0.5)] ring-[2px] ring-purple-400/40"
+                    className="absolute top-1/2 h-[18px] w-[18px] -translate-x-1/2 -translate-y-1/2 rounded-full border-[2px] border-white bg-purple shadow-[0_4px_12px_rgba(131,34,191,0.5)]"
                     style={{ left: knobLeft }}
                     aria-hidden="true"
                   />

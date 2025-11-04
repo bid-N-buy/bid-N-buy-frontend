@@ -95,8 +95,7 @@ const pickAuctionEnd = (r: any): string | undefined =>
   r.expireAt ??
   r.expiredAt ??
   r.auctionEnd ??
-  r.deadline ??
-  r.deadlineAt ??
+  // r.deadline ?? r.deadlineAt ??  // 배송/기타 마감 혼동은 제외 권장
   undefined;
 
 const pickThumbUrl = (r: any): string | null => {
@@ -151,7 +150,17 @@ const fromWish = (r: any): TradeItem => {
   const auctionEnd = pickAuctionEnd(r);
 
   const statusText = r.statusText ?? r.sellingStatus ?? r.status ?? undefined;
-  const status = toStatus(statusText, auctionStart, auctionEnd);
+  let status = toStatus(statusText, auctionStart, auctionEnd); // 기존 판단
+
+  // ✅ 최소 수정: 시작 전이면 무조건 BEFORE, 비정상(end < start)도 BEFORE로 보정
+  const start = toMs(auctionStart);
+  const end = toMs(auctionEnd);
+  const now = nowMs();
+  if (Number.isFinite(start) && start > now) {
+    status = "BEFORE";
+  } else if (Number.isFinite(start) && Number.isFinite(end) && end < start) {
+    status = "BEFORE";
+  }
 
   const counterparty =
     r.sellerNickname ??
@@ -182,6 +191,40 @@ const sortByEndDesc = (a: TradeItem, b: TradeItem) =>
   time(b.auctionEnd) - time(a.auctionEnd);
 const sortByStartDesc = (a: TradeItem, b: TradeItem) =>
   time(b.auctionStart) - time(a.auctionStart);
+
+/* =========================
+ * 진행/종료 판별 유틸 (UI 분류용)
+ *  - 진행중: 시작했고(!before) 아직 안 끝남(!ended)
+ *  - 종료: end <= now 또는 상태 COMPLETED/FINISH
+ * ========================= */
+export const isBeforeStart = (it: TradeItem): boolean => {
+  const start = toMs(it.auctionStart);
+  return Number.isFinite(start) && start > Date.now();
+};
+
+export const isEndedByTime = (it: TradeItem): boolean => {
+  const end = toMs(it.auctionEnd);
+  return Number.isFinite(end) && end <= Date.now();
+};
+
+export const isEndedByStatus = (it: TradeItem): boolean => {
+  const s = (it.status ?? "").toUpperCase();
+  const t = (it.statusText ?? "").toUpperCase();
+  if (s === "COMPLETED" || s === "FINISH") return true;
+  if (
+    /(COMPLETED|COMPLETE|TRANSACTION COMPLETE|거래완료|구매확정|수취완료|정산완료)/.test(
+      t
+    )
+  )
+    return true;
+  if (/(FINISH|FINISHED|CLOSED|CLOSE|ENDED|END|종료|마감|유찰)/.test(t))
+    return true;
+  return false;
+};
+
+export const isEnded = (it: TradeItem) =>
+  isEndedByTime(it) || isEndedByStatus(it);
+export const isOngoing = (it: TradeItem) => !isBeforeStart(it) && !isEnded(it);
 
 /* =========================
  * 훅
@@ -243,5 +286,29 @@ export function useWishlist(opts: UseWishlistOpts = {}) {
       : arr.sort(sortByEndDesc);
   }, [data, sort]);
 
-  return { data: sorted, loading, error };
+  // ✅ 탭용 파생 데이터 & 카운트
+  const ongoing = useMemo(() => sorted.filter(isOngoing), [sorted]);
+  const ended = useMemo(() => sorted.filter(isEnded), [sorted]);
+  const counts = useMemo(
+    () => ({
+      all: sorted.length,
+      ongoing: ongoing.length,
+      ended: ended.length,
+    }),
+    [sorted, ongoing.length, ended.length]
+  );
+
+  return {
+    data: sorted,
+    loading,
+    error,
+    // 탭 분류용
+    ongoing,
+    ended,
+    counts,
+    // 필요하면 UI에서 직접 판별도 가능
+    isBeforeStart,
+    isOngoing,
+    isEnded,
+  };
 }
