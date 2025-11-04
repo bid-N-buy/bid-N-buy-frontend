@@ -1,6 +1,8 @@
+// src/features/mypage/components/profile/ProfileDetails.tsx
 import React from "react";
 import defaultAvatar from "../../../../assets/avatar.svg";
 
+/* ---------------- Types ---------------- */
 export type Item = {
   id: string | number;
   title: string;
@@ -19,23 +21,65 @@ type Props = {
   onClickSold?: () => void;
   onClickSelling?: () => void;
   onItemClick?: (id: string | number) => void;
-
-  // ✅ 경매 시작 CTA
   onClickStartAuction?: () => void;
+
+  /** ✅ 데이터가 비었을 때 목업을 보여줄지 (기본: true) */
+  useMockOnEmpty?: boolean;
+  /** ✅ 섹션별 커스텀 목업 주입(선택). 미전달 시 기본 목업 사용 */
+  mockSoldItems?: Item[];
+  mockSellingItems?: Item[];
 };
 
-// 숫자 0~100 방어
+/* ---------------- Mock Data (기본 제공) ---------------- */
+/** 외부 파일이 없어도 바로 보이게 picsum 이미지를 사용합니다. */
+const MOCK_SOLD: Item[] = [
+  {
+    id: "m-sold-1",
+    title: "애플 에어팟 프로 (2세대, 상태 A급)",
+    thumbnail: "https://picsum.photos/seed/bnb-sold1/112/112",
+  },
+  {
+    id: "m-sold-2",
+    title: "닌텐도 스위치 OLED 화이트 세트",
+    thumbnail: "https://picsum.photos/seed/bnb-sold2/112/112",
+  },
+  {
+    id: "m-sold-3",
+    title: "LEGO 아이콘 10327 Dune Atreides Royal Ornithopter",
+    thumbnail: "https://picsum.photos/seed/bnb-sold3/112/112",
+  },
+];
+
+const MOCK_SELLING: Item[] = [
+  {
+    id: "m-sell-1",
+    title: "아이패드 프로 11형 M2 256GB",
+    thumbnail: "https://picsum.photos/seed/bnb-sell1/112/112",
+  },
+  {
+    id: "m-sell-2",
+    title: "PS5 디스크 에디션 + 듀얼센스",
+    thumbnail: "https://picsum.photos/seed/bnb-sell2/112/112",
+  },
+  {
+    id: "m-sell-3",
+    title: "Kindle Scribe 64GB 펜 포함",
+    thumbnail: "https://picsum.photos/seed/bnb-sell3/112/112",
+  },
+];
+
+/* ---------------- Utils ---------------- */
 const clamp = (n: number, min: number, max: number) =>
   Math.max(min, Math.min(max, n));
 
-// 프로필 이미지 없을 때 이니셜 동그라미
+/* ---------------- Small Components ---------------- */
+// 프로필 이미지 없을 때 이니셜 (현재는 defaultAvatar 사용 중이라 미사용)
 function Initials({ name }: { name: string }) {
   const trimmed = (name || "").trim();
   const parts = trimmed.split(/\s+/);
   const first = parts[0]?.[0] ?? "";
   const second = parts.length > 1 ? (parts[1][0] ?? "") : "";
   const initials = (first + second).toUpperCase() || "U";
-
   return (
     <div className="from-purple flex h-full w-full items-center justify-center bg-gradient-to-br to-indigo-600 text-4xl font-bold text-white">
       {initials}
@@ -43,21 +87,102 @@ function Initials({ name }: { name: string }) {
   );
 }
 
-// 공용 리스트 컴포넌트
+/** 공용 리스트 + 목업 처리 */
 const ItemRowList: React.FC<{
   items: Item[];
   emptyText: string;
   onItemClick?: (id: string | number) => void;
-  onClickStartAuction?: () => void; // ✅ 비었을 때만 나올 버튼
-}> = ({ items, emptyText, onItemClick, onClickStartAuction }) => {
-  const list = (items ?? []).slice(0, 3);
+  onClickStartAuction?: () => void; // 비었을 때 CTA
+  /** ✅ 비었을 때 목업 보여주기 */
+  useMockOnEmpty?: boolean;
+  /** ✅ 이 섹션 전용 목업 (없으면 기본 목업) */
+  mockItems?: Item[];
+  /** 목업임을 표시할지(작은 뱃지) */
+  showMockBadge?: boolean;
+}> = ({
+  items,
+  emptyText,
+  onItemClick,
+  onClickStartAuction,
+  useMockOnEmpty = true,
+  mockItems,
+  showMockBadge = true,
+}) => {
+  const base = (items ?? []).slice(0, 3);
+  const shouldUseMock = useMockOnEmpty && base.length === 0;
+  const mock = (mockItems ?? []).slice(0, 3);
 
-  // ❗비어 있을 때: 안내문 + (옵션) CTA 버튼을 카드 내부 가운데 배치
-  if (list.length === 0) {
+  if (shouldUseMock && mock.length > 0) {
+    return (
+      <div className="overflow-hidden rounded-xl border border-violet-200 bg-white">
+        <div className="flex items-center justify-between border-b border-violet-200 bg-violet-50 px-3 py-2">
+          <span className="text-xs text-gray-600">{emptyText}</span>
+          {/* {showMockBadge && (
+            <span className="rounded-full bg-violet-600/90 px-2 py-[2px] text-[10px] font-semibold text-white">
+              MOCK
+            </span>
+          )} */}
+        </div>
+        <ul className="divide-y divide-gray-200">
+          {mock.map((it) => (
+            <li
+              key={it.id}
+              className="flex items-center gap-3 px-3 py-3"
+              aria-label={`${it.title} (목업)`}
+            >
+              <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-gray-200">
+                {it.thumbnail ? (
+                  <img
+                    src={it.thumbnail}
+                    alt=""
+                    className="h-full w-full object-cover"
+                    loading="lazy"
+                  />
+                ) : null}
+              </div>
+              <p className="min-w-0 flex-1 truncate text-sm text-gray-800">
+                {it.title}
+              </p>
+              {/* 목업은 클릭 막기 아이콘만 표시 */}
+              <svg
+                className="h-4 w-4 shrink-0 text-gray-300"
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M9 5l7 7-7 7"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </li>
+          ))}
+        </ul>
+        {/* 비었을 때만 CTA 버튼 노출 */}
+        {onClickStartAuction && (
+          <div className="flex justify-center border-t border-gray-200 p-3">
+            <button
+              type="button"
+              onClick={onClickStartAuction}
+              className="bg-purple hover:bg-deep-purple rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-md focus:outline-none"
+            >
+              경매 등록
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // 실제 데이터가 있으면 기존 리스트
+  if (base.length === 0) {
+    // 목업 사용 안 할 때의 기존 빈 상태
     return (
       <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-gray-300 bg-gray-50 py-10 text-sm text-gray-600">
         <span>{emptyText}</span>
-
         {onClickStartAuction && (
           <button
             type="button"
@@ -71,10 +196,9 @@ const ItemRowList: React.FC<{
     );
   }
 
-  // 목록 있을 때: 아이템 리스트
   return (
     <ul className="divide-y divide-gray-200 overflow-hidden rounded-xl border border-gray-200 bg-white">
-      {list.map((it) => (
+      {base.map((it) => (
         <li
           key={it.id}
           className="flex cursor-pointer items-center gap-3 px-3 py-3 hover:bg-gray-50"
@@ -89,7 +213,6 @@ const ItemRowList: React.FC<{
           }}
           aria-label={`${it.title} 상세로 이동`}
         >
-          {/* 썸네일 */}
           <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-gray-200 text-[10px] text-gray-400">
             {it.thumbnail ? (
               <img
@@ -104,13 +227,9 @@ const ItemRowList: React.FC<{
               </div>
             )}
           </div>
-
-          {/* 타이틀 */}
           <p className="min-w-0 flex-1 truncate text-sm text-gray-800">
             {it.title}
           </p>
-
-          {/* > 아이콘 */}
           <svg
             className="h-4 w-4 shrink-0 text-gray-400"
             viewBox="0 0 24 24"
@@ -131,7 +250,7 @@ const ItemRowList: React.FC<{
   );
 };
 
-// 섹션 타이틀 + "보러가기" 버튼 영역
+/** 섹션 헤더 */
 const SectionHeader: React.FC<{
   label: string;
   count: number;
@@ -160,6 +279,7 @@ const SectionHeader: React.FC<{
   </div>
 );
 
+/* ---------------- Main ---------------- */
 const ProfileDetails: React.FC<Props> = ({
   avatarUrl,
   nickname,
@@ -173,21 +293,23 @@ const ProfileDetails: React.FC<Props> = ({
   onClickSelling,
   onItemClick,
   onClickStartAuction,
+  useMockOnEmpty = true,
+  mockSoldItems,
+  mockSellingItems,
 }) => {
-  // 매너온도 처리
+  // 매너온도
   const hasTemp =
     typeof temperature === "number" && Number.isFinite(temperature);
-
   const temp = hasTemp
     ? parseFloat(clamp(temperature as number, 0, 100).toFixed(1))
     : null;
   const knobLeft = temp !== null ? `${temp}%` : "0%";
 
-  // 서버에서 받은 실제 아이템
+  // 섹션 데이터
   const soldList = soldPreview.slice(0, 3);
   const sellingList = sellingPreview.slice(0, 3);
 
-  // 카운트 표시용
+  // 카운트 표기
   const displaySoldCount =
     typeof soldCount === "number" && soldCount >= 0
       ? soldCount
@@ -231,11 +353,10 @@ const ProfileDetails: React.FC<Props> = ({
             <p className="mt-1 truncate text-sm text-gray-500">{email}</p>
           ) : null}
 
-          {/* 매너온도 게이지 */}
+          {/* 매너온도 */}
           <div className="mt-4 w-[350px] max-w-full">
             <div className="mb-1 flex items-center justify-between text-[11px] leading-none text-gray-700">
               <span className="font-medium text-gray-700">매너온도</span>
-
               {temp === null ? (
                 <span className="font-normal text-gray-400">-</span>
               ) : (
@@ -251,14 +372,12 @@ const ProfileDetails: React.FC<Props> = ({
             <div className="relative h-[10px] rounded-full bg-gray-900/90 shadow-[inset_0_0_4px_rgba(0,0,0,0.4)]">
               {temp !== null && (
                 <>
-                  {/* 진행 바 */}
                   <div
                     className="bg-purple absolute inset-y-0 left-0 rounded-full transition-[width] duration-300"
                     style={{ width: `${temp}%` }}
                   />
-                  {/* 노브 */}
                   <div
-                    className="absolute top-1/2 h-[18px] w-[18px] -translate-x-1/2 -translate-y-1/2 rounded-full border-[2px] border-white bg-purple shadow-[0_4px_12px_rgba(131,34,191,0.5)]"
+                    className="bg-purple absolute top-1/2 h-[18px] w-[18px] -translate-x-1/2 -translate-y-1/2 rounded-full border-[2px] border-white shadow-[0_4px_12px_rgba(131,34,191,0.5)]"
                     style={{ left: knobLeft }}
                     aria-hidden="true"
                   />
@@ -283,7 +402,9 @@ const ProfileDetails: React.FC<Props> = ({
           items={soldList}
           emptyText="판매완료 물품이 없습니다."
           onItemClick={(id) => onItemClick?.(id)}
-          // 판매완료 섹션은 경매 시작 CTA 필요 없으니까 onClickStartAuction 안 넘김
+          useMockOnEmpty={useMockOnEmpty}
+          mockItems={mockSoldItems ?? MOCK_SOLD}
+          // 판매완료 섹션은 CTA 불필요
         />
       </section>
 
@@ -301,7 +422,9 @@ const ProfileDetails: React.FC<Props> = ({
           items={sellingList}
           emptyText="판매 중인 물품이 없습니다."
           onItemClick={(id) => onItemClick?.(id)}
-          onClickStartAuction={onClickStartAuction} // ✅ 여기서만 전달
+          onClickStartAuction={onClickStartAuction}
+          useMockOnEmpty={useMockOnEmpty}
+          mockItems={mockSellingItems ?? MOCK_SELLING}
         />
       </section>
     </section>
