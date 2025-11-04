@@ -102,7 +102,10 @@ const ChatYou = ({
                 className="size-15"
               />
               <div className="text-left">
-                <p className="font-bold">{auctionTitle}</p>
+                <p className="font-bold">
+                  {auctionTitle.substring(0, 20)}
+                  {auctionTitle.length > 20 ? "..." : null}
+                </p>
                 <p className="text-g300">{currentPrice.toString()} 원</p>
               </div>
             </div>
