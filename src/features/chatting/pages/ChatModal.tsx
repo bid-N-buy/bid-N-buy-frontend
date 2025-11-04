@@ -139,7 +139,7 @@ const ChatModal = ({ onClose }: ModalProps) => {
             <>
               <button
                 onClick={handleGoToList}
-                className="font-bold text-purple-600"
+                className="text-purple font-bold"
                 aria-label="채팅목록으로 가기"
               >
                 <ChevronLeft />

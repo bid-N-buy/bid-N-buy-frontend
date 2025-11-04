@@ -140,7 +140,7 @@ const AddressModal: React.FC<Props> = ({ open, initial, onClose, onSave }) => {
           </button>
           <button
             type="button"
-            className="rounded-md bg-purple-600 px-3 py-[6px] text-[13px] text-white hover:opacity-90 disabled:opacity-60"
+            className="bg-purple rounded-md px-3 py-[6px] text-[13px] text-white hover:opacity-90 disabled:opacity-60"
             onClick={handleSave}
             disabled={submitting}
           >

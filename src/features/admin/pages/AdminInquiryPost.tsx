@@ -81,8 +81,8 @@ const AdminInquiryPost = () => {
 
       {/* 관리자 답변 */}
       {inquiry.requestContent ? (
-        <div className="mt-6 flex flex-col gap-3 rounded-md border border-purple-200 bg-purple-50 p-5 sm:gap-4">
-          <span className="inline-block w-20 rounded-md bg-purple-600 px-2 py-[2px] text-center text-[11px] font-medium text-white">
+        <div className="border-purple bg-light-purple mt-6 flex flex-col gap-3 rounded-md border p-5 sm:gap-4">
+          <span className="bg-purple inline-block w-20 rounded-md px-2 py-[2px] text-center text-[11px] font-medium text-white">
             답변
           </span>
           <h4 className="text-[14px] font-semibold text-neutral-900 sm:text-[15px]">
