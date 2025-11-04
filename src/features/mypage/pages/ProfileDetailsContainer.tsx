@@ -1,4 +1,3 @@
-// src/features/mypage/pages/ProfileDetailsContainer.tsx
 import React from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import ProfileDetails from "../components/profile/ProfileDetails";
@@ -21,7 +20,6 @@ const ProfileDetailsContainer: React.FC = () => {
 
   const { targetUserId } = useParams<{ targetUserId?: string }>();
   const isOtherUserPage = Boolean(targetUserId);
-
 
   // ✅ 내 id로 /users/:id 접근하면 /profile 로 보내 혼동 방지
   React.useEffect(() => {
@@ -57,7 +55,6 @@ const ProfileDetailsContainer: React.FC = () => {
         setOtherLoading(true);
         setOtherError(null);
 
-
         const { data } = await api.get<OtherProfileRes>(
           `/auth/other/${targetUserId}`,
           {
@@ -83,9 +80,7 @@ const ProfileDetailsContainer: React.FC = () => {
 
   // 3) 판매 프리뷰
 
-  // (A) 내 판매완료 프리뷰
-  //  - 중요: COMPLETED일 땐 ownerUserId를 넘기지 않아야
-  //          훅에서 viewingOther=false로 판단해서 /mypage/sales 타게 됨
+  // (A-1) 내 판매완료 프리뷰 (그대로)
   const {
     items: completedPreviewMine,
     count: completedCountMine,
@@ -96,12 +91,26 @@ const ProfileDetailsContainer: React.FC = () => {
     size: 3,
     sort: "end",
     enabled: !isOtherUserPage, // 내 페이지에서만
-    ownerUserId: undefined, // <= CHECK: undefined 유지
+    ownerUserId: undefined, // <= 중요: undefined 유지해야 /mypage/sales 탐
     ownerNickname: myProfile?.nickname,
   });
 
-  // (B) 진행중 프리뷰
-  // 진행중은 내 페이지/남의 페이지 둘 다 가능
+  // ✅ (A-2) 타인 '판매완료' 프리뷰 — /auctions 재활용 후 필터링
+  const {
+    items: completedPreviewOther,
+    count: completedCountOther,
+    loading: completedOtherLoading,
+    error: completedOtherError,
+  } = useSalePreview("COMPLETED", {
+    page: 0,
+    size: 3,
+    sort: "end",
+    enabled: isOtherUserPage && Boolean(targetUserId),
+    ownerUserId: targetUserId, // 핵심
+    ownerNickname: otherProfile?.nickname, // 선택
+  });
+
+  // (B) 진행중 프리뷰 (내/타인 공통)
   const ongoingEnabled = isOtherUserPage
     ? Boolean(otherProfile?.nickname)
     : Boolean(myProfile?.nickname);
@@ -127,7 +136,7 @@ const ProfileDetailsContainer: React.FC = () => {
     isOtherUserPage && (!otherProfile || otherLoading);
 
   const isLoading = isOtherUserPage
-    ? stillPreparingOther || ongoingLoading
+    ? stillPreparingOther || ongoingLoading || completedOtherLoading
     : myProfileLoading || completedLoading || ongoingLoading;
 
   if (isLoading) {
@@ -139,7 +148,7 @@ const ProfileDetailsContainer: React.FC = () => {
   }
 
   const loadError = isOtherUserPage
-    ? otherError || ongoingError
+    ? otherError || ongoingError || completedOtherError
     : myProfileError || completedError || ongoingError;
 
   if (loadError) {
@@ -175,14 +184,10 @@ const ProfileDetailsContainer: React.FC = () => {
       ? myProfile.temperature
       : null;
 
-  // 판매완료 카운트
-  const effectiveCompletedCount =
-    completedCountMine ??
-    (completedPreviewMine ? completedPreviewMine.length : 0);
-
+  // 판매완료 카운트 (타인은 completedPreviewOther 기반)
   const soldCount = isOtherUserPage
-    ? (otherProfile?.salesCompletedCount ?? 0)
-    : effectiveCompletedCount;
+    ? (completedCountOther ?? completedPreviewOther?.length ?? 0)
+    : (completedCountMine ?? completedPreviewMine?.length ?? 0);
 
   // 판매중 카운트
   const effectiveOngoingCount =
@@ -197,7 +202,10 @@ const ProfileDetailsContainer: React.FC = () => {
     : effectiveOngoingCount;
 
   // 미리보기 아이템들
-  const soldPreview = isOtherUserPage ? [] : (completedPreviewMine ?? []);
+  const soldPreview = isOtherUserPage
+    ? (completedPreviewOther ?? [])
+    : (completedPreviewMine ?? []);
+
   const sellingPreview = ongoingPreviewRaw ?? [];
 
   // 6) 핸들러
@@ -217,7 +225,6 @@ const ProfileDetailsContainer: React.FC = () => {
 
   // ✅ 새 핸들러: 경매 시작하기 버튼 눌렀을 때 이동
   const handleClickStartAuction = () => {
-    // 여기 라우트는 실제 등록/작성 페이지에 맞춰서 바꿔줘
     nav("/auctions/new");
   };
 
@@ -235,7 +242,7 @@ const ProfileDetailsContainer: React.FC = () => {
       onClickSold={handleClickSoldList}
       onClickSelling={handleClickSellingList}
       onItemClick={handleClickItem}
-      onClickStartAuction={handleClickStartAuction} // ⬅ 추가된 부분
+      onClickStartAuction={handleClickStartAuction}
     />
   );
 };

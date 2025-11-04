@@ -70,19 +70,6 @@ const LoginForm: React.FC = () => {
   const location = useLocation();
 
   /** (DEV) 스토어 변경 로그 */
-  useEffect(() => {
-    const unsub = useAuthStore.subscribe((state, prev) => {
-      if (import.meta.env.DEV) {
-        console.debug("[auth] changed", {
-          accessChanged: state.accessToken !== prev.accessToken,
-          refreshChanged: state.refreshToken !== prev.refreshToken,
-          profileChanged: state.profile !== prev.profile,
-          userId: state.userId,
-        });
-      }
-    });
-    return unsub;
-  }, []);
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent<HTMLFormElement>) => {
@@ -190,10 +177,7 @@ const LoginForm: React.FC = () => {
   }, [loading]);
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="m-auto  w-[350px] space-y-4"
-    >
+    <form onSubmit={handleSubmit} className="m-auto w-[350px] space-y-4">
       {/* 이메일 */}
       <input
         name="email"
