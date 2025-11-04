@@ -190,7 +190,7 @@ const Header = () => {
         {/* 검색 (데스크탑) */}
         <form
           onSubmit={handleSearch}
-          className="text-g100 focus-within:border-purple border-g400 dark:text-g400 text-h7 hidden w-100 items-center justify-between rounded-md border px-3 py-2.5 md:flex lg:w-170 dark:bg-gray-900 dark:placeholder:text-gray-600"
+          className="text-g100 focus-within:border-purple border-g400 text-h7 hidden w-100 items-center justify-between rounded-md border px-3 py-2.5 md:flex lg:w-170"
         >
           <input
             type="text"
