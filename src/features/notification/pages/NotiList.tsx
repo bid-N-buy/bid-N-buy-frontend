@@ -5,7 +5,7 @@ import { Bell, Megaphone, TriangleAlert } from "lucide-react";
 
 const notiList = ({ notis }: NotiModalProps) => {
   return (
-    <ul className="h-full overflow-y-auto">
+    <ul className="h-full">
       {notis.length === 0 && (
         <div className="text-g300 flex h-full items-center justify-center text-sm">
           알림이 없습니다.
