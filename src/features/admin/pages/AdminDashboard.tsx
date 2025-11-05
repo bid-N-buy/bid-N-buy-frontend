@@ -25,18 +25,20 @@ const AdminDashboard = () => {
   }, []);
 
   return (
-    <div className="flex flex-col gap-10">
-      <div className="rounded-lg border border-gray-300 p-6">
-        <h3 className="mb-4 font-bold">문의/신고 현황</h3>
-        <AdmininquiryList inquiryList={inquiryList} />
-      </div>
-      <div className="rounded-lg border border-gray-300 p-6">
-        <h3 className="mb-4 font-bold">회원 목록</h3>
-        <AdminUserList userList={userList} />
-      </div>
-      <div className="rounded-lg border border-gray-300 p-6">
-        <h3 className="mb-4 font-bold">거래글 목록</h3>
-        <AdminAuctionList auctions={auctions} />
+    <div className="h-screen overflow-y-auto">
+      <div className="flex flex-col gap-10">
+        <div className="rounded-lg border border-gray-300 p-6">
+          <h3 className="mb-4 font-bold">문의/신고 현황</h3>
+          <AdmininquiryList inquiryList={inquiryList} />
+        </div>
+        <div className="rounded-lg border border-gray-300 p-6">
+          <h3 className="mb-4 font-bold">회원 목록</h3>
+          <AdminUserList userList={userList} />
+        </div>
+        <div className="rounded-lg border border-gray-300 p-6">
+          <h3 className="mb-4 font-bold">거래글 목록</h3>
+          <AdminAuctionList auctions={auctions} />
+        </div>
       </div>
     </div>
   );
