@@ -182,8 +182,8 @@ const LoginForm: React.FC = () => {
         type="email"
         id="email"
         placeholder="이메일을 입력해 주세요"
-        // value={email}
-        value="dinosaur7656@gmail.com"
+        value={email}
+        // value="dinosaur7656@gmail.com"
         onChange={(e) => setEmail(e.target.value)}
         className="hover:border-purple focus:border-purple h-[50px] w-full rounded-md border px-3 outline-none focus:border-2"
         disabled={loading}
@@ -197,8 +197,8 @@ const LoginForm: React.FC = () => {
         type="password"
         id="password"
         placeholder="비밀번호를 입력해 주세요"
-        // value={password}
-        value="abcd1234"
+        value={password}
+        // value="abcd1234"
         onChange={(e) => setPassword(e.target.value)}
         className="hover:border-purple focus:border-purple h-[50px] w-full rounded-md border px-3 outline-none focus:border-2"
         disabled={loading}
