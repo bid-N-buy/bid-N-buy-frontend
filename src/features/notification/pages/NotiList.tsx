@@ -14,24 +14,7 @@ const NotiList = ({ notis, onChatAdd }: NotiModalProps) => {
 
   const handleChatAdd = async (auctionId: number, sellerId: number) => {
     if (!token) return;
-
-    try {
-      const response = await api.post(
-        `/chatrooms/${auctionId}`,
-        { sellerId },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      const chatroomId = response.data.chatroomId;
-      await makeChatRoomInAuc(token, sellerId, auctionId);
-      openChatRoom(chatroomId);
-    } catch (error) {
-      console.error("❌ 채팅방 생성 실패:", error);
-    }
-  };
-
+    
   return (
     <ul className="h-full">
       {notis.length === 0 && (
