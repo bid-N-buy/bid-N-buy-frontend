@@ -36,7 +36,7 @@ type ChatModalAction = {
     sellerId: number,
     auctionId: number
   ) => Promise<void>;
-  handleNewChatMessage: (message) => Promise<void>;
+  handleNewChatMessage: (message: any) => Promise<void>;
 };
 
 type ChatModalStoreProps = ChatModalAction & ChatModalState;
@@ -111,6 +111,7 @@ export const useChatModalStore = create<ChatModalStoreProps>((set, get) => ({
 
       get().setChatList(response.data);
     } catch (e) {
+      console.error("초기 unreadCount 로드 실패:", e);
       set({ error: "초기 unreadCount 로드 실패", loading: false });
       return;
     } finally {
@@ -125,6 +126,7 @@ export const useChatModalStore = create<ChatModalStoreProps>((set, get) => ({
       });
       get().setChatList(response.data);
     } catch (e) {
+      console.error("채팅 모달 열려 있는 중 갱신:", e);
       return;
     }
   },
