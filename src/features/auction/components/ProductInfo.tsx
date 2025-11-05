@@ -8,7 +8,6 @@ import api from "../../../shared/api/axiosInstance";
 import { EllipsisVertical } from "lucide-react";
 import { formatDate } from "../../../shared/utils/datetime";
 import { buildImageUrl } from "../../../shared/utils/imageUrl";
-// import { useChatRoomAuc } from "../../chatting/api/useChatRoom";
 import { useBid } from "../hooks/useBid";
 import WishButton from "../../wish/components/WishButton";
 import { deleteAuction } from "../api/auctions";
@@ -237,6 +236,7 @@ const ProductInfo = ({
       // 채팅 모달이 헤더에 종속된 컴포넌트이므로 zustand로 상태 변경
       useChatModalStore.getState().openChatRoom(chatroomId);
     } catch (error) {
+      console.error("채팅방 생성 실패:", error);
       showToast("채팅방 생성에 실패했습니다.", "error");
     }
   };

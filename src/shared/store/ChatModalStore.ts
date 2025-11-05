@@ -177,7 +177,7 @@ export const useChatModalStore = create<ChatModalStoreProps>((set, get) => ({
       set({ loading: false });
     }
   },
-  // 경매 상세페이지 및 알림에서 챗룸 만들 때 사용
+  // 경매 상세페이지 및 알림에서 만들어진 챗룸 바로 열 때 사용
   makeChatRoomInAuc: async (accessToken, sellerId, auctionId) => {
     try {
       set({
@@ -225,6 +225,7 @@ export const useChatModalStore = create<ChatModalStoreProps>((set, get) => ({
       };
 
       set({ chatRoom: fullRoomData });
+      get().refetchChatList(accessToken);
     } catch (error) {
       set({
         error: `채팅방을 불러올 수 없습니다: ${error}`,
