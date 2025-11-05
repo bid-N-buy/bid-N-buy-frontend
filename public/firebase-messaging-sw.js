@@ -17,14 +17,15 @@ const messaging = firebase.messaging();
 messaging.onBackgroundMessage((payload) => {
   console.log("📩 백그라운드 메시지 수신:", payload);
 
-  const notificationTitle = payload.notification?.title || "알림";
-  const notificationOptions = {
-    body: payload.notification?.body,
-    icon: "src/assets/img/Bid&Buy.png", // 필요시 변경
-    data: payload.data || {}, // 클릭 시 데이터 전달 가능
+  // 이제 payload.data 안에 모든 정보가 들어있음
+  const data = payload.data || {};
+  const title = data.title || "📢 새 알림";
+  const options = {
+    body: data.body || data.content || "새로운 알림이 도착했습니다.",
+    icon: "/src/assets/img/Bid&Buy.png", // public 경로 기준으로 변경 권장
+    data, // 클릭 시 전달할 데이터
   };
-
-  self.registration.showNotification(notificationTitle, notificationOptions);
+  self.registration.showNotification(title, options);
 });
 
 // 알림 클릭 이벤트 핸들링 (선택)

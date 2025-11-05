@@ -157,9 +157,8 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthInitGate />
-      {/* 로그인 상태 감지 후 FCM 등록 */}
+      {/* 알림 항상 유지되도록 최상단에 배치 */}
       <FcmInitializer />
-      {/* 포그라운드 알림 수신 */}
       <FcmListener />
       <Routes>
         {/* 기본 레이아웃 */}
