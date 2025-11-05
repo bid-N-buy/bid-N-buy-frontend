@@ -142,7 +142,7 @@ function AdminLayout() {
     <div className="min-h-screen bg-white">
       <main className="relative flex">
         <AdminAsideMenu />
-        <section className="w-full p-10">
+        <section className="h-screen w-full overflow-y-auto p-10">
           <Outlet />
         </section>
       </main>
