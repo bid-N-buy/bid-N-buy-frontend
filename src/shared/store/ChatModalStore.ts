@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import type {
   ChatListItemProps,
-  ChatMessageProps,
+  // ChatMessageProps,
   ChatRoomProps,
 } from "../../features/chatting/types/ChatType";
 import api from "../api/axiosInstance";
