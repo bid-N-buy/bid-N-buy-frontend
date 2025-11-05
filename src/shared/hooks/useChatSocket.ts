@@ -7,9 +7,7 @@ import { useChatModalStore } from "../store/ChatModalStore";
 
 export const useChatSocket = () => {
   const token = useAuthStore((s) => s.accessToken);
-  const shouldReloadChatrooms = useChatModalStore(
-    (s) => s.shouldReloadChatrooms
-  );
+  const totalUnreadCount = useChatModalStore((s) => s.totalUnreadCount);
   const clientRef = useRef<Client | null>(null);
 
   useEffect(() => {
@@ -45,5 +43,5 @@ export const useChatSocket = () => {
       client.deactivate();
       clientRef.current = null;
     };
-  }, [token, shouldReloadChatrooms]);
+  }, [token, totalUnreadCount]);
 };

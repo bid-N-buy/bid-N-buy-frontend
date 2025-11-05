@@ -18,7 +18,6 @@ type ChatModalState = {
   totalUnreadCount: number;
   loading: boolean;
   error: string | null;
-  shouldReloadChatrooms: boolean;
 };
 type ChatModalAction = {
   openChatList: () => void;
@@ -38,7 +37,6 @@ type ChatModalAction = {
     auctionId: number
   ) => Promise<void>;
   handleNewChatMessage: (message: any) => Promise<void>;
-  toggleReloadChatrooms: () => void;
 };
 
 type ChatModalStoreProps = ChatModalAction & ChatModalState;
@@ -63,9 +61,6 @@ export const useChatModalStore = create<ChatModalStoreProps>((set, get) => ({
   totalUnreadCount: 0,
   loading: false,
   error: null,
-  shouldReloadChatrooms: false,
-  toggleReloadChatrooms: () =>
-    set({ shouldReloadChatrooms: !get().shouldReloadChatrooms }),
 
   // 채팅 모달 여는 상태
   openChatList: () =>
@@ -277,7 +272,6 @@ export const useChatModalStore = create<ChatModalStoreProps>((set, get) => ({
       });
       const serverList = response.data;
       updateChatState(serverList, set);
-      get().toggleReloadChatrooms();
     } catch (e) {
       console.error("실시간 메시지 상태 갱신 오류:", e);
       return;
