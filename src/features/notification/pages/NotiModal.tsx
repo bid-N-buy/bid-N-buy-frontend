@@ -9,13 +9,12 @@ import { useAuthStore } from "../../auth/store/authStore";
 
 const NotiModal = ({ onClose, onDelete }: ModalProps) => {
   const modalRef = useRef<HTMLDivElement>(null);
-  const { makeChatRoomInAuc } = useChatModalStore();
-  const token = useAuthStore((s) => s.accessToken);
 
+  // state를 빈 배열로 시작
   const [notis, setNotis] = useState<NotiListProps[]>([]);
-  const accessToken = useAuthStore((state) => state.accessToken);
-  const { notis: realtimeNotis } = useNotiStore(); // 실시간 알림 접근
 
+  // store에서 토큰 꺼내오기
+  const accessToken = useAuthStore((state) => state.accessToken);
 
   // 전체 삭제
   const handleDeleteAll = async () => {
@@ -24,14 +23,14 @@ const NotiModal = ({ onClose, onDelete }: ModalProps) => {
       await api.delete("/notifications", {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
-      setNotis([]);
-      if (onDelete) onDelete();
+      setNotis([]); // UI 반영
+      if (onDelete) onDelete(); // 부모 prop도 그대로 호출해서 기존 흐름 유지
     } catch (err) {
       console.error("전체 삭제 실패:", err);
     }
   };
 
-  // 모달 열릴 때 전체 읽음 처리
+  // (추가)모달 열릴 때 전체 읽음 처리
   useEffect(() => {
     const markAllAsRead = async () => {
       if (!accessToken) return;
@@ -39,6 +38,7 @@ const NotiModal = ({ onClose, onDelete }: ModalProps) => {
         await api.patch("/notifications/read-all", null, {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
+        // 프론트에서도 상태 업데이트
         setNotis((prev) => prev.map((n) => ({ ...n, read: true })));
       } catch (err) {
         console.error("전체 읽음 처리 실패:", err);
@@ -46,9 +46,9 @@ const NotiModal = ({ onClose, onDelete }: ModalProps) => {
     };
 
     markAllAsRead();
-  }, [accessToken]);
+  }, [accessToken]); // 모달이 mount 될 때 실행됨
 
-  // ✅ 서버 알림 + 실시간 알림 병합
+  // 알림 조회
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
@@ -63,32 +63,22 @@ const NotiModal = ({ onClose, onDelete }: ModalProps) => {
         });
 
         if (!data || (data as any).status === 401) {
-          console.warn("세션 만료");
+          console.warn(" 세션 만료");
           setNotis([]);
           return;
         }
 
-        const serverNotis = data.map((n) => ({
-          notificationId: BigInt(n.notificationId),
-          userId: n.userId ? BigInt(n.userId) : undefined,
-          type: n.type,
-          content: n.content,
-          read: n.read,
-          createdAt: n.createdAt,
-          deletedAt: n.deletedAt,
-          auctionId: n.auctionId ? Number(n.auctionId) : undefined,
-          sellerId: n.sellerId ? Number(n.sellerId) : undefined,
-        }));
-
-        // ✅ 서버 + 실시간 알림 병합 (중복 제거)
-        const merged = [...serverNotis, ...realtimeNotis].reduce((acc, cur) => {
-          if (!acc.some((n) => n.notificationId === cur.notificationId)) {
-            acc.push(cur);
-          }
-          return acc;
-        }, [] as NotiListProps[]);
-
-        setNotis(merged);
+        setNotis(
+          data.map((n) => ({
+            notificationId: BigInt(n.notificationId),
+            userId: n.userId ? BigInt(n.userId) : undefined,
+            type: n.type,
+            content: n.content,
+            read: n.read,
+            createdAt: n.createdAt,
+            deletedAt: n.deletedAt,
+          }))
+        );
       } catch (err) {
         console.error("알림 조회 실패:", err);
       }
@@ -127,7 +117,7 @@ const NotiModal = ({ onClose, onDelete }: ModalProps) => {
           </button>
         </div>
       </div>
-      <div className="h-[calc(100%-59px)] overflow-x-hidden overflow-y-auto">
+      <div className="overflow-hidden">
         <NotiList notis={notis} />
       </div>
     </div>
