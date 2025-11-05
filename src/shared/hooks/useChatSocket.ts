@@ -7,6 +7,9 @@ import { useChatModalStore } from "../store/ChatModalStore";
 
 export const useChatSocket = () => {
   const token = useAuthStore((s) => s.accessToken);
+  const shouldReloadChatrooms = useChatModalStore(
+    (s) => s.shouldReloadChatrooms
+  );
   const clientRef = useRef<Client | null>(null);
 
   useEffect(() => {
@@ -18,8 +21,7 @@ export const useChatSocket = () => {
       reconnectDelay: 5000,
       onConnect: () => {
         // 서버에 있는 모든 방 구독
-        // → 서버가 어떤 방에 내가 속했는지 push 안 해주므로
-        //    초기 한 번 /chatrooms/list 불러서 구독 목록 구성
+        // 서버가 어떤 방에 내가 속했는지 push 안 해주므로 구독 목록 구성
         api
           .get("/chatrooms/list", {
             headers: { Authorization: `Bearer ${token}` },
@@ -43,5 +45,5 @@ export const useChatSocket = () => {
       client.deactivate();
       clientRef.current = null;
     };
-  }, [token]);
+  }, [token, shouldReloadChatrooms]);
 };
