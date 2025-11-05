@@ -10,6 +10,9 @@ const Footer = () => {
           {/* 좌측 policy + 문의 */}
           <div>
             <h2 className="mb-1.5 text-base font-semibold">Bid&Buy</h2>
+            <div className="mb-1.5">
+              TEAM CHANCE : 박현서, 박시현, 마하은, 염승엽, 박상혁, 강기병
+            </div>
 
             <div className="mb-1.5">
               <a
