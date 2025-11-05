@@ -14,7 +14,7 @@ const NotiList = ({ notis, onChatAdd }: NotiModalProps) => {
 
   const handleChatAdd = async (auctionId: number, sellerId: number) => {
     if (!token) return;
-    
+
   return (
     <ul className="h-full">
       {notis.length === 0 && (
@@ -25,14 +25,6 @@ const NotiList = ({ notis, onChatAdd }: NotiModalProps) => {
       {notis.map((noti) => (
         <li
           key={noti.notificationId}
-          onClick={() => {
-            console.log("🖱️ [알림 클릭됨]:", noti);
-            if (noti.auctionId && noti.sellerId) {
-              handleChatAdd(noti.auctionId, noti.sellerId);
-            } else {
-              console.warn("⚠️ [FCM] 채팅 생성 정보 부족:", noti);
-            }
-          }}
           className={`border-g400 flex gap-2 border-b p-4 hover:bg-gray-50 ${noti.content.length < 27 && `items-center`}`}
         >
           {noti.type.toLowerCase() === "alert" ? (
