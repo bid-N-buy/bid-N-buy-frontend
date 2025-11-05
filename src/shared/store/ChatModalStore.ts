@@ -36,7 +36,7 @@ type ChatModalAction = {
     sellerId: number,
     auctionId: number
   ) => Promise<void>;
-  handleNewChatMessage: (message: ChatMessageProps | string) => Promise<void>;
+  handleNewChatMessage: (message) => Promise<void>;
 };
 
 type ChatModalStoreProps = ChatModalAction & ChatModalState;
@@ -271,6 +271,7 @@ export const useChatModalStore = create<ChatModalStoreProps>((set, get) => ({
       const serverList = response.data;
       updateChatState(serverList, set);
     } catch (e) {
+      console.error("실시간 메시지 상태 갱신 오류:", e);
       return;
     }
   },
