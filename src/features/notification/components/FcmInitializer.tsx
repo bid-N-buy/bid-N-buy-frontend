@@ -19,13 +19,11 @@ const FcmInitializer = () => {
     const isAdminLoggedIn = accessToken && adminId;
 
     if (!isUserLoggedIn && !isAdminLoggedIn) {
-      console.warn("🚫 로그인 정보 없음 → FCM 등록 중단");
       return;
     }
 
     const registerFcm = async () => {
       try {
-        console.log("🔍 현재 알림 권한 상태:", Notification.permission);
 
         // case 1: 이미 차단됨
         if (Notification.permission === "denied") {
@@ -41,7 +39,6 @@ const FcmInitializer = () => {
         // case 2: 아직 선택 안함 → 요청
         if (Notification.permission === "default") {
           const perm = await Notification.requestPermission();
-          console.log("🔔 권한 요청 결과:", perm);
 
           if (perm !== "granted") {
             // 거부하면 denied와 동일한 메시지
@@ -56,14 +53,12 @@ const FcmInitializer = () => {
         const fcmToken = await getToken(messaging, {
           vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,
         });
-        console.log("✅ 발급된 FCM 토큰:", fcmToken);
         if (fcmToken) {
           await api.post(
             "notifications/token",
             { token: fcmToken },
             { headers: { Authorization: `Bearer ${accessToken}` } }
           );
-          console.log("📩 FCM 토큰 서버 등록 완료");
         }
       } catch (err: any) {
         if (err.response) {

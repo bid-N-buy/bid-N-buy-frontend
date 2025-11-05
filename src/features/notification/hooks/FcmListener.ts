@@ -12,10 +12,8 @@ const FcmListener = () => {
   const { makeChatRoomInAuc, openChatRoom } = useChatModalStore();
 
   useEffect(() => {
-    console.log("🟢 [FCM Listener] 초기화 완료, 메시지 대기 중...");
 
     const unsubscribe = onMessage(messaging, async (payload) => {
-      console.log("📩 [FCM 수신됨]:", payload);
 
       const data = payload.data || {};
 
@@ -26,9 +24,6 @@ const FcmListener = () => {
       const auctionId = data.auctionId ? Number(data.auctionId) : undefined;
       const sellerId = data.sellerId ? Number(data.sellerId) : undefined;
 
-      console.log("🧾 [정제된 데이터]:", {
-        notificationId, type, content, auctionId, sellerId, createdAt,
-      });
 
       // ✅ Zustand에 알림 저장 (onClick 제외)
       addNoti({
@@ -44,7 +39,6 @@ const FcmListener = () => {
     });
 
     return () => {
-      console.log("🔴 [FCM Listener] 언마운트됨");
       unsubscribe();
     };
   }, [addNoti, token, makeChatRoomInAuc, openChatRoom]);

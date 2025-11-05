@@ -10,7 +10,6 @@ export const requestFcmToken = async (): Promise<string | null> => {
       const token = await getToken(messaging, {
         vapidKey: "BL8jYH3exgJIwWRlS6rNm15Anq0AQ27VYUJECXEFbvAhR2CE5EpAiEAo66J2CTKHDDgpp2VUyiKMG2573yIGCKU",
       });
-      console.log("✅ FCM 토큰 발급 성공:", token);
       return token;
     } else {
       console.warn("❌ 알림 권한 거부됨");

@@ -15,7 +15,6 @@ const messaging = firebase.messaging();
 
 // 백그라운드에서 메시지 수신할 때
 messaging.onBackgroundMessage((payload) => {
-  console.log("📩 백그라운드 메시지 수신:", payload);
 
   // 이제 payload.data 안에 모든 정보가 들어있음
   const data = payload.data || {};

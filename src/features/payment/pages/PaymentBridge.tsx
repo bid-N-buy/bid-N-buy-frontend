@@ -16,7 +16,6 @@ export default function PaymentBridge() {
 
     if (code) {
       showToast(message || "결제 실패", "error");
-      console.log("잘못된 요청 : " + message);
       window.history.back(); // 이전 페이지로 이동
       return;
     }
@@ -37,12 +36,10 @@ export default function PaymentBridge() {
         auctionId: searchParams.get("auctionId"),
       })
       .then(() => {
-        console.log("결제 성공");
         showToast("결제 성공!", "success");
         window.history.back(); // 이전 페이지로 이동
       })
       .catch(() => {
-        console.log("결제 fail");
         showToast("승인 실패", "error");
         window.history.back(); // 이전 페이지로 이동
       });
