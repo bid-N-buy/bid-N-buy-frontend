@@ -49,7 +49,7 @@ const ChatRoom = ({
       });
       setMessages(response.data);
     } catch (error) {
-      console.error("Failed to load chat log:", error);
+      console.error("채팅 로그 불러오기 실패:", error);
       setError(`채팅 로그를 불러올 수 없습니다: ${error}`);
     }
   };
@@ -57,7 +57,6 @@ const ChatRoom = ({
   // 웹소켓 전체 로직
   const webSocketLogic = () => {
     if (clientRef.current?.connected) {
-      console.log("재연결 방지");
       return;
     }
 
@@ -77,7 +76,6 @@ const ChatRoom = ({
 
       onConnect: () => {
         setIsConnected(true);
-        console.log("✅ WebSocket Connected!");
 
         // 연결 성공 시 채팅방 구독
         const receivedDestination = `/topic/chat/room/${chatroomId}`;
@@ -89,7 +87,8 @@ const ChatRoom = ({
             handleMessageReceived(message); // 화면 변경
             handleNewChatMessage(newMessage); // 실시간 전체 메시지 읽음 상태 관리
           } catch (e) {
-            console.error("뱃지 관련 오류:", e);
+            console.error("메시지 실시간 상태 오류:", e);
+            return;
           }
         });
 
@@ -117,12 +116,14 @@ const ChatRoom = ({
             });
           } catch (e) {
             console.error("읽음 상태 파싱 오류:", e);
+            return;
           }
         });
       },
       onStompError: (frame) => {
         console.error("STOMP Error:", frame);
         setIsConnected(false);
+        return;
       },
 
       onWebSocketClose: () => {
@@ -144,6 +145,7 @@ const ChatRoom = ({
       });
     } catch (e) {
       console.error("메시지 파싱 오류:", e, message.body);
+      return;
     }
   };
   // 새 메시지 생길 시 자동 스크롤 이동
@@ -253,11 +255,15 @@ const ChatRoom = ({
       messageType: "IMAGE",
     };
 
-    client.publish({
-      destination: `/app/chat/message`,
-      body: JSON.stringify(messageImage),
-      headers: { "content-type": "application/json" },
-    });
+    // 낙관적 업데이트
+    useChatModalStore.getState().handleNewChatMessage(messageImage.imageUrl);
+
+    // 이중 전송됨
+    // client.publish({
+    //   destination: `/app/chat/message`,
+    //   body: JSON.stringify(messageImage),
+    //   headers: { "content-type": "multipart/form-data" },
+    // });
   };
 
   // [전송] 채팅(기본) 메시지
@@ -295,7 +301,6 @@ const ChatRoom = ({
       .find((msg) => msg.senderId !== userId && !msg.read);
 
     if (!latestUnreadMessage) {
-      console.log("읽을 상대방 메시지가 없거나 모두 읽었습니다.");
       refetchChatList(token);
       return;
     }
@@ -316,9 +321,9 @@ const ChatRoom = ({
       );
       markAsRead(chatroomId);
       refetchChatList(token);
-      console.log("채팅 읽음 상태 전송 및 채팅 목록 갱신 완료");
-    } catch (error) {
-      console.error("읽음 상태 전송 실패:", error);
+    } catch (e) {
+      console.error("읽음 상태 전송 실패:", e);
+      return;
     }
   };
 
@@ -340,7 +345,6 @@ const ChatRoom = ({
       return;
     }
     if (messages.length === 0) {
-      console.log("메시지 기록이 없어 읽음 요청을 건너뜁니다.");
       return;
     }
     sendReadStatus();

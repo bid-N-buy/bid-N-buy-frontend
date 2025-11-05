@@ -25,6 +25,7 @@ import { useChatModalStore } from "../store/ChatModalStore";
 import { useNotiStore } from "../../features/notification/store/notiStore";
 import { useCategoryStore } from "../../features/auction/store/categoryStore";
 import type { CategoryNode } from "../../features/auction/api/categories";
+import { useAuctionFormStore } from "../../features/auction/store/auctionFormStore";
 
 const Header = () => {
   useChatSocket();
@@ -134,6 +135,7 @@ const Header = () => {
   };
 
   // 로그아웃
+  const resetAuctionForm = useAuctionFormStore((s) => s.reset);
   const handleLogout = async (): Promise<void> => {
     try {
       await api.post("/auth/logout", null, { withCredentials: true });
@@ -141,6 +143,8 @@ const Header = () => {
       // 서버 실패해도 로컬 정리는 진행
     } finally {
       clearAuth();
+      // 경매 등록 상태 초기화
+      resetAuctionForm();
       navigate("/", { replace: true });
       setIsMobileMenuOpen(false);
     }
@@ -186,7 +190,7 @@ const Header = () => {
         {/* 검색 (데스크탑) */}
         <form
           onSubmit={handleSearch}
-          className="text-g100 focus-within:border-purple border-g400 dark:text-g400 text-h7 hidden w-100 items-center justify-between rounded-md border px-3 py-2.5 md:flex lg:w-170 dark:bg-gray-900 dark:placeholder:text-gray-600"
+          className="text-g100 focus-within:border-purple border-g400 text-h7 hidden w-100 items-center justify-between rounded-md border px-3 py-2.5 md:flex lg:w-170"
         >
           <input
             type="text"

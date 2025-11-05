@@ -6,8 +6,6 @@ import NotiList from "./NotiList";
 import { X } from "lucide-react";
 import api from "../../../shared/api/axiosInstance";
 import { useAuthStore } from "../../auth/store/authStore";
-import { useNotiStore } from "../store/notiStore";
-import { useChatModalStore } from "../../../shared/store/ChatModalStore";
 
 const NotiModal = ({ onClose, onDelete }: ModalProps) => {
   const modalRef = useRef<HTMLDivElement>(null);
@@ -97,9 +95,9 @@ const NotiModal = ({ onClose, onDelete }: ModalProps) => {
     };
 
     fetchNotifications();
-  }, [accessToken, realtimeNotis]); // ✅ 실시간 알림 들어오면 다시 렌더링
+  }, [accessToken]);
 
-  // 모달 닫기 (외부 클릭 시)
+  // modal창 닫기: 여백 누를 시 꺼지도록
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
@@ -112,7 +110,7 @@ const NotiModal = ({ onClose, onDelete }: ModalProps) => {
 
   return (
     <div
-      className="border-g500 fixed inset-0 z-51 h-full w-full rounded-md border-1 bg-white text-wrap shadow-lg md:absolute md:inset-auto md:top-[72px] md:right-4 md:h-150 md:w-100"
+      className="border-g500 fixed inset-0 z-51 h-full w-full border-1 bg-white text-wrap shadow-lg md:absolute md:inset-auto md:top-[72px] md:right-4 md:h-150 md:w-100 md:rounded-md"
       ref={modalRef}
     >
       <div className="border-purple flex flex-shrink-0 items-center justify-between border-b p-4">
@@ -129,7 +127,9 @@ const NotiModal = ({ onClose, onDelete }: ModalProps) => {
           </button>
         </div>
       </div>
-      <NotiList notis={notis} />
+      <div className="h-[calc(100%-59px)] overflow-x-hidden overflow-y-auto">
+        <NotiList notis={notis} />
+      </div>
     </div>
   );
 };

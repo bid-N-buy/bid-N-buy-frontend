@@ -97,5 +97,14 @@ export const useAuctionFormStore = create<FormState & Actions>((set, get) => ({
     };
   },
 
-  reset: () => set(() => ({ ...initial })),
+  reset: () => {
+    const current = get();
+    // blob url 메모리 누수 방지 (revoke)
+    current.images.forEach((img) => {
+      if (img.imageUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(img.imageUrl);
+      }
+    });
+    set(() => ({ ...initial }));
+  },
 }));

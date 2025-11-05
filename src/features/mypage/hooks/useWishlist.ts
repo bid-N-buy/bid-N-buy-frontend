@@ -4,23 +4,47 @@ import api from "../../../shared/api/axiosInstance";
 import type { TradeItem, TradeStatus } from "../types/trade";
 
 /* =========================
- * 상태 문자열 -> 내부 상태 코드
+ * 날짜 유틸
  * ========================= */
-const toStatus = (raw?: string): TradeStatus => {
+const toMs = (v?: string) => {
+  if (!v) return NaN;
+  const t = new Date(v).getTime();
+  return Number.isFinite(t) ? t : NaN;
+};
+const nowMs = () => Date.now();
+
+/* =========================
+ * 상태 문자열 + 시간 -> 내부 상태 코드
+ *  - end <= now  → FINISH
+ *  - start > now → BEFORE
+ *  - 그 외 키워드 매핑
+ *  - 모호하면 SALE(가시성 보수적)
+ * ========================= */
+const toStatus = (
+  raw?: string,
+  startAt?: string,
+  endAt?: string
+): TradeStatus => {
   const s = (raw ?? "").toString().trim().toUpperCase();
 
-  // 명확한 완료/종료 우선
+  // 0) 시간 우선 보정
+  const start = toMs(startAt);
+  const end = toMs(endAt);
+
+  if (Number.isFinite(end) && end <= nowMs()) return "FINISH";
+  if (Number.isFinite(start) && start > nowMs()) return "BEFORE";
+
+  // 1) 명확한 완료/종료
   if (
     /COMPLETED|COMPLETE|TRANSACTION COMPLETE|거래완료|구매확정|수취완료|정산완료|완료됨/.test(
       s
     )
   )
     return "COMPLETED";
-
   if (/FINISH|FINISHED|CLOSED|CLOSE|ENDED|END|종료|마감|유찰/.test(s))
     return "FINISH";
 
-  // 결제/배송/진행 단계
+  // 2) 결제/배송/진행
   if (
     /PROGRESS|IN PROGRESS|WAIT|결제|배송|발송|처리중|진행중|PROCESS|SHIP|PAID|PAY/.test(
       s
@@ -28,11 +52,12 @@ const toStatus = (raw?: string): TradeStatus => {
   )
     return "PROGRESS";
 
+  // 3) 판매/입찰 중
   if (/SALE|SELLING|BIDDING|입찰|판매중/.test(s)) return "SALE";
   if (/BEFORE|대기|준비중|등록전|비공개|검수/.test(s)) return "BEFORE";
 
-  // 알 수 없으면 위시에서는 보수적으로 종료 취급(리스트에서 사라진 경우 등)
-  return "FINISH";
+  // 4) 모호하면 '진행/판매 중'으로 표기
+  return "SALE";
 };
 
 /* =========================
@@ -70,8 +95,7 @@ const pickAuctionEnd = (r: any): string | undefined =>
   r.expireAt ??
   r.expiredAt ??
   r.auctionEnd ??
-  r.deadline ??
-  r.deadlineAt ??
+  // r.deadline ?? r.deadlineAt ??  // 배송/기타 마감 혼동은 제외 권장
   undefined;
 
 const pickThumbUrl = (r: any): string | null => {
@@ -102,13 +126,7 @@ const pickThumbUrl = (r: any): string | null => {
 
 const pickPrice = (r: any): number | undefined => {
   const raw =
-    r.currentPrice ??
-    r.finalPrice ??
-    r.price ??
-    r.myBidPrice ??
-    r.bidPrice ??
-    undefined;
-
+    r.currentPrice ?? r.finalPrice ?? r.price ?? r.myBidPrice ?? r.bidPrice;
   if (typeof raw === "number") return raw;
   if (typeof raw === "string" && raw.trim() !== "") {
     const n = Number(raw);
@@ -128,8 +146,21 @@ const fromWish = (r: any): TradeItem => {
   const thumbUrl = pickThumbUrl(r);
   const price = pickPrice(r);
 
+  const auctionStart = pickAuctionStart(r);
+  const auctionEnd = pickAuctionEnd(r);
+
   const statusText = r.statusText ?? r.sellingStatus ?? r.status ?? undefined;
-  const status = toStatus(statusText);
+  let status = toStatus(statusText, auctionStart, auctionEnd); // 기존 판단
+
+  // ✅ 최소 수정: 시작 전이면 무조건 BEFORE, 비정상(end < start)도 BEFORE로 보정
+  const start = toMs(auctionStart);
+  const end = toMs(auctionEnd);
+  const now = nowMs();
+  if (Number.isFinite(start) && start > now) {
+    status = "BEFORE";
+  } else if (Number.isFinite(start) && Number.isFinite(end) && end < start) {
+    status = "BEFORE";
+  }
 
   const counterparty =
     r.sellerNickname ??
@@ -138,9 +169,6 @@ const fromWish = (r: any): TradeItem => {
     r.sellerName ??
     r.nickname ??
     undefined;
-
-  const auctionStart = pickAuctionStart(r);
-  const auctionEnd = pickAuctionEnd(r);
 
   return {
     id: String(id),
@@ -163,6 +191,40 @@ const sortByEndDesc = (a: TradeItem, b: TradeItem) =>
   time(b.auctionEnd) - time(a.auctionEnd);
 const sortByStartDesc = (a: TradeItem, b: TradeItem) =>
   time(b.auctionStart) - time(a.auctionStart);
+
+/* =========================
+ * 진행/종료 판별 유틸 (UI 분류용)
+ *  - 진행중: 시작했고(!before) 아직 안 끝남(!ended)
+ *  - 종료: end <= now 또는 상태 COMPLETED/FINISH
+ * ========================= */
+export const isBeforeStart = (it: TradeItem): boolean => {
+  const start = toMs(it.auctionStart);
+  return Number.isFinite(start) && start > Date.now();
+};
+
+export const isEndedByTime = (it: TradeItem): boolean => {
+  const end = toMs(it.auctionEnd);
+  return Number.isFinite(end) && end <= Date.now();
+};
+
+export const isEndedByStatus = (it: TradeItem): boolean => {
+  const s = (it.status ?? "").toUpperCase();
+  const t = (it.statusText ?? "").toUpperCase();
+  if (s === "COMPLETED" || s === "FINISH") return true;
+  if (
+    /(COMPLETED|COMPLETE|TRANSACTION COMPLETE|거래완료|구매확정|수취완료|정산완료)/.test(
+      t
+    )
+  )
+    return true;
+  if (/(FINISH|FINISHED|CLOSED|CLOSE|ENDED|END|종료|마감|유찰)/.test(t))
+    return true;
+  return false;
+};
+
+export const isEnded = (it: TradeItem) =>
+  isEndedByTime(it) || isEndedByStatus(it);
+export const isOngoing = (it: TradeItem) => !isBeforeStart(it) && !isEnded(it);
 
 /* =========================
  * 훅
@@ -224,5 +286,29 @@ export function useWishlist(opts: UseWishlistOpts = {}) {
       : arr.sort(sortByEndDesc);
   }, [data, sort]);
 
-  return { data: sorted, loading, error };
+  // ✅ 탭용 파생 데이터 & 카운트
+  const ongoing = useMemo(() => sorted.filter(isOngoing), [sorted]);
+  const ended = useMemo(() => sorted.filter(isEnded), [sorted]);
+  const counts = useMemo(
+    () => ({
+      all: sorted.length,
+      ongoing: ongoing.length,
+      ended: ended.length,
+    }),
+    [sorted, ongoing.length, ended.length]
+  );
+
+  return {
+    data: sorted,
+    loading,
+    error,
+    // 탭 분류용
+    ongoing,
+    ended,
+    counts,
+    // 필요하면 UI에서 직접 판별도 가능
+    isBeforeStart,
+    isOngoing,
+    isEnded,
+  };
 }

@@ -125,7 +125,7 @@ export default function ThreeCompactSection({
             <button
               type="button"
               onClick={onEmptyCtaClick}
-              className="rounded-lg bg-gradient-to-r from-purple-600 to-fuchsia-500 px-4 py-2 text-sm font-semibold text-white shadow-md ring-1 ring-purple-500/50 hover:brightness-110 focus:ring-2 focus:ring-purple-400 focus:outline-none"
+              className="bg-purple hover:bg-deep-purple rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-md focus:ring-2 focus:outline-none"
             >
               {emptyCtaLabel}
             </button>

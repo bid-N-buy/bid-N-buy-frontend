@@ -1,6 +1,7 @@
 // src/features/mypage/components/profile/ProfilePreview.tsx
 import React, { useMemo } from "react";
 import { Link } from "react-router-dom";
+import defaultAvatar from "../../../../assets/avatar.svg";
 
 type Props = {
   nickname?: string;
@@ -47,15 +48,13 @@ const ProfilePreview: React.FC<Props> = ({
       {/* 본문: 모바일 세로, md부터 가로 */}
       <div className="flex min-w-0 flex-col items-stretch gap-4 md:flex-row md:items-start md:gap-6">
         {/* 아바타 */}
-        <div className="size-20 flex-shrink-0 overflow-hidden rounded-full bg-neutral-700/90 sm:size-24 md:size-[120px] lg:size-[150px]">
-          {avatarUrl ? (
-            <img
-              src={avatarUrl}
-              alt={`${nickname} avatar`}
-              className="h-full w-full object-cover"
-              loading="lazy"
-            />
-          ) : null}
+        <div className="size-20 flex-shrink-0 overflow-hidden rounded-full bg-neutral-200 sm:size-24 md:size-[120px] lg:size-[150px]">
+          <img
+            src={avatarUrl || defaultAvatar}
+            alt={`${nickname} avatar`}
+            className="h-full w-full object-cover"
+            loading="lazy"
+          />
         </div>
 
         {/* 가운데 정보 */}
@@ -107,7 +106,7 @@ const ProfilePreview: React.FC<Props> = ({
           <Link to="/profile">
             <button
               onClick={onManageProfile}
-              className="min-w-[110px] rounded-[10px] bg-white/90 px-4 py-2.5 text-[13px] font-bold text-neutral-900 shadow-[0_6px_16px_rgba(0,0,0,0.08)] transition hover:bg-white active:translate-y-[2px] lg:py-3 lg:text-[14px]"
+              className="border-purple text-purple min-w-[110px] rounded-[10px] border bg-white/90 px-4 py-2.5 text-[13px] font-bold transition hover:bg-white active:translate-y-[2px] lg:py-3 lg:text-[14px]"
             >
               프로필보기
             </button>
@@ -115,7 +114,7 @@ const ProfilePreview: React.FC<Props> = ({
           <Link to="/auctions/new">
             <button
               onClick={onAuction}
-              className="min-w-[110px] rounded-[10px] bg-white/90 px-4 py-2.5 text-[13px] font-bold text-neutral-900 shadow-[0_6px_16px_rgba(0,0,0,0.08)] transition hover:bg-white active:translate-y-[2px] lg:py-3 lg:text-[14px]"
+              className="border-purple text-purple min-w-[110px] rounded-[10px] border bg-white/90 px-4 py-2.5 text-[13px] font-bold transition hover:bg-white active:translate-y-[2px] lg:py-3 lg:text-[14px]"
             >
               경매등록
             </button>
@@ -128,7 +127,7 @@ const ProfilePreview: React.FC<Props> = ({
         <Link to="/profile" className="contents">
           <button
             onClick={onManageProfile}
-            className="rounded-2xl bg-white/90 px-3 py-2.5 text-sm font-bold text-neutral-900 shadow-[0_6px_16px_rgba(0,0,0,0.08)] transition hover:bg-white active:translate-y-[1px] sm:px-4 sm:py-3"
+            className="text-purple rounded-2xl bg-white/90 px-3 py-2.5 text-sm font-bold transition hover:bg-white active:translate-y-[1px] sm:px-4 sm:py-3"
           >
             프로필 보기
           </button>
@@ -136,7 +135,7 @@ const ProfilePreview: React.FC<Props> = ({
         <Link to="/auctions/new" className="contents">
           <button
             onClick={onAuction}
-            className="rounded-2xl bg-white/90 px-3 py-2.5 text-sm font-bold text-neutral-900 shadow-[0_6px_16px_rgba(0,0,0,0.08)] transition hover:bg-white active:translate-y-[1px] sm:px-4 sm:py-3"
+            className="text-purple rounded-2xl bg-white/90 px-3 py-2.5 text-sm font-bold transition hover:bg-white active:translate-y-[1px] sm:px-4 sm:py-3"
           >
             경매 등록
           </button>

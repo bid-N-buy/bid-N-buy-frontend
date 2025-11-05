@@ -5,9 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy:assets": "aws s3 sync ./dist s3://bid-n-buy-frontend --exclude 'index.html' --cache-control 'public, max-age=31536000, immutable' --delete",
+    "deploy:index": "aws s3 cp ./dist/index.html s3://bid-n-buy-frontend/index.html --metadata-directive REPLACE --cache-control 'no-cache, must-revalidate' --content-type 'text/html'",
+    "deploy:cf": "aws cloudfront create-invalidation --distribution-id E20IDI1EB3GD0 --paths '/index.html'",
+    "deploy": "npm run build && npm run deploy:assets && npm run deploy:index && npm run deploy:cf"
   },
   "dependencies": {
     "@stomp/stompjs": "^7.2.0",

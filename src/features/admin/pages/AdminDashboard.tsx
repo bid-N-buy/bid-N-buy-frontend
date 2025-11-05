@@ -18,8 +18,9 @@ const AdminDashboard = () => {
       getInquiryList(0);
       getUserList(0);
       getAuctionsList();
-    } catch (error) {
-      console.error("정보를 불러오는 데에 오류 발생:", error);
+    } catch (e) {
+      console.error("데이터 불러오기 실패:", e);
+      return;
     }
   }, []);
 

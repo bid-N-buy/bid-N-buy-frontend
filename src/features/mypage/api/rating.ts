@@ -22,9 +22,7 @@ export async function submitRating(
       }
     );
 
-    if (import.meta.env.DEV) {
-      console.debug("[submitRating] raw response:", res.status, res.data);
-    }
+   
 
     const data = res?.data;
 

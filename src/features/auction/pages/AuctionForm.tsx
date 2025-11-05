@@ -256,7 +256,11 @@ const AuctionForm = () => {
                     >
                       이동
                     </button>
-                    <button type="button" onClick={() => onRemoveImage(i)}>
+                    <button
+                      className="text-red"
+                      type="button"
+                      onClick={() => onRemoveImage(i)}
+                    >
                       삭제
                     </button>
                   </div>

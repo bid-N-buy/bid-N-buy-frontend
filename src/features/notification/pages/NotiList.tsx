@@ -33,7 +33,12 @@ const NotiList = ({ notis, onChatAdd }: NotiModalProps) => {
   };
 
   return (
-    <ul>
+    <ul className="h-full">
+      {notis.length === 0 && (
+        <div className="text-g300 flex h-full items-center justify-center text-sm">
+          알림이 없습니다.
+        </div>
+      )}
       {notis.map((noti) => (
         <li
           key={noti.notificationId}

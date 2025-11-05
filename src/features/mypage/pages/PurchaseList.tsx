@@ -1,18 +1,16 @@
 // src/features/mypage/pages/PurchasesPage.tsx
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { usePurchases } from "../hooks/usePurchases";
 import TradeRowCompact from "../components/items/TradeRowCompact";
 import StatusTriFilter, {
   type TriFilterValue,
 } from "../components/filters/StatusTriFilter";
 import type { TradeItem } from "../types/trade";
-
 import { confirmSettlement } from "../api/confirmSettlement";
 import { submitRating } from "../api/rating";
 
-/* =========================================================
- * 별점 모달
- * ========================================================= */
+/* ---------- 별점 모달 (포탈 + 이벤트 차단) ---------- */
 type RatingModalProps = {
   open: boolean;
   rating: number;
@@ -30,11 +28,36 @@ const RatingModal: React.FC<RatingModalProps> = ({
   onSubmit,
   submitting = false,
 }) => {
-  if (!open) return null;
+  const [mountNode, setMountNode] = useState<HTMLElement | null>(null);
 
-  return (
-    <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/40">
-      <div className="w-[320px] rounded-lg bg-white p-4 shadow-lg">
+  useEffect(() => {
+    let root = document.getElementById("modal-root") as HTMLElement | null;
+    if (!root) {
+      root = document.createElement("div");
+      root.id = "modal-root";
+      document.body.appendChild(root);
+    }
+    setMountNode(root);
+  }, []);
+
+  if (!open || !mountNode) return null;
+
+  const modal = (
+    <div
+      className="pointer-events-auto fixed inset-0 z-[9999] flex items-center justify-center bg-black/40"
+      onMouseDown={(e) => {
+        // 바깥(검은 영역) 클릭 시 닫기
+        if (e.target === e.currentTarget) onCancel();
+      }}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        className="pointer-events-auto w-[320px] rounded-lg bg-white p-4 shadow-lg"
+        // 내부 클릭은 전파 차단 (리스트 li onClick 방지)
+        onMouseDown={(e) => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
+      >
         <h3 className="mb-3 text-base font-semibold text-neutral-900">
           구매 확정 & 별점 주기
         </h3>
@@ -43,41 +66,55 @@ const RatingModal: React.FC<RatingModalProps> = ({
         </p>
 
         <div className="mb-4 flex flex-wrap gap-2">
-          {Array.from({ length: 10 }, (_, i) => i + 1).map((score) => (
-            <button
-              key={score}
-              type="button"
-              className={`flex h-8 w-8 items-center justify-center rounded border text-sm font-semibold ${
-                score === rating
-                  ? "border-purple-600 text-purple-600"
-                  : "border-neutral-300 text-neutral-500 hover:border-purple-400 hover:text-purple-400"
-              }`}
-              onClick={() => onChangeRating(score)}
-              disabled={submitting}
-              aria-label={`${score}점`}
-            >
-              {score}
-            </button>
-          ))}
+          {Array.from({ length: 10 }, (_, i) => i + 1).map((score) => {
+            const selected = score === rating;
+            return (
+              <button
+                key={score}
+                type="button"
+                className={[
+                  "flex h-8 w-8 items-center justify-center rounded border text-sm font-semibold select-none",
+                  selected
+                    ? "border-purple text-purple"
+                    : "hover:border-purple hover:text-purple text-purple border-neutral-300",
+                ].join(" ")}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (!submitting) onChangeRating(score);
+                }}
+                disabled={submitting}
+                aria-label={`${score}점`}
+              >
+                {score}
+              </button>
+            );
+          })}
         </div>
 
         <div className="flex justify-end gap-2 text-sm">
           <button
             type="button"
             className="rounded border border-neutral-300 px-3 py-1 text-neutral-500 hover:bg-neutral-50 disabled:opacity-40"
-            onClick={onCancel}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (!submitting) onCancel();
+            }}
             disabled={submitting}
           >
             취소
           </button>
           <button
             type="button"
-            className={`rounded border px-3 py-1 font-semibold disabled:opacity-40 ${
+            className={[
+              "rounded border px-3 py-1 font-semibold disabled:opacity-40",
               submitting
                 ? "cursor-not-allowed border-neutral-300 bg-neutral-100 text-neutral-400"
-                : "border-purple-600 text-purple-600 hover:bg-purple-50"
-            }`}
-            onClick={onSubmit}
+                : "border-purple text-purple hover:bg-deep-purple hover:text-white",
+            ].join(" ")}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (!submitting) onSubmit();
+            }}
             disabled={submitting}
           >
             {submitting ? "전송 중..." : "제출"}
@@ -86,114 +123,63 @@ const RatingModal: React.FC<RatingModalProps> = ({
       </div>
     </div>
   );
+
+  return createPortal(modal, mountNode);
 };
 
-/* =========================================================
- * 결제/정산 판별 & 시간 유틸
- * ========================================================= */
+/* ---------- 판정 유틸 ---------- */
 const U = (v?: string | null) => (v ?? "").toString().trim().toUpperCase();
 
-const PAID_KEYWORDS = new Set([
-  // 영문
-  "PAID",
-  "PAY_DONE",
-  "DEPOSIT_DONE",
+const normIso = (s?: string | null) => {
+  if (!s) return undefined;
+  const t = s.trim();
+  return /^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}(:\d{2})?$/.test(t)
+    ? t.replace(/\s+/, "T")
+    : t;
+};
+const parseMs = (iso?: string | null) => {
+  const n = normIso(iso);
+  if (!n) return 0;
+  const t = Date.parse(n);
+  return Number.isFinite(t) ? t : 0;
+};
+const getEndIso = (it: any): string | null =>
+  it?.auctionEnd ??
+  it?.endTime ??
+  it?.endAt ??
+  it?.deadline ??
+  it?.deadlineAt ??
+  it?.endDate ??
+  null;
+
+const SETTLED_HINTS = new Set([
+  "구매확정",
+  "수취완료",
+  "정산",
   "SETTLED",
   "SETTLEMENT_DONE",
   "PAYOUT_DONE",
-  "SUCCESS",
-  "COMPLETED",
-  "DONE",
-  // 국문 (공백/붙임 모두)
-  "결제완료",
-  "입금완료",
-  "정산완료",
-  "거래완료",
-  "결제 완료",
-  "입금 완료",
-  "정산 완료",
-  "거래 완료",
+  "PURCHASE_CONFIRMED",
 ]);
+function hasSettledHint(text?: string) {
+  const up = U(text);
+  if (!up) return false;
+  return Array.from(SETTLED_HINTS).some((kw) => up.includes(kw));
+}
 
-const ENDED_KEYWORDS = new Set([
-  "COMPLETE",
-  "COMPLETED",
-  "FINISH",
-  "FINISHED",
-  "END",
-  "ENDED",
-  "CANCEL",
-  "CANCELED",
-  "CANCELLED",
-  "FAIL",
-  "FAILED",
-  "DONE",
-  "거래 완료",
-  "거래완료",
-  "정산 완료",
-  "정산완료",
-]);
-
-const parseMs = (iso?: string | null) => {
-  if (!iso) return 0;
-  const t = Date.parse(iso);
-  return Number.isFinite(t) ? t : 0;
-};
-
-const getEndIso = (it: any): string | null =>
-  it?.auctionEnd ?? it?.endTime ?? it?.endAt ?? it?.endDate ?? null;
-
-/** 서버에서 내려올 수 있는 완료 시각 후보를 최대한 흡수 (자동 스캔 포함) */
-const getPaidAtIso = (it: any): string | null => {
-  // 대표 키 우선
-  const direct =
-    it?.paidAt ??
-    it?.paymentAt ??
-    it?.depositAt ??
-    it?.settlementAt ??
-    it?.payoutAt ??
-    it?.resultAt ??
-    it?.orderCompletedAt ??
-    it?.completedAt ??
-    it?.updatedAt ??
-    null;
-  if (direct) return direct;
-
-  // 키 자동 스캔: (paid|pay|deposit|settle|complete|result|payout).*(at|time|date)$
-  const re =
-    /(paid|pay|deposit|settle|complete|result|payout).*(at|time|date)$/i;
-  let bestMs = 0;
-  let bestIso: string | null = null;
-
-  for (const k of Object.keys(it ?? {})) {
-    if (!re.test(k)) continue;
-    const v = (it as any)[k];
-    if (typeof v !== "string") continue;
-    const ms = Date.parse(v);
-    if (Number.isFinite(ms) && ms > bestMs) {
-      bestMs = ms;
-      bestIso = v;
-    }
-  }
-  return bestIso;
-};
-
-/** 서버/로컬 상태를 종합해 결제완료 여부 */
-function isPaidDone(it: any, settledMap: Record<string, boolean>): boolean {
+function isSettledOrDone(
+  it: any,
+  settledMap: Record<string, boolean>
+): boolean {
   const orderId = (it?.orderId ?? it?.id)?.toString();
   if (orderId && settledMap[orderId]) return true;
 
-  if (
-    it?.settled === true ||
-    it?.paid === true ||
-    it?.isPaid === true ||
-    it?.paymentDone === true
-  )
+  if (it?.settled === true || it?.isPaid === true || it?.paymentDone === true)
     return true;
 
   const buckets = [
-    U(it?.paymentStatus),
     U(it?.settlementStatus),
+    U(it?.paymentStatus),
     U(it?.payStatus),
     U(it?.depositStatus),
     U(it?.resultStatus),
@@ -201,37 +187,42 @@ function isPaidDone(it: any, settledMap: Record<string, boolean>): boolean {
     U(it?.status),
     U(it?.state),
   ];
-
-  return buckets.some(
-    (x) => x && (PAID_KEYWORDS.has(x) || ENDED_KEYWORDS.has(x))
-  );
+  return buckets.some((x) => x && hasSettledHint(x));
 }
 
-/** 진행중 여부 (결제완료/시간 경과 고려) */
-function isOngoing(
+function isEndedByTime(item: TradeItem): boolean {
+  const endIso = getEndIso(item);
+  if (!endIso) return false;
+  const t = parseMs(endIso);
+  return t !== 0 && t <= Date.now();
+}
+
+/** 버튼 표시 정책:
+ * notSettled && ( ended || hasSettledHint || hasOrderId )
+ */
+function canShowConfirmButton(
   item: TradeItem,
   settledMap: Record<string, boolean>
 ): boolean {
-  if (isPaidDone(item, settledMap)) return false;
+  const notSettled = !isSettledOrDone(item, settledMap);
+  const ended = isEndedByTime(item);
+  const hasOrderId = (item as any).orderId != null;
 
-  const endIso = getEndIso(item);
-  if (endIso) {
-    const t = parseMs(endIso);
-    if (t && t <= Date.now()) return false;
-  }
-  return true;
+  if (!notSettled) return false;
+  if (ended) return true;
+  if (hasSettledHint(item.statusText)) return true;
+  if (hasOrderId) return true;
+  return false;
 }
 
-/* =========================================================
- * 메인
- * ========================================================= */
+/* ---------- 메인 (무한스크롤) ---------- */
+const PAGE_SIZE = 20;
+
 const PurchasesPage: React.FC = () => {
   const [filter, setFilter] = useState<TriFilterValue>("all");
-
   const [confirmingId, setConfirmingId] = useState<string | number | null>(
     null
   );
-
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [reviewTargetId, setReviewTargetId] = useState<string | number | null>(
     null
@@ -239,86 +230,125 @@ const PurchasesPage: React.FC = () => {
   const [rating, setRating] = useState<number>(10);
   const [submittingReview, setSubmittingReview] = useState(false);
 
-  // 로컬에서 이미 확정 처리한 주문
   const [settledMap, setSettledMap] = useState<Record<string, boolean>>({});
 
+  const [page, setPage] = useState(0);
+  const [items, setItems] = useState<TradeItem[]>([]);
+  const [hasMore, setHasMore] = useState(true);
+  const [initialLoaded, setInitialLoaded] = useState(false);
+
   const { data, loading, error } = usePurchases({
-    page: 0,
-    size: 20,
+    page,
+    size: PAGE_SIZE,
     sort: "end",
   });
 
-  const base: TradeItem[] = useMemo(
-    () => (Array.isArray(data) ? data : []),
-    [data]
-  );
+  useEffect(() => {
+    if (!data) return;
+    const next = [...items];
+    const seen = new Set(next.map((d) => String((d as any).id)));
+    for (const row of data) {
+      const key = String((row as any).id);
+      if (!seen.has(key)) {
+        next.push(row);
+        seen.add(key);
+      }
+    }
+    setItems(next);
+    setHasMore(Array.isArray(data) && data.length === PAGE_SIZE);
+    if (!initialLoaded) setInitialLoaded(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data]);
 
-  // 카운트
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const isFetchingNext = loading && initialLoaded;
+
+  useEffect(() => {
+    if (!hasMore || isFetchingNext) return;
+    const el = sentinelRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      (entries) => entries[0].isIntersecting && setPage((p) => p + 1),
+      { root: null, rootMargin: "200px", threshold: 0 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [hasMore, isFetchingNext]);
+
+  // 디버그 로그
+  useEffect(() => {
+    const probe = items.slice(0, 3);
+    probe.forEach((it, i) => {
+      const endIso = getEndIso(it);
+      const ended = isEndedByTime(it);
+      const settled = isSettledOrDone(it, settledMap);
+      console.log(
+        `[PURCHASE#${i}] id=${it.id} orderId=${(it as any).orderId} end=`,
+        endIso,
+        " ended=",
+        ended,
+        " settled=",
+        settled,
+        " statusText=",
+        it.statusText
+      );
+    });
+  }, [items, settledMap]);
+
   const counts = useMemo(() => {
-    const all = base.length;
-    const ongoing = base.filter((it) => isOngoing(it, settledMap)).length;
+    const all = items.length;
+    const ongoing = items.filter(
+      (it) => !isSettledOrDone(it, settledMap) && !isEndedByTime(it)
+    ).length;
     const ended = all - ongoing;
     return { all, ongoing, ended };
-  }, [base, settledMap]);
+  }, [items, settledMap]);
 
-  // 탭 필터
   const filtered = useMemo(() => {
     if (filter === "ongoing")
-      return base.filter((it) => isOngoing(it, settledMap));
+      return items.filter(
+        (it) => !isSettledOrDone(it, settledMap) && !isEndedByTime(it)
+      );
     if (filter === "ended")
-      return base.filter((it) => !isOngoing(it, settledMap));
-    return base;
-  }, [base, filter, settledMap]);
+      return items.filter(
+        (it) => isSettledOrDone(it, settledMap) || isEndedByTime(it)
+      );
+    return items;
+  }, [items, filter, settledMap]);
 
-  // ✅ 결제 완료 순 정렬:
-  // 1) 결제완료(true) 먼저
-  // 2) 결제완료끼리는 paidAt 내림차순(최근 결제 우선)
-  //    - paidAt 없으면 endAt으로 대체 (최후 보정)
-  // 3) 미결제끼리는 endAt 내림차순
   const sorted = useMemo(() => {
-    const paidRank = (it: any) => (isPaidDone(it, settledMap) ? 0 : 1);
-    const paidAtMs = (it: any) => {
-      const fromServer = parseMs(getPaidAtIso(it));
-      if (fromServer) return fromServer;
-      if (isPaidDone(it, settledMap)) return parseMs(getEndIso(it)); // 결제완료인데 시각없음 → 마감시각 보정
-      return 0;
-    };
+    const rank = (it: TradeItem) => (isSettledOrDone(it, settledMap) ? 0 : 1);
+    const paidAtMs = (it: any) =>
+      parseMs(
+        it?.paidAt ??
+          it?.paymentAt ??
+          it?.depositAt ??
+          it?.settlementAt ??
+          it?.payoutAt ??
+          it?.orderCompletedAt ??
+          it?.completedAt ??
+          null
+      );
     const endMs = (it: any) => parseMs(getEndIso(it));
-
     return [...filtered].sort((a, b) => {
-      const ra = paidRank(a);
-      const rb = paidRank(b);
+      const ra = rank(a),
+        rb = rank(b);
       if (ra !== rb) return ra - rb;
-
       if (ra === 0) {
-        const pa = paidAtMs(a);
-        const pb = paidAtMs(b);
-        if (pa !== pb) return pb - pa; // 최근 결제 우선
+        const pa = paidAtMs(a),
+          pb = paidAtMs(b);
+        if (pa !== pb) return pb - pa;
       }
-
-      const ea = endMs(a);
-      const eb = endMs(b);
-      return eb - ea; // 미결제끼리는 마감 최근 우선
+      return endMs(b) - endMs(a);
     });
   }, [filtered, settledMap]);
 
-  // 구매 확정 버튼 노출 여부
-  function canShowConfirmButton(item: TradeItem): boolean {
-    const orderId = (item as any).orderId ?? item.id;
-    const localDone = settledMap[String(orderId)];
-    const serverDone =
-      isPaidDone(item, settledMap) || (item as any).settled === true;
-    return !(localDone || serverDone);
-  }
-
-  // 구매 확정 → 별점 모달
   function handleRequestConfirm(orderId: number | string) {
     setReviewTargetId(orderId);
     setRating(10);
     setReviewModalOpen(true);
   }
 
-  // 별점 제출 + 정산
   async function finalizeConfirmAndReview() {
     if (!reviewTargetId) return;
     try {
@@ -329,8 +359,7 @@ const PurchasesPage: React.FC = () => {
       setSettledMap((prev) => ({ ...prev, [String(reviewTargetId)]: true }));
       setFilter("ended");
       alert("구매 확정이 완료되었어요! ⭐");
-    } catch (err) {
-      console.error("[구매 확정/리뷰 실패]", err);
+    } catch {
       alert("처리 중 오류가 발생했습니다.");
     } finally {
       setSubmittingReview(false);
@@ -340,19 +369,24 @@ const PurchasesPage: React.FC = () => {
     }
   }
 
+  const displayStatus = (it: TradeItem): string => {
+    if (isSettledOrDone(it, settledMap)) return "거래 완료";
+    if (isEndedByTime(it)) return "종료";
+    return "진행 중";
+    // 서버가 주는 '상태 정보 없음' 같은 값은 숨기고 기본값으로 대체
+  };
+
   const renderList = (list: TradeItem[]) => (
     <ul className="divide-y divide-neutral-200">
       {list.map((it) => {
         const orderId = (it as any).orderId ?? it.id;
-        const settled = !!settledMap[String(orderId)];
+        const showConfirm = canShowConfirmButton(it, settledMap);
+
         return (
           <TradeRowCompact
             key={String(it.id)}
-            item={{
-              ...it,
-              statusText: settled ? "거래 완료" : (it as any).statusText,
-            }}
-            canConfirm={canShowConfirmButton(it)}
+            item={{ ...it, statusText: displayStatus(it) }}
+            canConfirm={showConfirm}
             confirming={confirmingId === orderId}
             onConfirmClick={handleRequestConfirm}
             onClick={() => {}}
@@ -368,7 +402,7 @@ const PurchasesPage: React.FC = () => {
       <button
         type="button"
         onClick={() => (window.location.href = "/auctions")}
-        className="rounded-lg bg-gradient-to-r from-purple-600 to-fuchsia-500 px-4 py-2 text-sm font-semibold text-white shadow-md ring-1 ring-purple-500/50 hover:brightness-110 focus:ring-2 focus:ring-purple-400 focus:outline-none"
+        className="bg-purple hover:bg-deep-purple rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-md"
       >
         지금 구경하러 가기
       </button>
@@ -382,15 +416,11 @@ const PurchasesPage: React.FC = () => {
       <StatusTriFilter
         value={filter}
         onChange={setFilter}
-        counts={{
-          all: counts.all,
-          ongoing: counts.ongoing,
-          ended: counts.ended,
-        }}
+        counts={counts}
         className="mb-3"
       />
 
-      {loading ? (
+      {!initialLoaded && loading ? (
         <p className="text-sm text-neutral-500">불러오는 중…</p>
       ) : error && sorted.length === 0 ? (
         <>
@@ -402,7 +432,20 @@ const PurchasesPage: React.FC = () => {
       ) : sorted.length === 0 ? (
         renderEmptyState()
       ) : (
-        renderList(sorted)
+        <>
+          {renderList(sorted)}
+          <div ref={sentinelRef} className="h-[1px]" />
+          {isFetchingNext && (
+            <div className="py-4 text-center text-sm text-neutral-500">
+              추가 로딩 중…
+            </div>
+          )}
+          {!hasMore && initialLoaded && (
+            <div className="py-4 text-center text-xs text-neutral-400">
+              마지막 페이지입니다
+            </div>
+          )}
+        </>
       )}
 
       <RatingModal

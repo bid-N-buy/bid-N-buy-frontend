@@ -20,7 +20,7 @@ export default function StatusTriFilter({
 }: Props): React.ReactElement {
   const base =
     "flex-1 cursor-pointer rounded-lg py-3 text-center text-[15px] font-semibold transition";
-  const active = "bg-[#8322BF] text-white";
+  const active = "bg-purple text-white";
   const idle =
     "bg-white text-neutral-800 hover:bg-neutral-50 border border-neutral-200";
 

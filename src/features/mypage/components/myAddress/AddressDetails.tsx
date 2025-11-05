@@ -1,6 +1,5 @@
-// AddressDetails.tsx
 import React from "react";
-import type { Address } from "../../types/address"; // <- 공통 타입에서 가져오기 (경로는 맞게)
+import type { Address } from "../../types/address";
 
 type Props = {
   address: Address | null;
@@ -15,11 +14,12 @@ const AddressDetails: React.FC<Props> = ({
   error,
   onEdit,
 }) => {
-  const editBtn =
-    "rounded-md border border-neutral-300 bg-white px-3 py-[6px] text-[13px] text-neutral-700 hover:bg-neutral-50 active:bg-neutral-100";
-
-  const addBtn =
-    "rounded-full bg-purple-600 px-3 py-[6px] text-[13px] text-white hover:opacity-90";
+  /* 버튼 토큰 (AccountSettings와 동일 규칙) */
+  const btnBase =
+    "inline-flex items-center justify-center rounded-md h-9 px-4 text-[13px] font-medium " +
+    "transition-colors disabled:opacity-60 whitespace-nowrap leading-[1.1] min-w-[72px]";
+  const btnPrimary = `${btnBase} bg-purple text-white hover:bg-deep-purple`;
+  const btnGhost = `${btnBase} border border-neutral-300 text-neutral-800 hover:bg-neutral-50`;
 
   if (loading) {
     return (
@@ -43,8 +43,12 @@ const AddressDetails: React.FC<Props> = ({
         <div className="text-[14px] text-neutral-500">
           등록된 주소가 없습니다.
         </div>
-
-        <button type="button" className={addBtn} onClick={onEdit}>
+        <button
+          type="button"
+          className={btnPrimary}
+          onClick={onEdit}
+          aria-label="주소 등록"
+        >
           주소 등록
         </button>
       </div>
@@ -65,8 +69,13 @@ const AddressDetails: React.FC<Props> = ({
           </div>
         </div>
 
-        <button type="button" className={editBtn} onClick={onEdit}>
-          수정
+        <button
+          type="button"
+          className={btnGhost}
+          onClick={onEdit}
+          aria-label="주소 변경"
+        >
+          변경
         </button>
       </div>
     </div>

@@ -23,9 +23,9 @@ export const useInquiryList = () => {
       const pageInfo: ManageInquiryProps = inquiries;
       setInquiryList(inquiries.data);
       setPages(pageInfo);
-    } catch (error) {
+    } catch (e) {
+      console.error("문의/신고 현황 데이터 불러오기 실패:", e);
       setInquiryList([]);
-      console.error("데이터 불러오기 실패:", error);
     }
   };
 
@@ -46,9 +46,9 @@ export const useUserList = () => {
       const pageInfo: ManageUserProps = users;
       setUserList(users.data);
       setPages(pageInfo);
-    } catch (error) {
+    } catch (e) {
+      console.error("유저 데이터 불러오기 실패:", e);
       setUserList([]);
-      console.error("데이터 불러오기 실패:", error);
     }
   };
 
@@ -88,8 +88,8 @@ export const useAuctionList = ({ params }: AdminAuctionProps) => {
         [];
       setAuctions(list);
       setPages(data);
-    } catch (error) {
-      console.error("데이터 불러오기 실패:", error);
+    } catch (e) {
+      console.error("데이터 불러오기 실패:", e);
       setLoading(false);
     } finally {
       setLoading(false);

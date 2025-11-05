@@ -72,12 +72,6 @@ api.interceptors.request.use((config) => {
       if (!hasBearer) headers.set("Authorization", `Bearer ${accessToken}`);
     }
   }
-
-  if (import.meta.env.DEV) {
-    console.debug("[api:req]", config.method, config.url, {
-      hasAuth: !!useAuthStore.getState().accessToken,
-    });
-  }
   return config;
 });
 
@@ -136,12 +130,6 @@ api.interceptors.response.use(
 
       // 🔒 서버 스펙상 둘 다 필요 → 하나라도 없으면 재발급 불가
       if (!accessToken || !refreshToken) {
-        if (import.meta.env.DEV) {
-          console.warn("[reissue] missing token(s)", {
-            hasAccess: !!accessToken,
-            hasRefresh: !!refreshToken,
-          });
-        }
         clear();
         flush(null);
         return Promise.reject(error);

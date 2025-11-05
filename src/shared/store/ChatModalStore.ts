@@ -36,7 +36,7 @@ type ChatModalAction = {
     sellerId: number,
     auctionId: number
   ) => Promise<void>;
-  handleNewChatMessage: (message: ChatMessageProps) => Promise<void>;
+  handleNewChatMessage: (message: ChatMessageProps | string) => Promise<void>;
 };
 
 type ChatModalStoreProps = ChatModalAction & ChatModalState;
@@ -110,9 +110,9 @@ export const useChatModalStore = create<ChatModalStoreProps>((set, get) => ({
       });
 
       get().setChatList(response.data);
-    } catch (error) {
-      console.error("초기 unreadCount 로드 실패:", error);
+    } catch (e) {
       set({ error: "초기 unreadCount 로드 실패", loading: false });
+      return;
     } finally {
       set({ error: "초기 unreadCount 로드 실패", loading: false });
     }
@@ -124,8 +124,8 @@ export const useChatModalStore = create<ChatModalStoreProps>((set, get) => ({
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       get().setChatList(response.data);
-    } catch (error) {
-      console.error("채팅 목록 리로드 실패:", error);
+    } catch (e) {
+      return;
     }
   },
   // 리스트에서 챗룸 접근 시 작동
@@ -167,7 +167,6 @@ export const useChatModalStore = create<ChatModalStoreProps>((set, get) => ({
       };
       set({ chatRoom: fullRoomData });
     } catch (error) {
-      console.error("Failed to load chat room detail:", error);
       set({
         error: `채팅방을 불러올 수 없습니다: ${error}`,
         chatRoom: null,
@@ -225,7 +224,6 @@ export const useChatModalStore = create<ChatModalStoreProps>((set, get) => ({
 
       set({ chatRoom: fullRoomData });
     } catch (error) {
-      console.error("Failed to load chat rooms:", error);
       set({
         error: `채팅방을 불러올 수 없습니다: ${error}`,
         chatRoom: null,
@@ -254,7 +252,6 @@ export const useChatModalStore = create<ChatModalStoreProps>((set, get) => ({
           lastMessagePreview: message.message,
           lastMessageTime: message.createdAt,
         };
-        console.log(updatedRoom, item.unreadCount);
         return false;
       }
       return true;
@@ -274,7 +271,7 @@ export const useChatModalStore = create<ChatModalStoreProps>((set, get) => ({
       const serverList = response.data;
       updateChatState(serverList, set);
     } catch (e) {
-      console.error("채팅 리스트 갱신 실패 (fallback to optimistic):", e);
+      return;
     }
   },
 }));

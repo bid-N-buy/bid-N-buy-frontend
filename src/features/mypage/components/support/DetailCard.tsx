@@ -132,7 +132,7 @@ const DetailCard: React.FC<Props> = ({
 
       {/* 관리자 답변 */}
       {hasAnswer && (
-        <section className="mt-6 flex flex-col gap-3 rounded-md border border-purple-200 bg-purple-50 p-5 sm:flex-row sm:gap-4">
+        <section className="border-purple bg-light-purple mt-6 flex flex-col gap-3 rounded-md border p-5 sm:flex-row sm:gap-4">
           {/* 왼쪽 사이드 라벨(데스크탑에서 시각적 구분) */}
           {/* <div className="flex shrink-0 flex-col sm:w-[120px]">
             <span className="inline-block rounded-md bg-purple-600 px-2 py-[2px] text-center text-[11px] font-medium text-white">
