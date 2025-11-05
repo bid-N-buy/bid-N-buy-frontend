@@ -124,10 +124,6 @@ function AdminGuestOnlyRoute() {
 function AppLayout() {
   return (
     <div className="min-h-screen bg-white">
-      {/* 로그인 상태 감지 후 FCM 등록 */}
-      <FcmInitializer />
-      {/* 포그라운드 알림 수신 */}
-      <FcmListener />
       <Suspense fallback={<div className="p-6">로딩 중…</div>}>
         <Header />
       </Suspense>
@@ -144,7 +140,6 @@ function AppLayout() {
 function AdminLayout() {
   return (
     <div className="min-h-screen bg-white">
-      <FcmInitializer />
       <main className="relative flex">
         <AdminAsideMenu />
         <section className="w-full p-10">
@@ -162,6 +157,10 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthInitGate />
+      {/* 로그인 상태 감지 후 FCM 등록 */}
+      <FcmInitializer />
+      {/* 포그라운드 알림 수신 */}
+      <FcmListener />
       <Routes>
         {/* 기본 레이아웃 */}
         <Route element={<AppLayout />}>
