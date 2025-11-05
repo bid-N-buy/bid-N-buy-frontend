@@ -7,6 +7,40 @@ import { X } from "lucide-react";
 import api from "../../../shared/api/axiosInstance";
 import { useAuthStore } from "../../auth/store/authStore";
 
+// const notiList: NotiListProps[] = [
+//   {
+//     notification_id: BigInt(101),
+//     type: "alert",
+//     content:
+//       "일반 알림일반 알림일반 알림일반 알림일반 알림일반 알림일반 알림일반 알림일반 알림일반 알림일반 알림일반 알림일반 알림일반 알림일반 알림일반 알림일반 알림일반 알림일반 알림일반 알림일반 알림",
+//     created_at: Date(),
+//     is_read: false,
+//     deleted_at: "x",
+//   },
+//   {
+//     notification_id: BigInt(102),
+//     type: "notice",
+//     content: "공지사항",
+//     created_at: Date(),
+//     is_read: false,
+//     deleted_at: "x",
+//   },
+//   {
+//     notification_id: BigInt(103),
+//     type: "warn",
+//     content: "경고",
+//     created_at: Date(),
+//     is_read: false,
+//     deleted_at: "x",
+//   },
+//   // ...
+// ];  
+
+// state를 빈 배열로 시작
+
+// ✅ 알림 목록 API 호출
+
+
 const NotiModal = ({ onClose, onDelete }: ModalProps) => {
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -87,6 +121,8 @@ const NotiModal = ({ onClose, onDelete }: ModalProps) => {
     fetchNotifications();
   }, [accessToken]);
 
+
+
   // modal창 닫기: 여백 누를 시 꺼지도록
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -100,7 +136,7 @@ const NotiModal = ({ onClose, onDelete }: ModalProps) => {
 
   return (
     <div
-      className="border-g500 fixed inset-0 z-51 h-full w-full border-1 bg-white text-wrap shadow-lg md:absolute md:inset-auto md:top-[72px] md:right-4 md:h-150 md:w-100 md:rounded-md"
+      className="border-g500 fixed inset-0 z-51 h-full w-full rounded-md border-1 bg-white text-wrap shadow-lg md:absolute md:inset-auto md:top-[72px] md:right-4 md:h-150 md:w-100"
       ref={modalRef}
     >
       <div className="border-purple flex flex-shrink-0 items-center justify-between border-b p-4">
@@ -117,9 +153,7 @@ const NotiModal = ({ onClose, onDelete }: ModalProps) => {
           </button>
         </div>
       </div>
-      <div className="overflow-hidden">
-        <NotiList notis={notis} />
-      </div>
+      <NotiList notis={notis} />
     </div>
   );
 };
