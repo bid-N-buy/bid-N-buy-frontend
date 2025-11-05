@@ -5,7 +5,7 @@ import { Bell, Megaphone, TriangleAlert } from "lucide-react";
 
 const notiList = ({ notis }: NotiModalProps) => {
   return (
-    <ul>
+    <ul className="h-full">
       {notis.map((noti) => (
         <li
           key={noti.notificationId}

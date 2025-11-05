@@ -34,12 +34,11 @@ import { useAuthStore } from "../../auth/store/authStore";
 //     deleted_at: "x",
 //   },
 //   // ...
-// ];  
+// ];
 
 // state를 빈 배열로 시작
 
 // ✅ 알림 목록 API 호출
-
 
 const NotiModal = ({ onClose, onDelete }: ModalProps) => {
   const modalRef = useRef<HTMLDivElement>(null);
@@ -121,8 +120,6 @@ const NotiModal = ({ onClose, onDelete }: ModalProps) => {
     fetchNotifications();
   }, [accessToken]);
 
-
-
   // modal창 닫기: 여백 누를 시 꺼지도록
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -153,7 +150,9 @@ const NotiModal = ({ onClose, onDelete }: ModalProps) => {
           </button>
         </div>
       </div>
-      <NotiList notis={notis} />
+      <div className="h-[calc(100%-59px)] overflow-x-hidden overflow-y-auto">
+        <NotiList notis={notis} />
+      </div>
     </div>
   );
 };
