@@ -1,5 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import {
+  Link,
+  useNavigate,
+  useLocation,
+  useSearchParams,
+} from "react-router-dom";
 import axios from "axios";
 import api, { API_BASE } from "../../../../shared/api/axiosInstance";
 import { useAuthStore, type AuthState } from "../../store/authStore";
@@ -69,6 +74,7 @@ const LoginForm: React.FC = () => {
   const setTokens = useAuthStore((s: AuthState) => s.setTokens);
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
 
   const { toast, showToast, hideToast } = useToast();
   const toastShownRef = useRef<string | null>(null);
@@ -159,14 +165,20 @@ const LoginForm: React.FC = () => {
           userId
         );
 
+        // returnTo 우선순위
+        // url 쿼리파라미터 우선 확인
+        const returnToFromQuery = searchParams.get("returnTo");
         const state = location.state as {
           from?: { pathname?: string };
           redirect?: string;
           returnTo?: string;
         } | null;
-        const to = state?.returnTo
-          ? decodeURIComponent(state.returnTo)
-          : (state?.from?.pathname ?? state?.redirect ?? "/");
+        const returnToFromState = state?.returnTo;
+        const to = returnToFromQuery
+          ? decodeURIComponent(returnToFromQuery)
+          : returnToFromState
+            ? decodeURIComponent(returnToFromState)
+            : (state?.from?.pathname ?? state?.redirect ?? "/");
         navigate(to, { replace: true });
       } catch (err) {
         if (axios.isAxiosError<ErrorResponse>(err)) {
@@ -185,7 +197,15 @@ const LoginForm: React.FC = () => {
         setLoading(false);
       }
     },
-    [email, password, loading, location.state, navigate, setTokens]
+    [
+      email,
+      password,
+      loading,
+      location.state,
+      searchParams,
+      navigate,
+      setTokens,
+    ]
   );
 
   /** 소셜 로그인 */

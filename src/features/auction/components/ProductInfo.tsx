@@ -162,7 +162,7 @@ const ProductInfo = ({
       const returnTo = encodeURIComponent(
         location.pathname + location.search + location.hash
       );
-      navigate("/login", {
+      navigate(`/login?returnTo=${returnTo}`, {
         replace: true,
         state: {
           toast: { message: "로그인이 필요합니다.", type: "error" },
@@ -197,7 +197,7 @@ const ProductInfo = ({
         const returnTo = encodeURIComponent(
           location.pathname + location.search + location.hash
         );
-        navigate("/login", {
+        navigate(`/login?returnTo=${returnTo}`, {
           replace: true,
           state: {
             toast: { message: "로그인이 필요합니다.", type: "error" },
@@ -236,7 +236,7 @@ const ProductInfo = ({
       const returnTo = encodeURIComponent(
         location.pathname + location.search + location.hash
       );
-      navigate("/login", {
+      navigate(`/login?returnTo=${returnTo}`, {
         replace: true,
         state: {
           toast: { message: "로그인이 필요합니다.", type: "error" },
