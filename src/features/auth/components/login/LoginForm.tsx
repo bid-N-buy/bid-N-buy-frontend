@@ -1,9 +1,10 @@
-// src/features/auth/components/LoginForm.tsx
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import api, { API_BASE } from "../../../../shared/api/axiosInstance";
 import { useAuthStore, type AuthState } from "../../store/authStore";
+import useToast from "../../../../shared/hooks/useToast";
+import Toast from "../../../../shared/components/Toast";
 import type {
   LoginResponse,
   ErrorResponse,
@@ -68,6 +69,26 @@ const LoginForm: React.FC = () => {
   const setTokens = useAuthStore((s: AuthState) => s.setTokens);
   const navigate = useNavigate();
   const location = useLocation();
+
+  const { toast, showToast, hideToast } = useToast();
+  const toastShownRef = useRef<string | null>(null);
+
+  // 토스트 하고 화면이동 위해 추가
+  useEffect(() => {
+    const state = location.state as {
+      toast?: { message: string; type: "success" | "error" };
+      returnTo?: string;
+    } | null;
+    if (state?.toast) {
+      // 중복 메시지 표시 방지
+      const toastKey = `${location.pathname}-${location.key || "default"}-${state.toast.message}`;
+      if (toastShownRef.current !== toastKey) {
+        toastShownRef.current = toastKey;
+        showToast(state.toast.message, state.toast.type);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname, location.key, location.state]);
 
   /** (DEV) 스토어 변경 로그 */
 
@@ -138,10 +159,14 @@ const LoginForm: React.FC = () => {
           userId
         );
 
-        const to =
-          (location.state as any)?.from?.pathname ??
-          (location.state as any)?.redirect ??
-          "/";
+        const state = location.state as {
+          from?: { pathname?: string };
+          redirect?: string;
+          returnTo?: string;
+        } | null;
+        const to = state?.returnTo
+          ? decodeURIComponent(state.returnTo)
+          : (state?.from?.pathname ?? state?.redirect ?? "/");
         navigate(to, { replace: true });
       } catch (err) {
         if (axios.isAxiosError<ErrorResponse>(err)) {
@@ -175,96 +200,105 @@ const LoginForm: React.FC = () => {
   }, [loading]);
 
   return (
-    <form onSubmit={handleSubmit} className="m-auto w-[350px] space-y-4">
-      {/* 이메일 */}
-      <input
-        name="email"
-        type="email"
-        id="email"
-        placeholder="이메일을 입력해 주세요"
-        value={email}
-        // value="dinosaur7656@gmail.com"
-        onChange={(e) => setEmail(e.target.value)}
-        className="hover:border-purple focus:border-purple h-[50px] w-full rounded-md border px-3 outline-none focus:border-2"
-        disabled={loading}
-        autoComplete="email"
-        required
-      />
+    <>
+      <form onSubmit={handleSubmit} className="m-auto w-[350px] space-y-4">
+        {/* 이메일 */}
+        <input
+          name="email"
+          type="email"
+          id="email"
+          placeholder="이메일을 입력해 주세요"
+          value={email}
+          // value="dinosaur7656@gmail.com"
+          onChange={(e) => setEmail(e.target.value)}
+          className="hover:border-purple focus:border-purple h-[50px] w-full rounded-md border px-3 outline-none focus:border-2"
+          disabled={loading}
+          autoComplete="email"
+          required
+        />
 
-      {/* 비밀번호 */}
-      <input
-        name="password"
-        type="password"
-        id="password"
-        placeholder="비밀번호를 입력해 주세요"
-        value={password}
-        // value="abcd1234"
-        onChange={(e) => setPassword(e.target.value)}
-        className="hover:border-purple focus:border-purple h-[50px] w-full rounded-md border px-3 outline-none focus:border-2"
-        disabled={loading}
-        autoComplete="current-password"
-        required
-        minLength={4}
-      />
+        {/* 비밀번호 */}
+        <input
+          name="password"
+          type="password"
+          id="password"
+          placeholder="비밀번호를 입력해 주세요"
+          value={password}
+          // value="abcd1234"
+          onChange={(e) => setPassword(e.target.value)}
+          className="hover:border-purple focus:border-purple h-[50px] w-full rounded-md border px-3 outline-none focus:border-2"
+          disabled={loading}
+          autoComplete="current-password"
+          required
+          minLength={4}
+        />
 
-      {/* 로그인 버튼 */}
-      <button
-        type="submit"
-        disabled={loading}
-        className="bg-purple hover:bg-deep-purple h-[50px] w-full rounded-md text-white transition disabled:opacity-60"
-      >
-        {loading ? "로그인 중..." : "로그인"}
-      </button>
+        {/* 로그인 버튼 */}
+        <button
+          type="submit"
+          disabled={loading}
+          className="bg-purple hover:bg-deep-purple h-[50px] w-full rounded-md text-white transition disabled:opacity-60"
+        >
+          {loading ? "로그인 중..." : "로그인"}
+        </button>
 
-      {/* 에러 메시지 */}
-      {error && (
-        <p className="text-sm text-red-500" role="alert" aria-live="assertive">
-          {error}
-        </p>
+        {/* 에러 메시지 */}
+        {error && (
+          <p
+            className="text-sm text-red-500"
+            role="alert"
+            aria-live="assertive"
+          >
+            {error}
+          </p>
+        )}
+
+        {/* 링크 */}
+        <div className="mt-[10px] flex justify-center gap-3 text-sm">
+          <Link to="/resetPassword" className="text-h8 hover:underline">
+            비밀번호 찾기
+          </Link>
+          <span className="text-h9">|</span>
+          <Link to="/signup" className="text-h8 hover:underline">
+            회원가입
+          </Link>
+        </div>
+
+        {/* 소셜 로그인 */}
+        <div className="mt-4 space-y-3">
+          {/* 네이버 */}
+          <button
+            type="button"
+            onClick={startNaver}
+            disabled={loading}
+            aria-label="네이버 로그인"
+            className="flex h-[50px] w-full items-center justify-center gap-2 rounded-md bg-[#03C75A] text-white transition hover:brightness-105 focus:ring-2 focus:ring-[#03C75A]/40 focus:outline-none active:brightness-95 disabled:opacity-60"
+          >
+            <span className="grid h-6 w-6 place-items-center rounded-[4px] bg-white font-black text-[#03C75A]">
+              N
+            </span>
+            <span className="text-[15px] font-semibold">네이버로 로그인</span>
+          </button>
+
+          {/* 카카오 */}
+          <button
+            type="button"
+            onClick={startKakao}
+            disabled={loading}
+            aria-label="카카오 로그인"
+            className="flex h-[50px] w-full items-center justify-center gap-2 rounded-md bg-[#FEE500] text-black transition hover:brightness-105 focus:ring-2 focus:ring-[#FEE500]/40 focus:outline-none active:brightness-95 disabled:opacity-60"
+          >
+            <span className="grid h-6 w-6 place-items-center rounded-full bg-black text-[13px] font-bold text-[#FEE500]">
+              K
+            </span>
+            <span className="text-[15px] font-semibold">카카오로 로그인</span>
+          </button>
+        </div>
+      </form>
+      {toast.isVisible && (
+        <Toast message={toast.message} type={toast.type} onClose={hideToast} />
       )}
-
-      {/* 링크 */}
-      <div className="mt-[10px] flex justify-center gap-3 text-sm">
-        <Link to="/resetPassword" className="text-h8 hover:underline">
-          비밀번호 찾기
-        </Link>
-        <span className="text-h9">|</span>
-        <Link to="/signup" className="text-h8 hover:underline">
-          회원가입
-        </Link>
-      </div>
-
-      {/* 소셜 로그인 */}
-      <div className="mt-4 space-y-3">
-        {/* 네이버 */}
-        <button
-          type="button"
-          onClick={startNaver}
-          disabled={loading}
-          aria-label="네이버 로그인"
-          className="flex h-[50px] w-full items-center justify-center gap-2 rounded-md bg-[#03C75A] text-white transition hover:brightness-105 focus:ring-2 focus:ring-[#03C75A]/40 focus:outline-none active:brightness-95 disabled:opacity-60"
-        >
-          <span className="grid h-6 w-6 place-items-center rounded-[4px] bg-white font-black text-[#03C75A]">
-            N
-          </span>
-          <span className="text-[15px] font-semibold">네이버로 로그인</span>
-        </button>
-
-        {/* 카카오 */}
-        <button
-          type="button"
-          onClick={startKakao}
-          disabled={loading}
-          aria-label="카카오 로그인"
-          className="flex h-[50px] w-full items-center justify-center gap-2 rounded-md bg-[#FEE500] text-black transition hover:brightness-105 focus:ring-2 focus:ring-[#FEE500]/40 focus:outline-none active:brightness-95 disabled:opacity-60"
-        >
-          <span className="grid h-6 w-6 place-items-center rounded-full bg-black text-[13px] font-bold text-[#FEE500]">
-            K
-          </span>
-          <span className="text-[15px] font-semibold">카카오로 로그인</span>
-        </button>
-      </div>
-    </form>
+    </>
   );
 };
 
