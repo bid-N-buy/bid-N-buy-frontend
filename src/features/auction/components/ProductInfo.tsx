@@ -13,7 +13,7 @@ import WishButton from "../../wish/components/WishButton";
 import { deleteAuction } from "../api/auctions";
 import { useAdminAuthStore } from "../../admin/store/adminStore";
 import { adminDeleteAuction } from "../../admin/api/admin";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import avatar from "../../../assets/avatar.svg";
 
 export interface ProductInfoProps {
@@ -78,6 +78,9 @@ const ProductInfo = ({
   const adminToken = useAdminAuthStore((s) => s.accessToken);
 
   const { makeChatRoomInAuc } = useChatModalStore();
+
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     if (!isMenuOpen) return;
@@ -156,7 +159,16 @@ const ProductInfo = ({
   const handleOpenBidModal = React.useCallback(() => {
     // 로그인 체크
     if (!userId) {
-      showToast("로그인이 필요합니다.", "error");
+      const returnTo = encodeURIComponent(
+        location.pathname + location.search + location.hash
+      );
+      navigate(`/login?returnTo=${returnTo}`, {
+        replace: true,
+        state: {
+          toast: { message: "로그인이 필요합니다.", type: "error" },
+          returnTo,
+        },
+      });
       return;
     }
     // 본인 상품 체크
@@ -176,13 +188,22 @@ const ProductInfo = ({
     }
 
     setIsBidModalOpen(true);
-  }, [userId, sellerId, sellingStatus, showToast]);
+  }, [userId, sellerId, sellingStatus, location]);
 
   const handleBidSubmit = useCallback(
     async (bidPrice: number) => {
       // 이중 가드
       if (!userId) {
-        showToast("로그인이 필요합니다.", "error");
+        const returnTo = encodeURIComponent(
+          location.pathname + location.search + location.hash
+        );
+        navigate(`/login?returnTo=${returnTo}`, {
+          replace: true,
+          state: {
+            toast: { message: "로그인이 필요합니다.", type: "error" },
+            returnTo,
+          },
+        });
         return;
       }
       // 최솟값 체크
@@ -206,13 +227,22 @@ const ProductInfo = ({
         // 토스트 처리
       }
     },
-    [auctionId, currentPrice, minBidPrice, userId, submitBid, showToast]
+    [auctionId, currentPrice, minBidPrice, userId, submitBid, location]
   );
 
   // 채팅방 생성
   const handleChatAdd = async (auctionId: number, sellerId: number) => {
     if (!token) {
-      showToast("로그인이 필요합니다.", "error");
+      const returnTo = encodeURIComponent(
+        location.pathname + location.search + location.hash
+      );
+      navigate(`/login?returnTo=${returnTo}`, {
+        replace: true,
+        state: {
+          toast: { message: "로그인이 필요합니다.", type: "error" },
+          returnTo,
+        },
+      });
       return;
     }
 
