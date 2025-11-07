@@ -109,9 +109,8 @@ export const useAuctionSearch = ({
     sortBy,
     page,
     size,
-    last,
-    loading,
     authKey,
+    // last, loading 의존성 배열에서 제거.. 무한 루프 방지
   ]);
 
   // 가격 필터 외 동일 조건으로 최고가 1건 조회 -> topPrice
