@@ -144,6 +144,7 @@
     line-height: var(--leading-base);
     letter-spacing: var(--tracking-base);
     background: #fff;
+    overflow-x: hidden; /* 모바일 가로 스크롤 방지 */
   }
 
   /* Heading: 디스플레이 폰트 + 지정 스케일 */
