@@ -246,21 +246,21 @@ const AuctionForm = () => {
 
   return (
     <div className="container pt-[30px] pb-[60px]">
-      <div className="flex flex-col gap-[60px]">
+      <div className="flex flex-col gap-8 md:gap-[60px]">
         <h3 className="border-g400 text-g100 border-b pb-4">경매 등록</h3>
 
         {/* 이미지 */}
-        <div className="flex items-start">
-          <div className="w-40 flex-shrink-0">
+        <div className="flex flex-col items-start gap-4 md:flex-row md:items-start md:gap-0">
+          <div className="w-full md:w-40 md:flex-shrink-0">
             <label htmlFor="images" className="text-g100 text-base font-medium">
               상품 이미지
             </label>
             <span className="text-g300 text-h7"> ({images.length}/10)</span>
           </div>
-          <div className="flex-1">
+          <div className="w-full flex-1">
             <label
               htmlFor="images"
-              className="bg-g500 hover:bg-g400 flex h-[200px] w-[200px] cursor-pointer flex-col items-center justify-center gap-3 rounded-md transition-colors"
+              className="bg-g500 hover:bg-g400 flex h-[180px] w-full max-w-[180px] cursor-pointer flex-col items-center justify-center gap-2 rounded-md transition-colors md:h-[200px] md:w-[200px] md:gap-3"
             >
               <Camera className="text-g200 h-8 w-8" />
               <span className="text-g200 text-h7">이미지 등록</span>
@@ -314,10 +314,10 @@ const AuctionForm = () => {
         </div>
 
         {/* 상품명 */}
-        <div className="flex items-center">
+        <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-0">
           <label
             htmlFor="productName"
-            className="text-g100 w-40 flex-shrink-0 text-base font-medium"
+            className="text-g100 w-full text-base font-medium md:w-40 md:flex-shrink-0"
           >
             상품명
           </label>
@@ -338,11 +338,11 @@ const AuctionForm = () => {
         </div>
 
         {/* 카테고리 */}
-        <div className="flex items-center">
-          <label className="text-g100 w-40 flex-shrink-0 text-base font-medium">
+        <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-0">
+          <label className="text-g100 w-full text-base font-medium md:w-40 md:flex-shrink-0">
             카테고리
           </label>
-          <div className="grid flex-1 grid-cols-2 gap-[10px]">
+          <div className="grid flex-1 grid-cols-1 gap-[10px] md:grid-cols-2">
             <select
               value={categoryMain}
               onChange={(e) => onChangeCategoryMain(e.target.value)}
@@ -385,10 +385,10 @@ const AuctionForm = () => {
         </div>
 
         {/* 상품 설명 */}
-        <div className="flex items-start">
+        <div className="flex flex-col gap-2 md:flex-row md:items-start md:gap-0">
           <label
             htmlFor="description"
-            className="text-g100 w-40 flex-shrink-0 pt-3 text-base font-medium"
+            className="text-g100 w-full pt-3 text-base font-medium md:w-40 md:flex-shrink-0"
           >
             상품 설명
           </label>
@@ -411,7 +411,7 @@ const AuctionForm = () => {
 
         {/* 시작가, 최소 입찰 단위 */}
         <div>
-          <div className="grid grid-cols-2 gap-[30px]">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-[30px]">
             <div className="flex flex-col gap-2">
               <label
                 htmlFor="startPrice"
@@ -461,10 +461,10 @@ const AuctionForm = () => {
 
         {/* 시작, 마감일시 */}
         <div>
-          <div className="grid grid-cols-2 gap-[30px]">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-[30px]">
             {/* 시작 */}
             <div>
-              <label className="text-g100 mb-4 block text-base font-medium">
+              <label className="text-g100 mb-2 block text-base font-medium md:mb-4">
                 시작일시
               </label>
               <div className="field group hover:border-purple relative w-full cursor-pointer transition-colors">
@@ -484,7 +484,7 @@ const AuctionForm = () => {
 
             {/* 마감 */}
             <div>
-              <label className="text-g100 mb-4 block text-base font-medium">
+              <label className="text-g100 mb-2 block text-base font-medium md:mb-4">
                 마감일시
               </label>
               <div className="field group hover:border-purple relative w-full cursor-pointer transition-colors">
@@ -505,10 +505,10 @@ const AuctionForm = () => {
         </div>
 
         {/* 버튼들 */}
-        <div className="grid grid-cols-2 gap-[30px]">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-[30px]">
           <button
             type="button"
-            className="border-purple text-purple hover:bg-light-purple cursor-pointer rounded-md border py-4 font-medium transition-colors"
+            className="border-purple text-purple hover:bg-light-purple cursor-pointer rounded-md border py-3 font-medium transition-colors md:py-4"
             onClick={onClickCancel}
             disabled={loading}
           >
@@ -516,7 +516,7 @@ const AuctionForm = () => {
           </button>
           <button
             type="button"
-            className="bg-purple hover:bg-deep-purple cursor-pointer rounded-md py-4 font-medium text-white transition-colors disabled:opacity-60"
+            className="bg-purple hover:bg-deep-purple cursor-pointer rounded-md py-3 font-medium text-white transition-colors disabled:opacity-60 md:py-4"
             onClick={onClickSubmit}
             disabled={loading}
           >
