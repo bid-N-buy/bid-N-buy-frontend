@@ -205,7 +205,7 @@ const AuctionList = () => {
   }, [searchKeyword, selectedCategory, mainCategoryId, subCategoryId]);
 
   return (
-    <div className="md:mh-[calc(100vh - 318px)] container pt-[30px] pb-[60px] sm:pb-[75px] lg:pb-[90px]">
+    <div className="md:mh-[calc(100vh - 318px)] pt-[30px] pb-[60px] sm:pb-[75px] lg:pb-[90px]">
       <div className="grid grid-cols-[repeat(24,minmax(0,1fr))] gap-4 sm:gap-7 lg:gap-10">
         {/* 데스크탑 - 사이드바ㅇ */}
         <aside className="hidden lg:col-span-6 lg:block xl:col-span-5">
@@ -231,7 +231,7 @@ const AuctionList = () => {
         </aside>
 
         {/* 상품 목록 */}
-        <main className="col-span-full lg:col-span-18 xl:col-span-19">
+        <main className="col-span-full px-4 lg:col-span-18 lg:px-0 xl:col-span-19">
           {/* 상단 */}
           <div className="mb-6 sm:mb-8">
             <div className="flex items-start justify-between gap-3">
@@ -272,6 +272,17 @@ const AuctionList = () => {
           {/* 상품 */}
           {error ? (
             <div className="text-red">{error}</div>
+          ) : !loading && items.length === 0 ? (
+            <div className="text-g300 mt-12 text-center text-base">
+              {searchKeyword ||
+              mainCategoryId ||
+              subCategoryId ||
+              minPrice ||
+              maxPrice ||
+              includeEnded
+                ? "해당하는 결과가 없습니다."
+                : "등록된 경매 상품이 없습니다."}
+            </div>
           ) : (
             <>
               <div className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2 sm:gap-x-6 sm:gap-y-8 lg:grid-cols-3 lg:gap-x-7 lg:gap-y-9 xl:grid-cols-4">

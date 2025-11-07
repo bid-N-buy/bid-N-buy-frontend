@@ -486,7 +486,7 @@ const Header = () => {
             </div>
 
             {/* 하단 */}
-            <div className="border-g500 bg-g500/30 border-t p-6">
+            <div className="border-g500 bg-g500/30 border-t px-6 py-8">
               {!ready ? (
                 <div className="flex flex-col gap-3">
                   <div className="bg-g400 h-10 w-full animate-pulse rounded-md" />
@@ -505,13 +505,13 @@ const Header = () => {
                     환영합니다!
                   </button>
 
-                  <div className="grid grid-cols-4 gap-3">
+                  <div className="grid grid-cols-4 gap-4">
                     <button
                       onClick={() => {
                         navigate("/auctions/new");
                         setIsMobileMenuOpen(false);
                       }}
-                      className="hover:bg-light-purple flex flex-col items-center gap-2 rounded-md p-3 transition-colors"
+                      className="hover:bg-light-purple flex flex-col items-center gap-2 rounded-md p-1.5 transition-colors"
                     >
                       <Plus className="text-purple h-6 w-6" />
                       <span className="text-g200 text-h8">경매등록</span>
@@ -522,7 +522,7 @@ const Header = () => {
                         openChatList();
                         setIsMobileMenuOpen(false);
                       }}
-                      className="hover:bg-light-purple relative flex flex-col items-center gap-2 rounded-md p-3 transition-colors"
+                      className="hover:bg-light-purple relative flex flex-col items-center gap-2 rounded-md p-1.5 transition-colors"
                     >
                       <MessageCircleMore className="text-purple h-6 w-6" />
                       {totalUnreadCount >= 1 && <New />}
@@ -534,7 +534,7 @@ const Header = () => {
                         setIsNotiOpen(true);
                         setIsMobileMenuOpen(false);
                       }}
-                      className="hover:bg-light-purple relative flex flex-col items-center gap-2 rounded-md p-3 transition-colors"
+                      className="hover:bg-light-purple relative flex flex-col items-center gap-2 rounded-md p-1.5 transition-colors"
                     >
                       <Bell className="text-purple h-6 w-6" />
                       {hasNew && <New />}
@@ -543,7 +543,7 @@ const Header = () => {
 
                     <button
                       onClick={handleLogout}
-                      className="hover:bg-light-purple flex flex-col items-center gap-2 rounded-md p-3 transition-colors"
+                      className="hover:bg-light-purple flex flex-col items-center gap-2 rounded-md p-1.5 transition-colors"
                     >
                       <LogOut className="text-g200 h-6 w-6" />
                       <span className="text-g200 text-h8">로그아웃</span>
