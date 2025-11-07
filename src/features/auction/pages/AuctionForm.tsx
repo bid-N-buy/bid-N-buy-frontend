@@ -272,9 +272,11 @@ const AuctionForm = () => {
               multiple
               className="hidden"
               disabled={images.length >= 10} // 10장 도달 시 비활성화
-              onChange={(e) =>
-                onFilesSelected(Array.from(e.target.files ?? []))
-              }
+              onChange={(e) => {
+                onFilesSelected(Array.from(e.target.files ?? []));
+                // 같은 파일 다시 선택할 수 있도록 value 초기화
+                e.target.value = "";
+              }}
             />
             <p className="text-g300 text-h7 mt-2">
               * 파일당 2MB, 전체 20MB 이하 이미지만 업로드할 수 있습니다.
