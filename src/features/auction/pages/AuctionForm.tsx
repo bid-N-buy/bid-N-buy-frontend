@@ -24,6 +24,10 @@ const onlyNum = (e: React.KeyboardEvent<HTMLInputElement>) => {
   if (!ok) e.preventDefault();
 };
 
+const MAX_IMAGE_COUNT = 10;
+const MAX_SIZE_PER_FILE = 2 * 1024 * 1024; // 2MB
+const MAX_TOTAL_IMAGE_SIZE = 20 * 1024 * 1024; // 20MB
+
 const AuctionForm = () => {
   const navigate = useNavigate();
   const { toast, showToast, hideToast } = useToast();
@@ -97,23 +101,57 @@ const AuctionForm = () => {
     set("categoryId", val ? Number(val) : null);
   };
 
-  // 파일 선택 핸들러 - 체크
+  // 파일 선택 핸들러
   const onFilesSelected = (files: File[]) => {
-    const room = Math.max(0, 10 - images.length);
-    const taking = files.slice(0, room);
+    if (!files.length) return;
+
+    const room = Math.max(0, MAX_IMAGE_COUNT - images.length);
+    if (room <= 0) {
+      showToast("이미지는 최대 10장까지 가능합니다.", "error");
+      return;
+    }
+
+    const limited: File[] = [];
+    let oversizedFound = false;
+    const currentTotalSize = selectedFiles.reduce(
+      (acc, file) => acc + file.size,
+      0
+    );
+    let accumulatedSize = currentTotalSize;
+
+    for (const file of files) {
+      if (limited.length >= room) break;
+
+      if (file.size > MAX_SIZE_PER_FILE) {
+        oversizedFound = true;
+        continue;
+      }
+
+      if (accumulatedSize + file.size > MAX_TOTAL_IMAGE_SIZE) {
+        showToast("이미지 전체 용량은 20MB를 넘을 수 없습니다.", "error");
+        break;
+      }
+
+      limited.push(file);
+      accumulatedSize += file.size;
+    }
 
     if (files.length > room) {
       showToast("이미지는 최대 10장까지 가능합니다.", "error");
     }
 
-    // 프리뷰용
-    const newPreviews = taking.map((f) => ({
+    if (oversizedFound) {
+      showToast("이미지 파일당 2MB 이하로 업로드해 주세요.", "error");
+    }
+
+    if (!limited.length) return;
+
+    const newPreviews = limited.map((f) => ({
       imageUrl: URL.createObjectURL(f),
     }));
     set("images", [...images, ...newPreviews]);
 
-    // 원본 파일도 보관
-    setSelectedFiles((prev) => [...prev, ...taking]);
+    setSelectedFiles((prev) => [...prev, ...limited]);
   };
 
   // 인덱스 i 이미지 첫 번째로 옮길 때 파일 배열도 같이 이동
@@ -238,6 +276,9 @@ const AuctionForm = () => {
                 onFilesSelected(Array.from(e.target.files ?? []))
               }
             />
+            <p className="text-g300 text-h7 mt-2">
+              * 파일당 2MB, 전체 20MB 이하 이미지만 업로드할 수 있습니다.
+            </p>
 
             {/* 썸네일 */}
             <div className="mt-4 flex flex-wrap gap-3">
