@@ -272,6 +272,17 @@ const AuctionList = () => {
           {/* 상품 */}
           {error ? (
             <div className="text-red">{error}</div>
+          ) : !loading && items.length === 0 ? (
+            <div className="text-g300 mt-12 text-center text-base">
+              {searchKeyword ||
+              mainCategoryId ||
+              subCategoryId ||
+              minPrice ||
+              maxPrice ||
+              includeEnded
+                ? "해당하는 결과가 없습니다."
+                : "등록된 경매 상품이 없습니다."}
+            </div>
           ) : (
             <>
               <div className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2 sm:gap-x-6 sm:gap-y-8 lg:grid-cols-3 lg:gap-x-7 lg:gap-y-9 xl:grid-cols-4">
