@@ -287,8 +287,18 @@ const AuctionList = () => {
                 {loading &&
                   Array.from({ length: 8 }).map((_, i) => (
                     <div key={`sk-${i}`} className="animate-pulse">
-                      <div className="bg-g400 mb-3 aspect-square w-full rounded-3xl" />
-                      <div className="bg-g400 h-4 w-3/4" />
+                      <div className="relative aspect-square w-full">
+                        <div className="bg-g400 h-full w-full rounded-3xl" />
+                        <div className="bg-g400 absolute top-3 right-3 h-6 w-16 rounded-2xl" />
+                      </div>
+                      <div className="mt-2">
+                        <div className="bg-g400 mb-1 h-4 w-3/4 px-1.5" />
+                        <div className="bg-g400 mb-1 h-5 w-1/2 px-1.5" />
+                        <div className="flex items-end justify-between">
+                          <div className="bg-g400 h-4 w-1/3 px-1.5" />
+                          <div className="bg-g400 h-6 w-6 rounded" />
+                        </div>
+                      </div>
                     </div>
                   ))}
               </div>
