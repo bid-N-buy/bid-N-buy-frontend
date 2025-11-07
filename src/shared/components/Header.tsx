@@ -514,7 +514,7 @@ const Header = () => {
                       className="hover:bg-light-purple flex flex-col items-center gap-2 rounded-md p-1.5 transition-colors"
                     >
                       <Plus className="text-purple h-6 w-6" />
-                      <span className="text-g200 text-h8">경매등록</span>
+                      <span className="text-g200 text-h8">경매</span>
                     </button>
 
                     <button
@@ -546,7 +546,7 @@ const Header = () => {
                       className="hover:bg-light-purple flex flex-col items-center gap-2 rounded-md p-1.5 transition-colors"
                     >
                       <LogOut className="text-g200 h-6 w-6" />
-                      <span className="text-g200 text-h8">로그아웃</span>
+                      <span className="text-g200 text-h8">나가기</span>
                     </button>
                   </div>
                 </div>
