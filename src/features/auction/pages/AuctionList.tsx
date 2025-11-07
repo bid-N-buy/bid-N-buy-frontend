@@ -205,7 +205,7 @@ const AuctionList = () => {
   }, [searchKeyword, selectedCategory, mainCategoryId, subCategoryId]);
 
   return (
-    <div className="md:mh-[calc(100vh - 318px)] pt-[30px] pb-[60px] sm:pb-[75px] lg:pb-[90px]">
+    <div className="w-full md:mh-[calc(100vh - 318px)] pt-[30px] pb-[60px] sm:pb-[75px] lg:pb-[90px]">
       <div className="grid grid-cols-[repeat(24,minmax(0,1fr))] gap-4 sm:gap-7 lg:gap-10">
         {/* 데스크탑 - 사이드바ㅇ */}
         <aside className="hidden lg:col-span-6 lg:block xl:col-span-5">
@@ -231,7 +231,7 @@ const AuctionList = () => {
         </aside>
 
         {/* 상품 목록 */}
-        <main className="col-span-full px-4 lg:col-span-18 lg:px-0 xl:col-span-19">
+        <main className="col-span-full lg:col-span-18 xl:col-span-19">
           {/* 상단 */}
           <div className="mb-6 sm:mb-8">
             <div className="flex items-start justify-between gap-3">
