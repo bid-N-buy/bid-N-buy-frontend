@@ -29,6 +29,8 @@ export const useAuctionSearch = ({
 
   const abortRef = useRef<AbortController | null>(null);
 
+  const prevSourceKeyRef = useRef<string>("");
+
   // 로그인 상태 키
   const authKey = useAuthStore((s) => s.userId ?? null);
 
@@ -73,6 +75,15 @@ export const useAuctionSearch = ({
     const controller = new AbortController();
     abortRef.current = controller;
 
+    // sourceKey 변경됐으면 항상 page=0으로 요청
+    const isSourceKeyChanged = prevSourceKeyRef.current !== sourceKey;
+    const requestPage = isSourceKeyChanged ? 0 : page;
+
+    // sourceKey 변경 여부 확인 후 ref 업데이트
+    if (isSourceKeyChanged) {
+      prevSourceKeyRef.current = sourceKey;
+    }
+
     (async () => {
       try {
         setLoading(true);
@@ -84,10 +95,12 @@ export const useAuctionSearch = ({
           maxPrice,
           includeEnded,
           sortBy,
-          page,
+          page: requestPage,
           size,
         });
-        setItems((prev) => (page === 0 ? res.data : [...prev, ...res.data]));
+        setItems((prev) =>
+          requestPage === 0 ? res.data : [...prev, ...res.data]
+        );
         setLast(res.last);
       } catch (e: any) {
         const canceled =
@@ -110,6 +123,7 @@ export const useAuctionSearch = ({
     page,
     size,
     authKey,
+    sourceKey,
     // last, loading 의존성 배열에서 제거.. 무한 루프 방지
   ]);
 
