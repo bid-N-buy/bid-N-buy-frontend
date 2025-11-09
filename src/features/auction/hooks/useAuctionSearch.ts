@@ -23,18 +23,23 @@ export const useAuctionSearch = ({
   const [error, setError] = useState<string | null>(null);
   const [last, setLast] = useState(false);
 
+  // 초기 로드 완료 여부 추적(무한스크롤 때문에)
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
+
   // 최고가(가격 필터 상한)
   const [topPrice, setTopPrice] = useState<number>(1_000_000);
   const topAbortRef = useRef<AbortController | null>(null);
 
+  // 진행 중인 목록 요청 관리
   const abortRef = useRef<AbortController | null>(null);
 
+  // 이전 소스 키
   const prevSourceKeyRef = useRef<string>("");
 
   // 로그인 상태 키
   const authKey = useAuthStore((s) => s.userId ?? null);
 
-  // 파라미터 바뀌면 초기화
+  // 파라미터 바뀌면 초기화 키
   const sourceKey = useMemo(
     () =>
       JSON.stringify({
@@ -67,16 +72,20 @@ export const useAuctionSearch = ({
     setPage(0);
     setLast(false);
     setError(null);
-    setLoading(false); // sourceKey 리셋 시 loading 종료
+    setLoading(false);
+    setInitialLoadComplete(false); // 초기 로드 완료 상태 리셋
+    // 진행 중인 요청 있음 취소하고 핸들러 비움
     abortRef.current?.abort();
+    abortRef.current = null;
   }, [sourceKey]);
 
-  // sourceKey 변경 시 데이터 페칭
+  // sourceKey 변경 시 초기 로드(page=0)
   useEffect(() => {
     const isSourceKeyChanged = prevSourceKeyRef.current !== sourceKey;
-    if (!isSourceKeyChanged) return;
-    if (last) return;
+    if (!isSourceKeyChanged || last) return;
 
+    // 진행 중이면 취소하고 새 컨트롤러 교체
+    abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
 
@@ -92,7 +101,7 @@ export const useAuctionSearch = ({
             maxPrice,
             includeEnded,
             sortBy,
-            page: 0, // sourceKey 변경 시 항상 page=0
+            page: 0,
             size,
           },
           controller.signal
@@ -100,6 +109,7 @@ export const useAuctionSearch = ({
         prevSourceKeyRef.current = sourceKey;
         setItems(res.data);
         setLast(res.last);
+        setInitialLoadComplete(true); // 초기 로드 완료 표시
       } catch (e: any) {
         const canceled =
           e?.name === "CanceledError" ||
@@ -109,10 +119,14 @@ export const useAuctionSearch = ({
         if (!canceled) setError("목록을 불러오지 못했습니다.");
       } finally {
         setLoading(false);
+        abortRef.current = null;
       }
     })();
 
-    return () => controller.abort();
+    return () => {
+      controller.abort();
+      abortRef.current = null;
+    };
   }, [
     searchKeyword,
     mainCategoryId,
@@ -128,11 +142,14 @@ export const useAuctionSearch = ({
   ]);
 
   // 무한스크롤 처리
+  // page>0 로드
   useEffect(() => {
-    if (prevSourceKeyRef.current !== sourceKey) return;
-    if (last || loading) return;
-    if (page === 0) return;
+    // 초기 로드 완료 안 됐음 대기
+    if (!initialLoadComplete) return;
+    if (last || page === 0) return;
 
+    // 진행 중이면 취소하고 새 컨트롤러 교체
+    abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
 
@@ -164,12 +181,18 @@ export const useAuctionSearch = ({
         if (!canceled) setError("목록을 불러오지 못했습니다.");
       } finally {
         setLoading(false);
+        abortRef.current = null;
       }
     })();
 
-    return () => controller.abort();
+    return () => {
+      controller.abort();
+      abortRef.current = null;
+    };
   }, [
     page,
+    initialLoadComplete,
+    sourceKey,
     searchKeyword,
     mainCategoryId,
     subCategoryId,
@@ -179,8 +202,7 @@ export const useAuctionSearch = ({
     sortBy,
     size,
     authKey,
-    sourceKey,
-    // last, loading 의존성 배열에서 제거 - page 변경 시에만 실행
+    last,
   ]);
 
   // 가격 필터 외 동일 조건으로 최고가 1건 조회 -> topPrice
