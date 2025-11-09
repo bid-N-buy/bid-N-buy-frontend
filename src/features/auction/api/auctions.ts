@@ -89,9 +89,10 @@ export type FetchAuctionsParams = {
 };
 
 export const fetchAuctions = async (
-  params: FetchAuctionsParams = {}
+  params: FetchAuctionsParams = {},
+  signal?: AbortSignal
 ): Promise<AuctionsRes> => {
-  const { data } = await api.get<AuctionsRes>("/auctions", { params });
+  const { data } = await api.get<AuctionsRes>("/auctions", { params, signal });
   return data;
 };
 

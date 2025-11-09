@@ -157,15 +157,41 @@ const AuctionList = () => {
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     if (!sentinelRef.current) return;
+    const el = sentinelRef.current;
     const io = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && !loading && !last) loadMore();
       },
-      { rootMargin: "200px" }
+      {
+        root: null, // viewport (기본값인데 명시적으로)
+        rootMargin: "200px",
+        threshold: 0,
+      }
     );
-    io.observe(sentinelRef.current);
+    io.observe(el);
     return () => io.disconnect();
-  }, [loadMore, loading, last]);
+    // loading/last/items.length가 바뀌면 옵저버를 재바인딩해 즉시 현재 교차 상태로 콜백 한 번 더 실행되게
+  }, [loadMore, loading, last, items.length]);
+
+  // 보너스.. 초기 로드 후 sentinel 이미 보이는 경우 대비
+  const hasCheckedInitialSentinel = useRef(false);
+  useEffect(() => {
+    if (
+      !loading &&
+      !last &&
+      items.length > 0 &&
+      !hasCheckedInitialSentinel.current
+    ) {
+      const rect = sentinelRef.current?.getBoundingClientRect();
+      if (rect && rect.top < window.innerHeight) {
+        loadMore();
+      }
+      hasCheckedInitialSentinel.current = true;
+    }
+    if (loading) {
+      hasCheckedInitialSentinel.current = false;
+    }
+  }, [items.length, loading, last, loadMore]);
 
   // 정렬
   const onChangeSort = (v: "latest" | "price_asc" | "price_desc") => {
