@@ -61,6 +61,7 @@ export const useAuctionSearch = ({
     ]
   );
 
+  // sourceKey 변경 시 초기화
   useEffect(() => {
     setItems([]);
     setPage(0);
@@ -69,20 +70,17 @@ export const useAuctionSearch = ({
     abortRef.current?.abort();
   }, [sourceKey]);
 
+  // sourceKey 변경 시 데이터 페칭
   useEffect(() => {
-    if (last || loading) return;
+    const isSourceKeyChanged = prevSourceKeyRef.current !== sourceKey;
+    if (!isSourceKeyChanged) return;
+    if (last) return;
 
     const controller = new AbortController();
     abortRef.current = controller;
 
-    // sourceKey 변경됐으면 항상 page=0으로 요청
-    const isSourceKeyChanged = prevSourceKeyRef.current !== sourceKey;
-    const requestPage = isSourceKeyChanged ? 0 : page;
-
-    // sourceKey 변경 여부 확인 후 ref 업데이트
-    if (isSourceKeyChanged) {
-      prevSourceKeyRef.current = sourceKey;
-    }
+    // sourceKey 변경 여부 확인 후 ref 업데이트 (요청 전 업데이트)
+    prevSourceKeyRef.current = sourceKey;
 
     (async () => {
       try {
@@ -95,12 +93,10 @@ export const useAuctionSearch = ({
           maxPrice,
           includeEnded,
           sortBy,
-          page: requestPage,
+          page: 0, // sourceKey 변경 시 항상 page=0
           size,
         });
-        setItems((prev) =>
-          requestPage === 0 ? res.data : [...prev, ...res.data]
-        );
+        setItems(res.data);
         setLast(res.last);
       } catch (e: any) {
         const canceled =
@@ -120,11 +116,60 @@ export const useAuctionSearch = ({
     maxPrice,
     includeEnded,
     sortBy,
-    page,
     size,
     authKey,
     sourceKey,
-    // last, loading 의존성 배열에서 제거.. 무한 루프 방지
+    last,
+  ]);
+
+  // 무한스크롤 처리
+  useEffect(() => {
+    if (prevSourceKeyRef.current !== sourceKey) return;
+    if (last || loading) return;
+    if (page === 0) return;
+
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    (async () => {
+      try {
+        setLoading(true);
+        const res = await fetchAuctions({
+          searchKeyword: (searchKeyword ?? "").trim() || undefined,
+          mainCategoryId: mainCategoryId ?? undefined,
+          subCategoryId: subCategoryId ?? undefined,
+          minPrice,
+          maxPrice,
+          includeEnded,
+          sortBy,
+          page,
+          size,
+        });
+        setItems((prev) => [...prev, ...res.data]);
+        setLast(res.last);
+      } catch (e: any) {
+        const canceled =
+          e?.name === "CanceledError" || e?.code === "ERR_CANCELED";
+        if (!canceled) setError("목록을 불러오지 못했습니다.");
+      } finally {
+        setLoading(false);
+      }
+    })();
+
+    return () => controller.abort();
+  }, [
+    page,
+    searchKeyword,
+    mainCategoryId,
+    subCategoryId,
+    minPrice,
+    maxPrice,
+    includeEnded,
+    sortBy,
+    size,
+    authKey,
+    sourceKey,
+    // last, loading 의존성 배열에서 제거 - page 변경 시에만 실행
   ]);
 
   // 가격 필터 외 동일 조건으로 최고가 1건 조회 -> topPrice
