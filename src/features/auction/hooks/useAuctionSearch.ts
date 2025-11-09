@@ -67,6 +67,7 @@ export const useAuctionSearch = ({
     setPage(0);
     setLast(false);
     setError(null);
+    setLoading(false); // sourceKey 리셋 시 loading 종료
     abortRef.current?.abort();
   }, [sourceKey]);
 
@@ -79,28 +80,32 @@ export const useAuctionSearch = ({
     const controller = new AbortController();
     abortRef.current = controller;
 
-    // sourceKey 변경 여부 확인 후 ref 업데이트 (요청 전 업데이트)
-    prevSourceKeyRef.current = sourceKey;
-
     (async () => {
       try {
         setLoading(true);
-        const res = await fetchAuctions({
-          searchKeyword: (searchKeyword ?? "").trim() || undefined,
-          mainCategoryId: mainCategoryId ?? undefined,
-          subCategoryId: subCategoryId ?? undefined,
-          minPrice,
-          maxPrice,
-          includeEnded,
-          sortBy,
-          page: 0, // sourceKey 변경 시 항상 page=0
-          size,
-        });
+        const res = await fetchAuctions(
+          {
+            searchKeyword: (searchKeyword ?? "").trim() || undefined,
+            mainCategoryId: mainCategoryId ?? undefined,
+            subCategoryId: subCategoryId ?? undefined,
+            minPrice,
+            maxPrice,
+            includeEnded,
+            sortBy,
+            page: 0, // sourceKey 변경 시 항상 page=0
+            size,
+          },
+          controller.signal
+        );
+        prevSourceKeyRef.current = sourceKey;
         setItems(res.data);
         setLast(res.last);
       } catch (e: any) {
         const canceled =
-          e?.name === "CanceledError" || e?.code === "ERR_CANCELED";
+          e?.name === "CanceledError" ||
+          e?.code === "ERR_CANCELED" ||
+          e?.name === "AbortError" ||
+          (e instanceof Error && e.name === "AbortError");
         if (!canceled) setError("목록을 불러오지 못했습니다.");
       } finally {
         setLoading(false);
@@ -134,22 +139,28 @@ export const useAuctionSearch = ({
     (async () => {
       try {
         setLoading(true);
-        const res = await fetchAuctions({
-          searchKeyword: (searchKeyword ?? "").trim() || undefined,
-          mainCategoryId: mainCategoryId ?? undefined,
-          subCategoryId: subCategoryId ?? undefined,
-          minPrice,
-          maxPrice,
-          includeEnded,
-          sortBy,
-          page,
-          size,
-        });
+        const res = await fetchAuctions(
+          {
+            searchKeyword: (searchKeyword ?? "").trim() || undefined,
+            mainCategoryId: mainCategoryId ?? undefined,
+            subCategoryId: subCategoryId ?? undefined,
+            minPrice,
+            maxPrice,
+            includeEnded,
+            sortBy,
+            page,
+            size,
+          },
+          controller.signal
+        );
         setItems((prev) => [...prev, ...res.data]);
         setLast(res.last);
       } catch (e: any) {
         const canceled =
-          e?.name === "CanceledError" || e?.code === "ERR_CANCELED";
+          e?.name === "CanceledError" ||
+          e?.code === "ERR_CANCELED" ||
+          e?.name === "AbortError" ||
+          (e instanceof Error && e.name === "AbortError");
         if (!canceled) setError("목록을 불러오지 못했습니다.");
       } finally {
         setLoading(false);
@@ -180,15 +191,18 @@ export const useAuctionSearch = ({
 
     (async () => {
       try {
-        const res = await fetchAuctions({
-          searchKeyword: (searchKeyword ?? "").trim() || undefined,
-          mainCategoryId: mainCategoryId ?? undefined,
-          subCategoryId: subCategoryId ?? undefined,
-          includeEnded,
-          sortBy: "price_desc",
-          page: 0,
-          size: 1,
-        });
+        const res = await fetchAuctions(
+          {
+            searchKeyword: (searchKeyword ?? "").trim() || undefined,
+            mainCategoryId: mainCategoryId ?? undefined,
+            subCategoryId: subCategoryId ?? undefined,
+            includeEnded,
+            sortBy: "price_desc",
+            page: 0,
+            size: 1,
+          },
+          controller.signal
+        );
 
         const top = res?.data?.[0];
         const ceil = top
@@ -197,7 +211,10 @@ export const useAuctionSearch = ({
         setTopPrice(ceil);
       } catch (e: any) {
         const canceled =
-          e?.name === "CanceledError" || e?.code === "ERR_CANCELED";
+          e?.name === "CanceledError" ||
+          e?.code === "ERR_CANCELED" ||
+          e?.name === "AbortError" ||
+          (e instanceof Error && e.name === "AbortError");
         if (!canceled) setTopPrice(1_000_000); // 실패 시 기본값 100만 원으로
       }
     })();
