@@ -25,17 +25,25 @@ export const useChatRoomData = (chatroomId: number) => {
       try {
         const listResponse = await api.get(`/chatrooms/list`, {
           headers: { Authorization: `Bearer ${token}` },
+          validateStatus: (status) => status >= 200 && status < 500,
         });
 
         const listItem = listResponse.data.find(
           (item: ChatListItemProps) => item.chatroomId === chatroomId
         );
 
-        if (!listItem) throw new Error("채팅 목록에서 방을 찾을 수 없습니다.");
+        if (!listItem) {
+          throw new Error("CHAT_ROOM_NOT_FOUND");
+        }
 
         const auctionRes = await api.get(`/auctions/${listItem.auctionId}`, {
           headers: { Authorization: `Bearer ${token}` },
+          validateStatus: (status) => status >= 200 && status < 500,
         });
+
+        if (!auctionRes) {
+          throw new Error("AUCTION_NOT_FOUND");
+        }
 
         const fullRoomData: ChatRoomProps = {
           chatroomId: chatroomId,
@@ -54,9 +62,19 @@ export const useChatRoomData = (chatroomId: number) => {
           },
         };
         setChatRoomData(fullRoomData);
-      } catch (err) {
-        console.error("채팅방 상세 로드 실패:", err);
-        setError(`채팅방 상세 정보를 불러올 수 없습니다.`);
+      } catch (err: any) {
+        console.error(err);
+        let errorMessage = `채팅방 상세 정보를 불러올 수 없습니다.`;
+
+        if (err.message === "CHAT_ROOM_NOT_FOUND") {
+          errorMessage = "채팅방 목록에서 해당 방 정보를 찾을 수 없습니다.";
+        } else if (err.message === "AUCTION_NOT_FOUND") {
+          errorMessage = "상품이 삭제되어 더 이상 대화할 수 없습니다.";
+        } else if (err.response?.status === 401) {
+          // 💡 토큰 만료 등 다른 Axios 에러도 대비
+          errorMessage = "인증 정보가 만료되었습니다. 다시 로그인해 주세요.";
+        }
+        setError(errorMessage);
       } finally {
         setIsLoading(false);
       }
