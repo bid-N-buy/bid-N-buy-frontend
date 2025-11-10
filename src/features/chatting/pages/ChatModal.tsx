@@ -23,18 +23,15 @@ const ChatModal = ({ onClose }: ModalProps) => {
     targetView,
     selectedChatroomId,
     chatList,
-    chatRoom,
     loading,
     openChatList,
     openChatRoom,
     refetchChatList,
-    fetchChatRoom,
   } = useChatModalStore(
     useShallow((state) => ({
       targetView: state.targetView,
       selectedChatroomId: state.selectedChatroomId,
       chatList: state.chatList,
-      chatRoom: state.chatRoom,
       loading: state.loading,
       openChatList: state.openChatList,
       openChatRoom: state.openChatRoom,
@@ -42,6 +39,13 @@ const ChatModal = ({ onClose }: ModalProps) => {
       fetchChatRoom: state.fetchChatRoom,
     }))
   );
+
+  const selectedRoomListItem = chatList.find(
+    (chat) => chat.chatroomId === selectedChatroomId
+  );
+
+  const counterpartNickname =
+    selectedRoomListItem?.counterpartNickname || "사용자";
 
   const [currentView, setCurrentView] = useState<string>(targetView);
 
@@ -86,7 +90,6 @@ const ChatModal = ({ onClose }: ModalProps) => {
   const handleSelectRoom = (chatroomId: number) => {
     const roomInfo = chatList.find((chat) => chat.chatroomId === chatroomId);
     if (roomInfo) {
-      fetchChatRoom(token, chatroomId);
       openChatRoom(chatroomId);
       setCurrentView("room");
     }
@@ -144,7 +147,7 @@ const ChatModal = ({ onClose }: ModalProps) => {
               >
                 <ChevronLeft />
               </button>
-              <p>{chatRoom?.chatroomInfo.counterpartNickname || "사용자"}</p>
+              <p>{counterpartNickname}</p>
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 aria-label="더보기"
@@ -207,12 +210,12 @@ const ChatModal = ({ onClose }: ModalProps) => {
             </p>
           )} */}
           {currentView === "room" && loading && <p>채팅방 정보 로딩 중...</p>}
-          {currentView === "room" && !loading && chatRoom && (
+          {currentView === "room" && !loading && selectedChatroomId && (
             <ChatRoom
-              chatroomId={selectedChatroomId!}
-              sellerId={chatRoom.sellerId}
-              chatroomInfo={chatRoom.chatroomInfo}
-              productInfo={chatRoom.productInfo}
+              chatroomId={selectedChatroomId}
+              // sellerId={chatRoom.sellerId}
+              // chatroomInfo={chatRoom.chatroomInfo}
+              // productInfo={chatRoom.productInfo}
             />
           )}
         </div>

@@ -18,7 +18,7 @@ import {
   useAuthStore,
   type AuthState,
 } from "../../features/auth/store/authStore";
-import { useChatSocket } from "../hooks/useChatSocket";
+import { useChatBadge } from "../hooks/useChatBadge";
 import { useAuthInit } from "../../features/auth/hooks/UseAuthInit";
 import api from "../../shared/api/axiosInstance";
 import { useChatModalStore } from "../store/ChatModalStore";
@@ -28,7 +28,7 @@ import type { CategoryNode } from "../../features/auction/api/categories";
 import { useAuctionFormStore } from "../../features/auction/store/auctionFormStore";
 
 const Header = () => {
-  useChatSocket();
+  useChatBadge();
   const notis = useNotiStore((s) => s.notis);
   const hasNew = notis.some((n) => !n.read);
 

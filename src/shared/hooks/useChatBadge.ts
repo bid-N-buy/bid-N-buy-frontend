@@ -5,7 +5,7 @@ import SockJS from "sockjs-client";
 import { useAuthStore } from "../../features/auth/store/authStore";
 import { useChatModalStore } from "../store/ChatModalStore";
 
-export const useChatSocket = () => {
+export const useChatBadge = () => {
   const token = useAuthStore((s) => s.accessToken);
   const totalUnreadCount = useChatModalStore((s) => s.totalUnreadCount);
   const clientRef = useRef<Client | null>(null);
