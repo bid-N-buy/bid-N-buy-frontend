@@ -77,8 +77,6 @@ const ProductInfo = ({
 
   const adminToken = useAdminAuthStore((s) => s.accessToken);
 
-  const { makeChatRoomInAuc } = useChatModalStore();
-
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -262,7 +260,6 @@ const ProductInfo = ({
         }
       );
       const chatroomId = response.data.chatroomId;
-      await makeChatRoomInAuc(token, sellerId, auctionId);
       // 채팅 모달이 헤더에 종속된 컴포넌트이므로 zustand로 상태 변경
       useChatModalStore.getState().openChatRoom(chatroomId);
     } catch (error) {

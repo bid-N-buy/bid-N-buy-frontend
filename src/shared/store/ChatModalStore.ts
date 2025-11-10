@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import type {
   ChatListItemProps,
-  // ChatMessageProps,
   ChatRoomProps,
 } from "../../features/chatting/types/ChatType";
 import api from "../api/axiosInstance";
@@ -27,15 +26,6 @@ type ChatModalAction = {
   markAsRead: (chatroomId: number) => void;
   fetchChatList: (accessToken: string | null) => Promise<void>;
   refetchChatList: (accessToken: string | null) => Promise<void>;
-  fetchChatRoom: (
-    accessToken: string | null,
-    chatroomId: number
-  ) => Promise<void>;
-  makeChatRoomInAuc: (
-    accessToken: string | null,
-    sellerId: number,
-    auctionId: number
-  ) => Promise<void>;
   handleNewChatMessage: (message: any) => Promise<void>;
 };
 
@@ -130,111 +120,6 @@ export const useChatModalStore = create<ChatModalStoreProps>((set, get) => ({
       return;
     }
   },
-  // 리스트에서 챗룸 접근 시 작동
-  fetchChatRoom: async (accessToken, chatroomId) => {
-    const { chatList } = get();
-
-    try {
-      set({
-        loading: true,
-        error: null,
-      });
-      const listItem = chatList.find((item) => item.chatroomId === chatroomId);
-
-      if (!listItem) {
-        set({
-          error: "채팅 목록에서 해당 방을 찾을 수 없습니다.",
-          loading: false,
-        });
-        return;
-      }
-      const auctionRes = await api.get(`/auctions/${listItem.auctionId}`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      const fullRoomData: ChatRoomProps = {
-        chatroomId: chatroomId,
-        sellerId: auctionRes.data.sellerId,
-        chatroomInfo: {
-          auctionId: listItem.auctionId,
-          auctionImageUrl: listItem.auctionImageUrl,
-          auctionTitle: listItem.auctionTitle,
-          counterpartId: listItem.counterpartId,
-          counterpartNickname: listItem.counterpartNickname,
-          counterpartProfileImageUrl: listItem.counterpartProfileImageUrl,
-        },
-        productInfo: {
-          currentPrice: auctionRes.data.currentPrice,
-          sellingStatus: auctionRes.data.sellingStatus,
-        },
-      };
-      set({ chatRoom: fullRoomData });
-    } catch (error) {
-      set({
-        error: `채팅방을 불러올 수 없습니다: ${error}`,
-        chatRoom: null,
-      });
-    } finally {
-      set({ loading: false });
-    }
-  },
-  // 경매 상세페이지 및 알림에서 만들어진 챗룸 바로 열 때 사용
-  makeChatRoomInAuc: async (accessToken, sellerId, auctionId) => {
-    try {
-      set({
-        loading: true,
-        error: null,
-      });
-      const response = await api.get<ChatListItemProps[]>("/chatrooms/list", {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-
-      const listItem = response.data.find(
-        (item) =>
-          item.counterpartId === sellerId && item.auctionId === auctionId
-      );
-
-      if (!listItem) {
-        set({
-          error: "채팅 목록에서 해당 방을 찾을 수 없습니다.",
-          loading: false,
-        });
-        return;
-      }
-
-      const auctionRes = await api.get(`/auctions/${listItem!.auctionId}`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-
-      const fullRoomData = {
-        chatroomId: listItem.chatroomId,
-        sellerId: auctionRes.data.sellerId,
-        chatroomInfo: {
-          auctionId: listItem.auctionId,
-          auctionImageUrl: listItem.auctionImageUrl,
-          auctionTitle: listItem.auctionTitle,
-          counterpartId: listItem.counterpartId,
-          counterpartNickname: listItem.counterpartNickname,
-          counterpartProfileImageUrl: listItem.counterpartProfileImageUrl,
-        },
-        productInfo: {
-          currentPrice: auctionRes.data.currentPrice,
-          sellingStatus: auctionRes.data.sellingStatus,
-        },
-      };
-
-      set({ chatRoom: fullRoomData });
-      get().refetchChatList(accessToken);
-    } catch (error) {
-      set({
-        error: `채팅방을 불러올 수 없습니다: ${error}`,
-        chatRoom: null,
-      });
-    } finally {
-      set({ loading: false });
-    }
-  },
   // 실시간 전체메시지 읽음 상태 갱신(리스트)
   handleNewChatMessage: async (message) => {
     const { chatList, selectedChatroomId } = get();
@@ -263,19 +148,6 @@ export const useChatModalStore = create<ChatModalStoreProps>((set, get) => ({
       // 업데이트된 챗룸 가장 위로 정렬된 새 리스트 정의
       const newChatList = [updatedRoom, ...updatedList];
       updateChatState(newChatList, set);
-    }
-    // unreadCount 갱신
-    try {
-      const response = await api.get("/chatrooms/list", {
-        headers: {
-          Authorization: `Bearer ${useAuthStore.getState().accessToken}`,
-        },
-      });
-      const serverList = response.data;
-      updateChatState(serverList, set);
-    } catch (e) {
-      console.error("실시간 메시지 상태 갱신 오류:", e);
-      return;
     }
   },
 }));

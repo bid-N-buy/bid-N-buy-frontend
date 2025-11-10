@@ -1,10 +1,4 @@
-import React, {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { useCallback, useRef, useState } from "react";
 import api from "../../../shared/api/axiosInstance";
 import { Client, type IMessage } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
@@ -17,7 +11,6 @@ export const useChatSocket = (chatroomId: number) => {
   const clientRef = useRef<Client | null>(null);
 
   const [messages, setMessages] = useState<ChatMessageProps[]>([]);
-  const [inputMessage, setInputMessage] = useState<string>("");
   const [isConnected, setIsConnected] = useState<boolean>(false);
 
   const [error, setError] = useState<string | null>(null);
@@ -129,7 +122,7 @@ export const useChatSocket = (chatroomId: number) => {
     // 연결 시도
     client.activate();
     clientRef.current = client;
-  }, [WS_URL, chatroomId, handleNewChatMessage, token]);
+  }, [WS_URL, chatroomId, token, handleNewChatMessage]);
 
   // 메시지 수신 및 화면 업데이트 로직
   const handleMessageReceived = (message: IMessage) => {
@@ -257,31 +250,31 @@ export const useChatSocket = (chatroomId: number) => {
   };
 
   // [전송] 채팅(기본) 메시지
-  const sendMessage = () => {
-    const client = clientRef.current;
+  // const sendMessage = () => {
+  //   const client = clientRef.current;
 
-    if (!client || !client.connected || !inputMessage.trim()) {
-      console.warn("연결되지 않았거나 메시지가 비어있습니다.");
-      return;
-    }
-    // 메시지 생성
-    const chatMessage = {
-      chatroomId: chatroomId,
-      senderId: userId,
-      message: inputMessage.trim(),
-      messageType: "CHAT",
-    };
+  //   if (!client || !client.connected || !inputMessage.trim()) {
+  //     console.warn("연결되지 않았거나 메시지가 비어있습니다.");
+  //     return;
+  //   }
+  //   // 메시지 생성
+  //   const chatMessage = {
+  //     chatroomId: chatroomId,
+  //     senderId: userId,
+  //     message: inputMessage.trim(),
+  //     messageType: "CHAT",
+  //   };
 
-    // 전송 실행
-    client.publish({
-      destination: `/app/chat/message`,
-      body: JSON.stringify(chatMessage),
-      headers: { "content-type": "application/json" },
-    });
+  //   // 전송 실행
+  //   client.publish({
+  //     destination: `/app/chat/message`,
+  //     body: JSON.stringify(chatMessage),
+  //     headers: { "content-type": "application/json" },
+  //   });
 
-    // 입력 상태 초기화
-    setInputMessage("");
-  };
+  //   // 입력 상태 초기화
+  //   setInputMessage("");
+  // };
 
   // [전송] 읽음 상태
   const sendReadStatus = useCallback(async () => {
@@ -319,15 +312,12 @@ export const useChatSocket = (chatroomId: number) => {
     clientRef,
     messages,
     isConnected,
-    inputMessage,
     error,
     webSocketLogic,
     fetchMessageHistory,
-    setInputMessage,
     handleSendPaymentRequest,
     handleSendAddress,
     handleSendImage,
-    sendMessage,
     sendReadStatus,
   };
 };

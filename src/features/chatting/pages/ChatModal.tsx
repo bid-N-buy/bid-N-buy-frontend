@@ -36,7 +36,6 @@ const ChatModal = ({ onClose }: ModalProps) => {
       openChatList: state.openChatList,
       openChatRoom: state.openChatRoom,
       refetchChatList: state.refetchChatList,
-      fetchChatRoom: state.fetchChatRoom,
     }))
   );
 
@@ -211,12 +210,7 @@ const ChatModal = ({ onClose }: ModalProps) => {
           )} */}
           {currentView === "room" && loading && <p>채팅방 정보 로딩 중...</p>}
           {currentView === "room" && !loading && selectedChatroomId && (
-            <ChatRoom
-              chatroomId={selectedChatroomId}
-              // sellerId={chatRoom.sellerId}
-              // chatroomInfo={chatRoom.chatroomInfo}
-              // productInfo={chatRoom.productInfo}
-            />
+            <ChatRoom chatroomId={selectedChatroomId} />
           )}
         </div>
       </div>

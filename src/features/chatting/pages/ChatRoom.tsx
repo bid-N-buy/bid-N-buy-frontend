@@ -1,39 +1,65 @@
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuthStore } from "../../auth/store/authStore";
-// import { useChatListApi } from "../api/useChatList";
 import ChatProductInfo from "../components/ChatProductInfo";
 import ChatMe from "../components/ChatMe";
 import ChatYou from "../components/ChatYou";
 import ChatInput from "../components/ChatInput";
 // import ChatDate from "../components/ChatDate"; 날짜 넘어갈 시에 사용
-// import type { ChatRoomProps } from "../types/ChatType";
 import { useChatSocket } from "../hooks/useChatSocket";
 import { useChatRoomData } from "../hooks/useChatRoomData";
+import { useChatModalStore } from "../../../shared/store/ChatModalStore";
 
 const ChatRoom = ({ chatroomId }: { chatroomId: number }) => {
   // 토큰/유저아이디 전역에서 들고 오기
   const token = useAuthStore((state) => state.accessToken);
   const userId = useAuthStore.getState().userId;
+  const [inputMessage, setInputMessage] = useState("");
 
   // 스크롤 하단 위치 위한 useRef
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
   const { chatRoomData, isLoading, error } = useChatRoomData(chatroomId);
 
+  const { markAsRead } = useChatModalStore();
+
   const {
     clientRef,
     fetchMessageHistory,
     webSocketLogic,
     messages,
-    inputMessage,
-    setInputMessage,
     isConnected,
     sendReadStatus,
-    sendMessage,
     handleSendPaymentRequest,
     handleSendAddress,
     handleSendImage,
   } = useChatSocket(chatroomId);
+
+  // [전송] 채팅(기본) 메시지
+  const handleSendMessage = useCallback(() => {
+    const client = clientRef.current;
+
+    if (!client || !client.connected || !inputMessage.trim()) {
+      console.warn("연결되지 않았거나 메시지가 비어있습니다.");
+      return;
+    }
+    // 메시지 생성
+    const chatMessage = {
+      chatroomId: chatroomId,
+      senderId: userId,
+      message: inputMessage.trim(),
+      messageType: "CHAT",
+    };
+
+    // 전송 실행
+    client.publish({
+      destination: `/app/chat/message`,
+      body: JSON.stringify(chatMessage),
+      headers: { "content-type": "application/json" },
+    });
+
+    // 입력 상태 초기화
+    setInputMessage("");
+  }, [chatroomId, clientRef, inputMessage, userId]);
 
   useEffect(() => {
     if (!token || !chatroomId) return;
@@ -56,6 +82,10 @@ const ChatRoom = ({ chatroomId }: { chatroomId: number }) => {
   }, [chatroomId, clientRef, fetchMessageHistory, token, webSocketLogic]);
 
   useEffect(() => {
+    if (chatroomId) markAsRead(chatroomId);
+  }, [chatroomId, markAsRead]);
+
+  useEffect(() => {
     if (!chatroomId || !userId || !isConnected) {
       return;
     }
@@ -73,9 +103,17 @@ const ChatRoom = ({ chatroomId }: { chatroomId: number }) => {
   }, [chatContainerRef, isLoading, messages]);
 
   if (isLoading)
-    return <div className="h-full w-full text-center">로딩 중</div>;
+    return (
+      <div className="text-g300 flex h-[100%] items-center justify-center text-sm">
+        로딩 중...
+      </div>
+    );
   if (!chatRoomData || error)
-    return <div className="h-full w-full text-center">에러가 있습니다.</div>;
+    return (
+      <div className="text-g300 flex h-[100%] items-center justify-center text-sm">
+        {error}
+      </div>
+    );
 
   return (
     <>
@@ -123,7 +161,7 @@ const ChatRoom = ({ chatroomId }: { chatroomId: number }) => {
         isConnected={isConnected}
         inputMessage={inputMessage}
         setInputMessage={setInputMessage}
-        sendMessage={sendMessage}
+        sendMessage={handleSendMessage}
         handleSendImage={handleSendImage}
       />
     </>
