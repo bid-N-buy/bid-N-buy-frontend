@@ -45,12 +45,10 @@ const ensureAxiosHeaders = (cfg: InternalAxiosRequestConfig): AxiosHeaders => {
 type ReissueResponse = {
   email?: string;
   nickname?: string;
-  tokenInfo?: {
-    accessToken?: string;
-    refreshToken?: string;
-    grantType?: string;
-    accessTokenExpiresIn?: number;
-  };
+  accessToken?: string;
+  refreshToken?: string;
+  grantType?: string;
+  accessTokenExpiresIn?: number;
 };
 
 // 요청 인터셉터
@@ -146,24 +144,18 @@ adminApi.interceptors.response.use(
         return Promise.reject(error);
       }
 
-      // 서버 스펙: 소문자 키(회원쪽과 동일 규약이면 그대로)
-      const body = {
-        accesstoken: accessToken,
-        refreshtoken: refreshToken,
-      };
+      // 백 스펙에 맞춰서..
+      const body = { accessToken, refreshToken };
 
       // 인터셉터 재귀 방지 위해 axios 기본 인스턴스 사용
       const refreshRes = await axios.post<ReissueResponse>(
         ADMIN_REISSUE_URL,
         body,
-        {
-          withCredentials: false,
-        }
+        { withCredentials: false }
       );
 
-      const info = refreshRes.data?.tokenInfo;
-      const newAccess = info?.accessToken ?? null;
-      const newRefresh = info?.refreshToken ?? null;
+      const newAccess = refreshRes.data?.accessToken ?? null;
+      const newRefresh = refreshRes.data?.refreshToken ?? null;
 
       if (!newAccess) {
         clear();
