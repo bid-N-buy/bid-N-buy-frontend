@@ -1,7 +1,6 @@
 import { useRef, useEffect, useState } from "react";
 import adminApi from "../api/adminAxiosInstance";
 import { useAdminAuthStore } from "../store/adminStore";
-import Toast from "../../../shared/components/Toast";
 import useToast from "../../../shared/hooks/useToast";
 import type { ModalProps } from "../../../shared/types/CommonType";
 import { X } from "lucide-react";
@@ -12,7 +11,7 @@ const AdminAlertPostModal = ({ onClose }: ModalProps) => {
   const [form, setForm] = useState({ userId: "", content: "" });
 
   // 전송 완료/실패 알림
-  const { toast, showToast, hideToast } = useToast();
+  const { showToast } = useToast();
 
   const sendAlert = async () => {
     if (!adminToken) {
@@ -107,9 +106,6 @@ const AdminAlertPostModal = ({ onClose }: ModalProps) => {
           </button>
         </form>
       </div>
-      {toast.isVisible && (
-        <Toast message={toast.message} type={toast.type} onClose={hideToast} />
-      )}
     </>
   );
 };

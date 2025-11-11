@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { useParams } from "react-router-dom";
 import adminApi from "../api/adminAxiosInstance";
 import type { AdminInquiryAnswer } from "../types/AdminType";
-import Toast from "../../../shared/components/Toast";
 import useToast from "../../../shared/hooks/useToast";
 
 const AdminInquiryAnswerForm = () => {
@@ -10,7 +9,7 @@ const AdminInquiryAnswerForm = () => {
   const [form, setForm] = useState({ title: "", content: "" });
   const [loading, setLoading] = useState(false);
 
-  const { toast, showToast, hideToast } = useToast();
+  const { showToast } = useToast();
 
   const onChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -121,9 +120,6 @@ const AdminInquiryAnswerForm = () => {
           </button>
         </div>
       </form>
-      {toast.isVisible && (
-        <Toast message={toast.message} type={toast.type} onClose={hideToast} />
-      )}
     </>
   );
 };

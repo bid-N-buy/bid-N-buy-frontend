@@ -1,7 +1,6 @@
 import { useRef, useEffect, useState } from "react";
 import adminApi from "../api/adminAxiosInstance";
 import { useAdminAuthStore } from "../store/adminStore";
-import Toast from "../../../shared/components/Toast";
 import useToast from "../../../shared/hooks/useToast";
 import type { AdminPenaltyPostProps } from "../types/AdminType";
 import { X } from "lucide-react";
@@ -12,7 +11,7 @@ const AdminPenaltyPostModal = ({ userId, onClose }: AdminPenaltyPostProps) => {
   const [form, setForm] = useState({ userId: userId, type: "LEVEL_1" });
 
   // 전송 완료/실패 알림
-  const { toast, showToast, hideToast } = useToast();
+  const { showToast } = useToast();
 
   const sendPenalty = async () => {
     if (!adminToken) {
@@ -112,9 +111,6 @@ const AdminPenaltyPostModal = ({ userId, onClose }: AdminPenaltyPostProps) => {
           </button>
         </form>
       </div>
-      {toast.isVisible && (
-        <Toast message={toast.message} type={toast.type} onClose={hideToast} />
-      )}
     </>
   );
 };

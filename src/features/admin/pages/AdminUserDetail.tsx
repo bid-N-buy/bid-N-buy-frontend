@@ -3,7 +3,6 @@ import { createPortal } from "react-dom";
 import { useNavigate, useParams } from "react-router-dom";
 import adminApi from "../api/adminAxiosInstance";
 import type { UserDetailProps } from "../types/AdminType";
-import Toast from "../../../shared/components/Toast";
 import useToast from "../../../shared/hooks/useToast";
 import { formatDate } from "../../../shared/utils/datetime";
 import Avatar from "../../../shared/components/Avatar";
@@ -13,7 +12,7 @@ const AdminUserDetail = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const [user, setUser] = useState<UserDetailProps | null>(null);
-  const { toast, showToast, hideToast } = useToast();
+  const { showToast } = useToast();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -199,9 +198,6 @@ const AdminUserDetail = () => {
           />,
           modalRoot
         )}
-      {toast.isVisible && (
-        <Toast message={toast.message} type={toast.type} onClose={hideToast} />
-      )}
     </div>
   );
 };
