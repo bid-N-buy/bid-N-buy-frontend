@@ -21,5 +21,5 @@ export const useToastStore = create<ToastState>((set) => ({
       type,
     }),
 
-  hideToast: () => set({ isVisible: false, message: "", type: "success" }),
+  hideToast: () => set({ isVisible: false, message: "" }),
 }));

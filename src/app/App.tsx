@@ -28,6 +28,8 @@ import AdminInquiryPost from "../features/admin/pages/AdminInquiryPost";
 import AdminUserDetail from "../features/admin/pages/AdminUserDetail";
 import AuthInitGate from "../features/auth/components/AuthInitGate";
 import ReportDetailPage from "../features/mypage/pages/ReportDetailPage";
+import Toast from "../shared/components/Toast";
+import { useToastStore } from "../shared/store/useToastStore";
 
 // 공통
 const Header = React.lazy(() => import("../shared/components/Header"));
@@ -152,14 +154,17 @@ function AdminLayout() {
 
 export default function App() {
   const { ready } = useAuthInit();
+  const { isVisible, message, type, hideToast } = useToastStore();
   if (!ready) return <div className="p-6 text-center">초기화 중...</div>;
 
   return (
     <BrowserRouter>
       <AuthInitGate />
-      {/* 알림 항상 유지되도록 최상단에 배치 */}
+      {/* 알림 항상 유지되도록 최상단 배치 */}
       <FcmInitializer />
       <FcmListener />
+      {/* 전역 토스트 */}
+      {isVisible && <Toast message={message} type={type} onClose={hideToast} />}
       <Routes>
         {/* 기본 레이아웃 */}
         <Route element={<AppLayout />}>
@@ -200,7 +205,7 @@ export default function App() {
               {/* 문의/신고 */}
               <Route path="inquiries" element={<InquiryList />} />
 
-              {/* ✅ 문의/신고 작성 (상대 경로로 묶기) */}
+              {/* 문의/신고 작성 (상대 경로로 묶기) */}
               <Route path="support">
                 {/* /mypage/support -> /mypage/support/inquiries/new 로 리디렉트 */}
                 <Route
