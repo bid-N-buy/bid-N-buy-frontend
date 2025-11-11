@@ -3,15 +3,10 @@ import api from "../../../shared/api/axiosInstance";
 import { useAuthStore } from "../../auth/store/authStore";
 import { useChatModalStore } from "../../../shared/store/ChatModalStore";
 import type { ChatListItemProps, ChatRoomProps } from "../types/ChatType";
-import useToast from "../../../shared/hooks/useToast";
 
-export const useChatRoomData = (
-  chatroomId: number,
-  handleGoToList: () => void
-) => {
+export const useChatRoomData = (chatroomId: number) => {
   const token = useAuthStore((s) => s.accessToken);
   const isChatOpen = useChatModalStore((s) => s.isChatOpen);
-  const { showToast } = useToast();
 
   const [chatRoomData, setChatRoomData] = useState<ChatRoomProps | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -40,14 +35,62 @@ export const useChatRoomData = (
         if (!listItem) {
           throw new Error("CHAT_ROOM_NOT_FOUND");
         }
+        const isCounterpartWithdrawn = listItem.counterpartId === null;
+
+        if (isCounterpartWithdrawn) {
+          const withdrawnRoomData: ChatRoomProps = {
+            chatroomId: chatroomId,
+            sellerId: null,
+            chatroomInfo: {
+              auctionId: null,
+              auctionImageUrl: null,
+              auctionTitle: "탈퇴회원의 상품",
+              counterpartId: null,
+              counterpartNickname: "탈퇴회원",
+              counterpartProfileImageUrl: null,
+            },
+            productInfo: {
+              currentPrice: null,
+              sellingStatus: null,
+            },
+            isLocked: true,
+            lockMessage: "상대방이 탈퇴하여 더 이상 대화할 수 없습니다.",
+          };
+          setChatRoomData(withdrawnRoomData);
+          setIsLoading(false);
+          return;
+        }
 
         const auctionRes = await api.get(`/auctions/${listItem.auctionId}`, {
           headers: { Authorization: `Bearer ${token}` },
           validateStatus: (status) => status >= 200 && status < 500,
         });
 
-        if (!auctionRes.data.currentPrice) {
-          throw new Error("AUCTION_NOT_FOUND");
+        const isAuctionDeleted = !auctionRes.data.currentPrice;
+
+        if (isAuctionDeleted) {
+          const dummyData: ChatRoomProps = {
+            chatroomId: chatroomId,
+            sellerId: null,
+            chatroomInfo: {
+              auctionId: listItem.auctionId,
+              auctionImageUrl: "",
+              auctionTitle: "삭제된 상품",
+              counterpartId: listItem.counterpartId,
+              counterpartNickname: listItem.counterpartNickname,
+              counterpartProfileImageUrl: listItem.counterpartProfileImageUrl,
+            },
+            productInfo: {
+              currentPrice: null,
+              sellingStatus: null,
+            },
+            isLocked: true,
+            lockReason: "AUCTION_DELETED",
+            lockMessage: "상품이 삭제되어 더 이상 대화할 수 없습니다.",
+          };
+          setChatRoomData(dummyData);
+          setIsLoading(false);
+          return;
         }
 
         const fullRoomData: ChatRoomProps = {
@@ -73,24 +116,15 @@ export const useChatRoomData = (
 
         if (err.message === "CHAT_ROOM_NOT_FOUND") {
           errorMessage = "채팅방 목록에서 해당 방 정보를 찾을 수 없습니다.";
-        } else if (err.message === "AUCTION_NOT_FOUND") {
-          errorMessage = "상품이 삭제되어 더 이상 대화할 수 없습니다.";
-        } else if (err.response?.status === 401) {
-          // 💡 토큰 만료 등 다른 Axios 에러도 대비
-          errorMessage = "인증 정보가 만료되었습니다. 다시 로그인해 주세요.";
         }
         setError(errorMessage);
-        showToast(errorMessage, "error");
-        setTimeout(() => {
-          handleGoToList();
-        }, 500);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchRoomData();
-  }, [token, chatroomId, isChatOpen, showToast, handleGoToList]);
+  }, [token, chatroomId, isChatOpen]);
 
   return { chatRoomData, isLoading, error };
 };

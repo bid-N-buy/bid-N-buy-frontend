@@ -14,7 +14,7 @@ const ChatList = ({ chatList, onSelectRoom }: ChatListProps) => {
       {chatList.map((chat) => (
         <li
           key={chat.chatroomId}
-          onClick={() => onSelectRoom(chat.chatroomId)}
+          onClick={() => onSelectRoom(chat.chatroomId!)}
           className="border-g400 flex cursor-pointer items-center justify-between border-b p-4 hover:bg-gray-50"
         >
           <div className="flex items-center gap-2">
