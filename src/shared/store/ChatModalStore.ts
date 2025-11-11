@@ -1,8 +1,5 @@
 import { create } from "zustand";
-import type {
-  ChatListItemProps,
-  ChatRoomProps,
-} from "../../features/chatting/types/ChatType";
+import type { ChatListItemProps } from "../../features/chatting/types/ChatType";
 import api from "../api/axiosInstance";
 import { useAuthStore } from "../../features/auth/store/authStore";
 
@@ -13,7 +10,6 @@ type ChatModalState = {
   targetView: string;
   selectedChatroomId: number | null;
   chatList: ChatListItemProps[];
-  chatRoom: ChatRoomProps | null;
   totalUnreadCount: number;
   loading: boolean;
   error: string | null;
@@ -47,7 +43,6 @@ export const useChatModalStore = create<ChatModalStoreProps>((set, get) => ({
   targetView: "list",
   selectedChatroomId: null,
   chatList: [],
-  chatRoom: null,
   totalUnreadCount: 0,
   loading: false,
   error: null,

@@ -3,10 +3,15 @@ import api from "../../../shared/api/axiosInstance";
 import { useAuthStore } from "../../auth/store/authStore";
 import { useChatModalStore } from "../../../shared/store/ChatModalStore";
 import type { ChatListItemProps, ChatRoomProps } from "../types/ChatType";
+import useToast from "../../../shared/hooks/useToast";
 
-export const useChatRoomData = (chatroomId: number) => {
+export const useChatRoomData = (
+  chatroomId: number,
+  handleGoToList: () => void
+) => {
   const token = useAuthStore((s) => s.accessToken);
   const isChatOpen = useChatModalStore((s) => s.isChatOpen);
+  const { showToast } = useToast();
 
   const [chatRoomData, setChatRoomData] = useState<ChatRoomProps | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -41,7 +46,7 @@ export const useChatRoomData = (chatroomId: number) => {
           validateStatus: (status) => status >= 200 && status < 500,
         });
 
-        if (!auctionRes) {
+        if (!auctionRes.data.currentPrice) {
           throw new Error("AUCTION_NOT_FOUND");
         }
 
@@ -75,13 +80,17 @@ export const useChatRoomData = (chatroomId: number) => {
           errorMessage = "인증 정보가 만료되었습니다. 다시 로그인해 주세요.";
         }
         setError(errorMessage);
+        showToast(errorMessage, "error");
+        setTimeout(() => {
+          handleGoToList();
+        }, 500);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchRoomData();
-  }, [token, chatroomId, isChatOpen]);
+  }, [token, chatroomId, isChatOpen, showToast, handleGoToList]);
 
   return { chatRoomData, isLoading, error };
 };

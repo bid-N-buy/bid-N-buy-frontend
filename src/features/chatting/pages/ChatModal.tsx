@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
 import api from "../../../shared/api/axiosInstance";
 import { useShallow } from "zustand/shallow";
 import { useAuthStore } from "../../auth/store/authStore";
@@ -39,17 +39,16 @@ const ChatModal = ({ onClose }: ModalProps) => {
     }))
   );
 
+  const [currentView, setCurrentView] = useState<string>(targetView);
   const selectedRoomListItem = chatList.find(
     (chat) => chat.chatroomId === selectedChatroomId
   );
-
   const counterpartNickname =
     selectedRoomListItem?.counterpartNickname || "사용자";
 
-  const [currentView, setCurrentView] = useState<string>(targetView);
-
-  // chatroom에서 해당 채팅방 삭제 메뉴
+  // chatroom에서 해당 채팅방 삭제 메뉴 열기
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   // const [isAdOpen, setIsAdOpen] = useState(false); // 주소
   // const [editing, setEditing] = useState<Address | null>(null);
@@ -95,11 +94,11 @@ const ChatModal = ({ onClose }: ModalProps) => {
   };
 
   // 채팅방에서 목록으로 돌아갈 함수
-  const handleGoToList = async () => {
+  const handleGoToList = useCallback(async () => {
     openChatList();
     refetchChatList(token);
     setCurrentView("list");
-  };
+  }, [openChatList, refetchChatList, token]);
 
   // 채팅방 삭제 함수
   const handleDeleteRoom = async (chatroomId: number) => {
@@ -157,7 +156,7 @@ const ChatModal = ({ onClose }: ModalProps) => {
                 <div className="border-g400 absolute top-10 right-3 mt-2 w-32 rounded-md border bg-white shadow-lg">
                   <button
                     onClick={() => {
-                      handleDeleteRoom(selectedChatroomId!);
+                      setConfirmOpen(true);
                     }}
                     className="text-red hover:bg-g500 w-full px-4 py-2.5 text-left text-base transition-colors md:py-3"
                   >
@@ -210,7 +209,39 @@ const ChatModal = ({ onClose }: ModalProps) => {
           )} */}
           {currentView === "room" && loading && <p>채팅방 정보 로딩 중...</p>}
           {currentView === "room" && !loading && selectedChatroomId && (
-            <ChatRoom chatroomId={selectedChatroomId} />
+            <ChatRoom
+              chatroomId={selectedChatroomId}
+              handleGoToList={handleGoToList}
+            />
+          )}
+          {confirmOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/10">
+              <div className="animate-fade-in w-72 rounded-md bg-white p-6 text-center shadow-sm">
+                <p className="text-g100 mb-5 text-base font-medium">
+                  채팅방을 삭제하시겠습니까?
+                </p>
+                <div className="flex justify-center gap-3">
+                  <button
+                    onClick={() => {
+                      setConfirmOpen(false);
+                      setIsMenuOpen(false);
+                    }}
+                    className="border-purple text-purple hover:bg-light-purple cursor-pointer rounded-md border px-4 py-2 font-semibold transition-colors"
+                  >
+                    취소
+                  </button>
+                  <button
+                    onClick={() => {
+                      setConfirmOpen(false);
+                      handleDeleteRoom(selectedChatroomId!);
+                    }}
+                    className="bg-purple hover:bg-deep-purple cursor-pointer rounded-md px-4 py-2 font-semibold text-white transition-colors"
+                  >
+                    확인
+                  </button>
+                </div>
+              </div>
+            </div>
           )}
         </div>
       </div>
