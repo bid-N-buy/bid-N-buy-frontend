@@ -6,10 +6,16 @@ import ChatYou from "../components/ChatYou";
 import ChatInput from "../components/ChatInput";
 // import ChatDate from "../components/ChatDate"; 날짜 넘어갈 시에 사용
 import { useChatSocket } from "../hooks/useChatSocket";
-import { useChatRoomData } from "../hooks/useChatRoomData";
 import { useChatModalStore } from "../../../shared/store/ChatModalStore";
+import { useChatRoomData } from "../hooks/useChatRoomData";
 
-const ChatRoom = ({ chatroomId }: { chatroomId: number }) => {
+const ChatRoom = ({
+  chatroomId,
+  handleGoToList,
+}: {
+  chatroomId: number;
+  handleGoToList: () => void;
+}) => {
   // 토큰/유저아이디 전역에서 들고 오기
   const token = useAuthStore((state) => state.accessToken);
   const userId = useAuthStore.getState().userId;
@@ -18,7 +24,10 @@ const ChatRoom = ({ chatroomId }: { chatroomId: number }) => {
   // 스크롤 하단 위치 위한 useRef
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
-  const { chatRoomData, isLoading, error } = useChatRoomData(chatroomId);
+  const { chatRoomData, isLoading, error } = useChatRoomData(
+    chatroomId,
+    handleGoToList
+  );
 
   const { markAsRead } = useChatModalStore();
 
