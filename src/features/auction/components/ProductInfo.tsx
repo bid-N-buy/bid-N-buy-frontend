@@ -2,7 +2,6 @@ import React, { useState, useCallback, useRef, useEffect } from "react";
 import BidModal from "./BidModal";
 import { useAuthStore } from "../../auth/store/authStore";
 import { useChatModalStore } from "../../../shared/store/ChatModalStore";
-import Toast from "../../../shared/components/Toast";
 import useToast from "../../../shared/hooks/useToast";
 import api from "../../../shared/api/axiosInstance";
 import { EllipsisVertical } from "lucide-react";
@@ -40,7 +39,6 @@ export interface ProductInfoProps {
   onAfterBid?: (next: { currentPrice?: number }) => void;
 
   showToast?: (msg: string, type?: "success" | "error") => void;
-  hideToast?: () => void;
 }
 
 const ProductInfo = ({
@@ -64,13 +62,12 @@ const ProductInfo = ({
   onDeleteClick,
   onAfterBid,
   showToast: propShowToast,
-  hideToast: propHideToast,
 }: ProductInfoProps) => {
   const [isBidModalOpen, setIsBidModalOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
-  const { toast, showToast, hideToast } = useToast();
+  const { showToast } = useToast();
 
   const userId = useAuthStore((s) => s.userId);
   const token = useAuthStore((s) => s.accessToken);
@@ -457,10 +454,6 @@ const ProductInfo = ({
         onBidSubmit={handleBidSubmit}
       />
 
-      {/* 토스트 */}
-      {toast.isVisible && (
-        <Toast message={toast.message} type={toast.type} onClose={hideToast} />
-      )}
 
       {/* 삭제 모달 */}
       {confirmOpen && (
