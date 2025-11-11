@@ -4,7 +4,6 @@ import { useAuctionDetailStore } from "../../auction/store/auctionDetailStore";
 import { formatDate } from "../../../shared/utils/datetime";
 import ProductImage from "../../auction/components/ProductImage";
 import { useAdminAuthStore } from "../store/adminStore";
-import Toast from "../../../shared/components/Toast";
 import useToast from "../../../shared/hooks/useToast";
 import { adminDeleteAuction } from "../api/admin";
 
@@ -23,7 +22,7 @@ const AdminAuctionPost = () => {
     load,
     reset,
   } = useAuctionDetailStore();
-  const { toast, showToast, hideToast } = useToast();
+  const { showToast } = useToast();
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   // 삭제
@@ -40,8 +39,8 @@ const AdminAuctionPost = () => {
     }
     try {
       if (adminToken) await adminDeleteAuction(auctionId);
-      navigate(-1);
       showToast("경매가 삭제되었습니다.", "success");
+      navigate(-1);
     } catch (err: any) {
       const msg =
         err?.response?.data?.message ?? err?.message ?? "삭제에 실패했습니다.";
@@ -117,9 +116,6 @@ const AdminAuctionPost = () => {
           {auction.description}
         </p>
       </div>
-      {toast.isVisible && (
-        <Toast message={toast.message} type={toast.type} onClose={hideToast} />
-      )}
 
       {confirmOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/10">

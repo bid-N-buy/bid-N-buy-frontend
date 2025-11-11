@@ -4,7 +4,6 @@ import { useAuctionFormStore } from "../store/auctionFormStore";
 import { createAuction } from "../api/auctions";
 import useToast from "../../../shared/hooks/useToast";
 import { validateCreateAuction } from "../utils/validation";
-import Toast from "../../../shared/components/Toast";
 import { useNavigate } from "react-router-dom";
 import { useCategoryStore } from "../store/categoryStore";
 import DatePicker from "react-datepicker";
@@ -30,7 +29,7 @@ const MAX_TOTAL_IMAGE_SIZE = 20 * 1024 * 1024; // 20MB
 
 const AuctionForm = () => {
   const navigate = useNavigate();
-  const { toast, showToast, hideToast } = useToast();
+  const { showToast } = useToast();
 
   const {
     title,
@@ -524,15 +523,6 @@ const AuctionForm = () => {
           </button>
         </div>
       </div>
-
-      {toast.isVisible && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={hideToast}
-          duration={2500}
-        />
-      )}
     </div>
   );
 };

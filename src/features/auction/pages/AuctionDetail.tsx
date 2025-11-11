@@ -8,7 +8,6 @@ import RelatedItem from "../components/RelatedItem";
 import { useAuctionDetailStore } from "../store/auctionDetailStore";
 import { useAuthStore } from "../../auth/store/authStore";
 import useToast from "../../../shared/hooks/useToast";
-import Toast from "../../../shared/components/Toast";
 
 const AuctionDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -23,7 +22,7 @@ const AuctionDetail = () => {
     reset,
     patch,
   } = useAuctionDetailStore();
-  const { toast, showToast, hideToast } = useToast();
+  const { showToast } = useToast();
 
   useEffect(() => {
     if (!id) return;
@@ -97,7 +96,6 @@ const AuctionDetail = () => {
                 navigate("/", { replace: true }); // 메인으로
               }}
               showToast={showToast}
-              hideToast={hideToast}
             />
           </div>
         </div>
@@ -121,10 +119,6 @@ const AuctionDetail = () => {
           onCardClick={handleCardClick}
         />
       </section>
-
-      {toast.isVisible && (
-        <Toast message={toast.message} type={toast.type} onClose={hideToast} />
-      )}
     </div>
   );
 };

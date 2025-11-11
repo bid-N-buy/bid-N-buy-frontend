@@ -4,7 +4,6 @@ import adminApi from "../api/adminAxiosInstance";
 import { useNavigate } from "react-router-dom";
 import type { AdminProps } from "../types/AdminType";
 import { ChevronRight } from "lucide-react";
-import Toast from "../../../shared/components/Toast";
 import useToast from "../../../shared/hooks/useToast";
 
 type ApiErr = { message?: string; error?: string };
@@ -20,7 +19,7 @@ const AdminSignUpForm = () => {
 
   const [loadingSubmit, setLoadingSubmit] = useState<boolean>(false);
   const [msg, setMsg] = useState<string | null>(null);
-  const { toast, showToast, hideToast } = useToast();
+  const { showToast } = useToast();
 
   const handleIpConsentAgreed = (e) => {
     const isChecked = e.target.checked;
@@ -162,9 +161,6 @@ const AdminSignUpForm = () => {
       >
         {loadingSubmit ? "가입 중..." : "회원가입 하기"}
       </button>
-      {toast.isVisible && (
-        <Toast message={toast.message} type={toast.type} onClose={hideToast} />
-      )}
     </form>
   );
 };
