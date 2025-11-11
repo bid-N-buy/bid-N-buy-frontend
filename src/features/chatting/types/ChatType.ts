@@ -1,14 +1,14 @@
-import type { AuctionDetail } from "../../auction/types/auctions";
+// import type { AuctionDetail } from "../../auction/types/auctions";
 
 export const WS_URL = import.meta.env.VITE_WEBSOCKET_URL;
 
 export interface ChatListItemProps {
-  chatroomId: number;
-  auctionId: number;
-  auctionTitle: string;
+  chatroomId: number | null;
+  auctionId: number | null;
+  auctionTitle: string | null;
   auctionImageUrl: string | null;
-  counterpartId: number;
-  counterpartNickname: string;
+  counterpartId: number | null;
+  counterpartNickname: string | null;
   counterpartProfileImageUrl: string | null;
   lastMessageTime: string;
   lastMessagePreview: string;
@@ -22,7 +22,7 @@ export interface ChatListProps {
 
 export interface ChatRoomProps {
   chatroomId: number;
-  sellerId: number;
+  sellerId: number | null;
   chatroomInfo: Pick<
     ChatListItemProps,
     | "auctionId"
@@ -32,7 +32,10 @@ export interface ChatRoomProps {
     | "counterpartNickname"
     | "counterpartProfileImageUrl"
   >;
-  productInfo: Pick<AuctionDetail, "currentPrice" | "sellingStatus">;
+  productInfo: { currentPrice: number | null; sellingStatus: string | null };
+  isLocked?: boolean;
+  lockReason?: "WITHDRAWN" | "AUCTION_DELETED" | null;
+  lockMessage?: string;
 }
 
 export interface ChatProductInfoProps {
@@ -40,9 +43,9 @@ export interface ChatProductInfoProps {
     ChatListItemProps,
     "auctionId" | "auctionImageUrl" | "auctionTitle" | "counterpartId"
   >;
-  currentPrice: number;
-  sellerId: number;
-  sellingStatus: string;
+  currentPrice: number | null;
+  sellerId: number | null;
+  sellingStatus: string | null;
   handleSendPaymentRequest: (
     auctionId: number,
     buyerId: number,

@@ -43,7 +43,7 @@ const ChatYou = ({
 
       // 금액 저장
       const merchantOrderId = "ORDER_" + Date.now();
-       await api.post("/payments/saveAmount", {
+      await api.post("/payments/saveAmount", {
         orderId,
         merchantOrderId,
         amount: currentPrice,
@@ -54,7 +54,7 @@ const ChatYou = ({
         method: "CARD",
         amount: { currency: "KRW", value: currentPrice },
         orderId: merchantOrderId,
-        orderName: auctionTitle,
+        orderName: auctionTitle!,
         successUrl: `${window.location.origin}/payment/bridge?auctionId=${auctionId}`,
         failUrl: `${window.location.origin}/payment/bridge?auctionId=${auctionId}`,
         customerEmail: profile?.email,
@@ -94,8 +94,8 @@ const ChatYou = ({
               />
               <div className="text-left">
                 <p className="font-bold">
-                  {auctionTitle.substring(0, 20)}
-                  {auctionTitle.length > 20 ? "..." : null}
+                  {auctionTitle!.substring(0, 18)}
+                  {auctionTitle!.length > 18 ? "..." : null}
                 </p>
                 <p className="text-g300">{currentPrice.toString()} 원</p>
               </div>

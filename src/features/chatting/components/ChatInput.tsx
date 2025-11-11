@@ -89,7 +89,6 @@ const ChatInput = ({
               className="w-full focus:outline-none"
               value={preview ? "" : inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
-              // onKeyDown={(e) => e.key === "Enter" && !e.nativeEvent.isComposing}
               style={{ resize: "none" }}
               required
             />
@@ -124,4 +123,4 @@ const ChatInput = ({
   );
 };
 
-export default React.memo(ChatInput);
+export default ChatInput;

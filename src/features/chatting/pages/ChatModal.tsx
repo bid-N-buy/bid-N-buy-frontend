@@ -211,7 +211,7 @@ const ChatModal = ({ onClose }: ModalProps) => {
           {currentView === "room" && !loading && selectedChatroomId && (
             <ChatRoom
               chatroomId={selectedChatroomId}
-              handleGoToList={handleGoToList}
+              handleDeleteRoom={handleDeleteRoom}
             />
           )}
           {confirmOpen && (

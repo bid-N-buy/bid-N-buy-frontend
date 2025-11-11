@@ -11,10 +11,10 @@ import { useChatRoomData } from "../hooks/useChatRoomData";
 
 const ChatRoom = ({
   chatroomId,
-  handleGoToList,
+  handleDeleteRoom,
 }: {
   chatroomId: number;
-  handleGoToList: () => void;
+  handleDeleteRoom: (chatroomId: number) => Promise<void>;
 }) => {
   // 토큰/유저아이디 전역에서 들고 오기
   const token = useAuthStore((state) => state.accessToken);
@@ -24,10 +24,7 @@ const ChatRoom = ({
   // 스크롤 하단 위치 위한 useRef
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
-  const { chatRoomData, isLoading, error } = useChatRoomData(
-    chatroomId,
-    handleGoToList
-  );
+  const { chatRoomData, isLoading, error } = useChatRoomData(chatroomId);
 
   const { markAsRead } = useChatModalStore();
 
@@ -119,8 +116,17 @@ const ChatRoom = ({
     );
   if (!chatRoomData || error)
     return (
-      <div className="text-g300 flex h-[100%] items-center justify-center text-sm">
-        {error}
+      <div className="flex h-[100%] flex-col items-center justify-center gap-2">
+        <p className="text-g300 text-sm">
+          {error || "채팅방 정보를 불러올 수 없습니다."}
+        </p>
+        <button
+          type="button"
+          className="bg-purple hover:bg-deep-purple cursor-pointer rounded-md px-3 py-1 text-sm font-bold text-white transition-colors"
+          onClick={() => handleDeleteRoom(chatroomId)}
+        >
+          채팅방 삭제
+        </button>
       </div>
     );
 
@@ -148,26 +154,40 @@ const ChatRoom = ({
           msg.senderId === userId ? (
             <ChatMe
               key={index}
-              sellerId={chatRoomData.sellerId}
+              sellerId={chatRoomData.sellerId!}
               msgInfo={msg}
               auctionInfo={chatRoomData.chatroomInfo}
-              currentPrice={chatRoomData.productInfo.currentPrice}
+              currentPrice={chatRoomData.productInfo.currentPrice!}
             />
           ) : (
             <ChatYou
               key={index}
-              sellerId={chatRoomData.sellerId}
+              sellerId={chatRoomData.sellerId!}
               msgInfo={msg}
               counterpartInfo={chatRoomData.chatroomInfo}
               auctionInfo={chatRoomData.chatroomInfo}
-              currentPrice={chatRoomData.productInfo.currentPrice}
+              currentPrice={chatRoomData.productInfo.currentPrice!}
             />
           )
+        )}
+        {error && (
+          <div className="flex h-[100%] flex-col items-center justify-center gap-2">
+            <p className="text-g300 text-sm">
+              {error || chatRoomData?.lockMessage}
+            </p>
+            <button
+              type="button"
+              className="bg-purple hover:bg-deep-purple cursor-pointer rounded-md px-3 py-1 text-sm font-bold text-white transition-colors"
+              onClick={() => handleDeleteRoom(chatroomId)}
+            >
+              채팅방 삭제
+            </button>
+          </div>
         )}
       </div>
 
       <ChatInput
-        isConnected={isConnected}
+        isConnected={isConnected && !chatRoomData?.isLocked}
         inputMessage={inputMessage}
         setInputMessage={setInputMessage}
         sendMessage={handleSendMessage}
