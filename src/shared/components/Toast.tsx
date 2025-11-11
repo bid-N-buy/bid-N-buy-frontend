@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef, useCallback } from "react";
 import { CheckCircle, XCircle, X } from "lucide-react";
 
 interface ToastProps {
@@ -9,30 +9,57 @@ interface ToastProps {
 }
 
 const Toast = ({ message, type, onClose, duration = 3000 }: ToastProps) => {
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      onClose();
-    }, duration);
+  const timerRef = useRef<number | null>(null);
 
-    return () => clearTimeout(timer);
-  }, [duration, onClose]);
+  const clearTimer = useCallback(() => {
+    if (timerRef.current) {
+      window.clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
+
+  const startTimer = useCallback(() => {
+    clearTimer();
+    if (duration > 0) {
+      timerRef.current = window.setTimeout(onClose, duration);
+    }
+  }, [duration, onClose, clearTimer]);
+
+  useEffect(() => {
+    startTimer();
+    return clearTimer;
+  }, [startTimer, clearTimer]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
 
   return (
-    <div className="animate-fade-in fixed top-8 left-1/2 z-[2000] -translate-x-1/2">
+    <div
+      className="animate-fade-in fixed inset-x-4 top-4 z-[2000] sm:inset-x-auto sm:left-1/2 sm:top-8 sm:-translate-x-1/2"
+      onMouseEnter={clearTimer}
+      onMouseLeave={startTimer}
+    >
       <div
-        className={`flex items-center gap-3 rounded-md px-6 py-4 shadow-lg ${
+        className={`w-full max-w-[min(92vw,560px)] sm:max-w-md flex items-start gap-3 rounded-md px-4 py-3 shadow-lg sm:px-6 sm:py-4 ${
           type === "success" ? "bg-purple text-white" : "bg-red text-white"
         }`}
       >
         {type === "success" ? (
-          <CheckCircle className="h-5 w-5 flex-shrink-0" />
+          <CheckCircle className="mt-0.5 h-5 w-5 flex-shrink-0 sm:mt-0" />
         ) : (
-          <XCircle className="h-5 w-5 flex-shrink-0" />
+          <XCircle className="mt-0.5 h-5 w-5 flex-shrink-0 sm:mt-0" />
         )}
-        <span className="text-h7 font-medium">{message}</span>
+        <span className="flex-1 text-sm font-medium leading-relaxed break-keep whitespace-pre-wrap sm:text-base">
+          {message}
+        </span>
         <button
           onClick={onClose}
-          className="ml-2 transition-opacity hover:opacity-80"
+          className="ml-2 mt-0.5 flex-shrink-0 transition-opacity hover:opacity-80 sm:mt-0"
           aria-label="닫기"
         >
           <X className="h-4 w-4" />
