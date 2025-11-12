@@ -1,7 +1,7 @@
 import React from "react";
 import { useAuthStore } from "../../auth/store/authStore";
 import type { ChatMeProps } from "../types/ChatType";
-import { formatTime } from "../../../shared/utils/datetime";
+import { formatMsgTime } from "../../../shared/utils/datetime";
 
 const ChatMe = ({
   msgInfo,
@@ -18,7 +18,7 @@ const ChatMe = ({
     <div className="m-2 flex items-end justify-end gap-2 text-right">
       <div>
         <p className="text-g300 text-xs">{read ? "" : "전송됨"}</p>
-        <p className="text-g300 text-xs">{formatTime(createdAt)}</p>
+        <p className="text-g300 text-xs">{formatMsgTime(createdAt)}</p>
       </div>
       <div className="bg-light-purple max-w-80 rounded-md p-3">{message}</div>
     </div>
@@ -26,7 +26,7 @@ const ChatMe = ({
     <div className="m-2 flex items-end justify-end gap-2 text-right">
       <div>
         <p className="text-g300 text-xs">{read ? "" : "전송됨"}</p>
-        <p className="text-g300 text-xs">{formatTime(createdAt)}</p>
+        <p className="text-g300 text-xs">{formatMsgTime(createdAt)}</p>
       </div>
       <div className="bg-light-purple max-w-80 rounded-md p-3">
         <div className="flex gap-2">
@@ -51,7 +51,7 @@ const ChatMe = ({
     <div className="m-2 flex items-end justify-end gap-2 text-right">
       <div>
         <p className="text-g300 text-xs">{read ? "" : "전송됨"}</p>
-        <p className="text-g300 text-xs">{formatTime(createdAt)}</p>
+        <p className="text-g300 text-xs">{formatMsgTime(createdAt)}</p>
       </div>
       <div className="bg-light-purple max-w-80 rounded-md p-3">
         <img
@@ -65,7 +65,7 @@ const ChatMe = ({
     <div className="m-2 flex items-end justify-end gap-2 text-right">
       <div>
         <p className="text-g300 text-xs">{read ? "" : "전송됨"}</p>
-        <p className="text-g300 text-xs">{formatTime(createdAt)}</p>
+        <p className="text-g300 text-xs">{formatMsgTime(createdAt)}</p>
       </div>
       <div className="bg-light-purple max-w-80 rounded-md p-3">{message}</div>
     </div>

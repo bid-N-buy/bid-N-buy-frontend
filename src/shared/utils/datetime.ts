@@ -10,8 +10,8 @@ export const formatDate = (dateString: string) => {
   return `${year}. ${month}. ${day}. ${hours}:${minutes}`;
 }; // 사용 시 formatDate("2025-10-13T12:00:00"); 이렇게
 
-// 채팅용 시간 나타내는 함수: 당일은 시간, 지나간 날짜는 시일으로 표시
-export const formatTime = (dateString: string) => {
+// 채팅 리스트 시간 나타내는 함수: 당일은 시간, 지나간 날짜는 시일으로 표시
+export const formatListDate = (dateString: string) => {
   // ISO 문자열을 Date 객체로 변환
   const thisDate = new Date(dateString);
   const now = new Date();
@@ -40,6 +40,15 @@ export const formatTime = (dateString: string) => {
     const day = thisDate.getDate().toString().padStart(2, "0");
     return `${month}.${day}`;
   }
+};
+
+export const formatMsgTime = (dateString: string) => {
+  const formattedTime = new Date(dateString).toLocaleTimeString("ko-KR", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+  return formattedTime;
 };
 
 // 전송용 (YYYY-MM-DDTHH:mm:ss)

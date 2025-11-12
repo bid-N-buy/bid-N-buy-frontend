@@ -3,10 +3,10 @@ import type { ChatInputProps } from "../types/ChatType";
 import { Camera, X } from "lucide-react";
 
 const ChatInput = ({
+  isConnected,
   inputMessage,
   setInputMessage,
   sendMessage,
-  isConnected,
   handleSendImage,
 }: ChatInputProps) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -76,20 +76,23 @@ const ChatInput = ({
       <div className="bg-white px-3 py-2">
         <form className="w-full" onSubmit={submitMessage}>
           <div
-            className={`border-purple relative block w-full rounded-md border-2 p-2 ${preview && `flex gap-2`}`}
+            className={`relative block w-full rounded-md border-2 p-2 ${!isConnected ? `bg-g400 border-g500` : `border-purple`} ${preview ? `flex gap-2` : ""}`}
           >
             <input
               type="text"
               name="chatMessage"
               id="chatMessage"
               placeholder={
-                preview ? "사진을 전송합니다." : "메시지를 입력하세요."
+                preview
+                  ? "사진을 전송합니다."
+                  : !isConnected
+                    ? "입력할 수 없습니다."
+                    : "메시지를 입력하세요."
               }
               disabled={!isConnected || !!preview}
               className="w-full focus:outline-none"
               value={preview ? "" : inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
-              style={{ resize: "none" }}
               required
             />
           </div>
@@ -102,17 +105,18 @@ const ChatInput = ({
               className="hidden"
               ref={fileInputRef}
               onChange={handleFileChange}
+              disabled={!isConnected}
             />
             <button
               type="button"
-              className="cursor-pointer p-2"
+              className={`p-2 ${!isConnected && `cursor-pointer`}`}
               onClick={handleImageUpload}
             >
               <Camera />
             </button>
             <button
               type="submit"
-              className="bg-purple w-15 rounded-md py-2 text-white"
+              className={`w-15 rounded-md py-2 text-white ${!isConnected ? `bg-g300` : `bg-purple`}`}
             >
               전송
             </button>

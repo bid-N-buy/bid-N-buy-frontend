@@ -4,17 +4,17 @@ import ChatProductInfo from "../components/ChatProductInfo";
 import ChatMe from "../components/ChatMe";
 import ChatYou from "../components/ChatYou";
 import ChatInput from "../components/ChatInput";
-// import ChatDate from "../components/ChatDate"; 날짜 넘어갈 시에 사용
+import ChatDate from "../components/ChatDate";
 import { useChatSocket } from "../hooks/useChatSocket";
 import { useChatModalStore } from "../../../shared/store/ChatModalStore";
 import { useChatRoomData } from "../hooks/useChatRoomData";
 
 const ChatRoom = ({
   chatroomId,
-  handleDeleteRoom,
+  setConfirmOpen,
 }: {
   chatroomId: number;
-  handleDeleteRoom: (chatroomId: number) => Promise<void>;
+  setConfirmOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
   // 토큰/유저아이디 전역에서 들고 오기
   const token = useAuthStore((state) => state.accessToken);
@@ -123,7 +123,7 @@ const ChatRoom = ({
         <button
           type="button"
           className="bg-purple hover:bg-deep-purple cursor-pointer rounded-md px-3 py-1 text-sm font-bold text-white transition-colors"
-          onClick={() => handleDeleteRoom(chatroomId)}
+          onClick={() => setConfirmOpen(true)}
         >
           채팅방 삭제
         </button>
@@ -139,6 +139,7 @@ const ChatRoom = ({
         sellingStatus={chatRoomData.productInfo.sellingStatus}
         handleSendPaymentRequest={handleSendPaymentRequest}
         handleSendAddress={handleSendAddress}
+        isLocked={chatRoomData.isLocked}
       />
       <div
         ref={chatContainerRef}
@@ -150,35 +151,47 @@ const ChatRoom = ({
             메시지를 보내 보세요.
           </div>
         )}
-        {messages.map((msg, index) =>
-          msg.senderId === userId ? (
-            <ChatMe
-              key={index}
-              sellerId={chatRoomData.sellerId!}
-              msgInfo={msg}
-              auctionInfo={chatRoomData.chatroomInfo}
-              currentPrice={chatRoomData.productInfo.currentPrice!}
-            />
-          ) : (
-            <ChatYou
-              key={index}
-              sellerId={chatRoomData.sellerId!}
-              msgInfo={msg}
-              counterpartInfo={chatRoomData.chatroomInfo}
-              auctionInfo={chatRoomData.chatroomInfo}
-              currentPrice={chatRoomData.productInfo.currentPrice!}
-            />
-          )
-        )}
-        {error && (
-          <div className="flex h-[100%] flex-col items-center justify-center gap-2">
-            <p className="text-g300 text-sm">
-              {error || chatRoomData?.lockMessage}
-            </p>
+        {messages.map((msg, index) => {
+          const messageDate = new Date(msg.createdAt).toDateString(); // 💡 현재 메시지 날짜 (Day/Month/Year)
+          const prevMsg = messages[index - 1];
+          const prevMessageDate = prevMsg
+            ? new Date(prevMsg.createdAt).toDateString()
+            : null; // 💡 이전 메시지 날짜
+
+          // 1. 날짜가 다르거나 (index > 0), 첫 번째 메시지일 때 (index === 0) 날짜 경계선을 표시합니다.
+          const showDateSeparator =
+            index === 0 || messageDate !== prevMessageDate;
+          return (
+            <>
+              {showDateSeparator && <ChatDate date={msg.createdAt} />}
+              {msg.senderId === userId ? (
+                <ChatMe
+                  key={index}
+                  sellerId={chatRoomData.sellerId!}
+                  msgInfo={msg}
+                  auctionInfo={chatRoomData.chatroomInfo}
+                  currentPrice={chatRoomData.productInfo.currentPrice!}
+                />
+              ) : (
+                <ChatYou
+                  key={index}
+                  sellerId={chatRoomData.sellerId!}
+                  msgInfo={msg}
+                  counterpartInfo={chatRoomData.chatroomInfo}
+                  auctionInfo={chatRoomData.chatroomInfo}
+                  currentPrice={chatRoomData.productInfo.currentPrice!}
+                />
+              )}
+            </>
+          );
+        })}
+        {chatRoomData?.lockMessage && (
+          <div className="flex w-full flex-col items-center justify-center gap-2 py-4">
+            <p className="text-g300 text-sm">{chatRoomData?.lockMessage}</p>
             <button
               type="button"
               className="bg-purple hover:bg-deep-purple cursor-pointer rounded-md px-3 py-1 text-sm font-bold text-white transition-colors"
-              onClick={() => handleDeleteRoom(chatroomId)}
+              onClick={() => setConfirmOpen(true)}
             >
               채팅방 삭제
             </button>
