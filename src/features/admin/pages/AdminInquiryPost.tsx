@@ -52,9 +52,9 @@ const AdminInquiryPost = () => {
           </span>
 
           <span className="flex items-center gap-1">
-            <span className="text-neutral-400">작성자</span>
+            <span className="text-neutral-400">아이디(이메일)</span>
             <span className="font-medium text-neutral-700">
-              {inquiry.userNickname}
+              {inquiry.userEmail}
             </span>
           </span>
 
