@@ -60,6 +60,10 @@ export interface ChatProductInfoProps {
   isLocked?: boolean;
 }
 
+export interface ChatDateProps {
+  date: string; // "YYYY-MM-DD" 형식의 날짜 문자열
+}
+
 export interface ChatMessageProps {
   chatmessageId: number;
   chatroomId: number;

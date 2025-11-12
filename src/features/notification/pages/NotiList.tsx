@@ -1,6 +1,6 @@
 import React from "react";
 import type { NotiModalProps } from "../types/NotiType";
-import { formatTime } from "../../../shared/utils/datetime";
+import { formatListDate } from "../../../shared/utils/datetime";
 import { Bell, Megaphone, TriangleAlert } from "lucide-react";
 
 const notiList = ({ notis }: NotiModalProps) => {
@@ -20,7 +20,7 @@ const notiList = ({ notis }: NotiModalProps) => {
           )}
           <div className="w-[90%]">
             <p className="mb-1 text-xs text-gray-400">
-              {formatTime(noti.createdAt)}
+              {formatListDate(noti.createdAt)}
             </p>
             <p>{noti.content}</p>
           </div>

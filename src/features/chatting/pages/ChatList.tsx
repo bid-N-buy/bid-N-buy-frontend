@@ -1,7 +1,7 @@
 import React from "react";
 import type { ChatListProps } from "../types/ChatType";
 import Avatar from "../../../shared/components/Avatar";
-import { formatTime } from "../../../shared/utils/datetime";
+import { formatListDate } from "../../../shared/utils/datetime";
 
 const ChatList = ({ chatList, onSelectRoom }: ChatListProps) => {
   return (
@@ -24,7 +24,7 @@ const ChatList = ({ chatList, onSelectRoom }: ChatListProps) => {
                 <span className="font-bold">{chat.counterpartNickname}</span>
                 <span className="ml-1 text-xs text-gray-400">
                   {chat.lastMessageTime
-                    ? formatTime(chat.lastMessageTime)
+                    ? formatListDate(chat.lastMessageTime)
                     : null}
                 </span>
               </p>
