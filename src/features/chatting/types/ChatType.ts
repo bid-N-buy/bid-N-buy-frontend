@@ -57,6 +57,7 @@ export interface ChatProductInfoProps {
     buyerId: number,
     sellerId: number
   ) => void;
+  isLocked?: boolean;
 }
 
 export interface ChatMessageProps {

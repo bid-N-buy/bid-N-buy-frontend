@@ -8,6 +8,7 @@ const ChatProductInfo = ({
   sellingStatus,
   handleSendPaymentRequest,
   handleSendAddress,
+  isLocked,
 }: ChatProductInfoProps) => {
   const { auctionId, auctionImageUrl, auctionTitle, counterpartId } =
     auctionInfo;
@@ -17,7 +18,7 @@ const ChatProductInfo = ({
   return (
     <div
       key={auctionId}
-      className="bg-light-purple flex justify-between gap-2 p-4"
+      className="bg-light-purple flex h-[102px] justify-between gap-2 p-4"
     >
       <div className="bg-g300 size-15">
         <img
@@ -26,11 +27,11 @@ const ChatProductInfo = ({
         />
       </div>
       <div
-        className={
-          currentPrice
-            ? "w-[80%]"
-            : "flex min-w-[60%] flex-col gap-1 text-sm md:w-[60%] lg:w-[72%]"
-        }
+        className={`text-sm ${
+          isLocked
+            ? `w-[80%]`
+            : `flex min-w-[60%] flex-col gap-1 md:w-[60%] lg:w-[72%]`
+        }`}
       >
         <p className="text-xs">{sellingStatus}</p>
         <p className="font-bold">

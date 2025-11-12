@@ -127,12 +127,16 @@ const ChatModal = ({ onClose }: ModalProps) => {
         className="border-g500 fixed inset-0 z-51 h-full w-full border-1 bg-white text-wrap shadow-lg md:absolute md:inset-auto md:top-[72px] md:right-8 md:h-150 md:w-100 md:rounded-md"
         ref={modalRef}
       >
-        <div className="border-purple flex flex-shrink-0 items-center justify-between border-b p-4">
+        <div className="border-purple flex flex-shrink-0 items-center justify-between border-b p-2">
           {/* 5. 현재 뷰에 따라 제목 및 돌아가기 버튼 표시 */}
           {currentView === "list" ? (
             <>
               <p className="font-bold">채팅목록</p>
-              <button onClick={onClose} aria-label="채팅 모달 닫기">
+              <button
+                onClick={onClose}
+                aria-label="채팅 모달 닫기"
+                className="p-2"
+              >
                 <X />
               </button>
             </>
@@ -140,7 +144,7 @@ const ChatModal = ({ onClose }: ModalProps) => {
             <>
               <button
                 onClick={handleGoToList}
-                className="text-purple font-bold"
+                className="p-2"
                 aria-label="채팅목록으로 가기"
               >
                 <ChevronLeft />
@@ -149,6 +153,7 @@ const ChatModal = ({ onClose }: ModalProps) => {
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 aria-label="더보기"
+                className="p-2"
               >
                 <EllipsisVertical className="text-g200 relative" />
               </button>
@@ -211,11 +216,11 @@ const ChatModal = ({ onClose }: ModalProps) => {
           {currentView === "room" && !loading && selectedChatroomId && (
             <ChatRoom
               chatroomId={selectedChatroomId}
-              handleDeleteRoom={handleDeleteRoom}
+              setConfirmOpen={setConfirmOpen}
             />
           )}
           {confirmOpen && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/10">
+            <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/20">
               <div className="animate-fade-in w-72 rounded-md bg-white p-6 text-center shadow-sm">
                 <p className="text-g100 mb-5 text-base font-medium">
                   채팅방을 삭제하시겠습니까?

@@ -11,10 +11,10 @@ import { useChatRoomData } from "../hooks/useChatRoomData";
 
 const ChatRoom = ({
   chatroomId,
-  handleDeleteRoom,
+  setConfirmOpen,
 }: {
   chatroomId: number;
-  handleDeleteRoom: (chatroomId: number) => Promise<void>;
+  setConfirmOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
   // 토큰/유저아이디 전역에서 들고 오기
   const token = useAuthStore((state) => state.accessToken);
@@ -123,7 +123,7 @@ const ChatRoom = ({
         <button
           type="button"
           className="bg-purple hover:bg-deep-purple cursor-pointer rounded-md px-3 py-1 text-sm font-bold text-white transition-colors"
-          onClick={() => handleDeleteRoom(chatroomId)}
+          onClick={() => setConfirmOpen(true)}
         >
           채팅방 삭제
         </button>
@@ -139,6 +139,7 @@ const ChatRoom = ({
         sellingStatus={chatRoomData.productInfo.sellingStatus}
         handleSendPaymentRequest={handleSendPaymentRequest}
         handleSendAddress={handleSendAddress}
+        isLocked={chatRoomData.isLocked}
       />
       <div
         ref={chatContainerRef}
@@ -170,15 +171,13 @@ const ChatRoom = ({
             />
           )
         )}
-        {error && (
-          <div className="flex h-[100%] flex-col items-center justify-center gap-2">
-            <p className="text-g300 text-sm">
-              {error || chatRoomData?.lockMessage}
-            </p>
+        {chatRoomData?.lockMessage && (
+          <div className="flex w-full flex-col items-center justify-center gap-2 py-4">
+            <p className="text-g300 text-sm">{chatRoomData?.lockMessage}</p>
             <button
               type="button"
               className="bg-purple hover:bg-deep-purple cursor-pointer rounded-md px-3 py-1 text-sm font-bold text-white transition-colors"
-              onClick={() => handleDeleteRoom(chatroomId)}
+              onClick={() => setConfirmOpen(true)}
             >
               채팅방 삭제
             </button>
