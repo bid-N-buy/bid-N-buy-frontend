@@ -97,7 +97,9 @@ const ChatYou = ({
                   {auctionTitle!.substring(0, 18)}
                   {auctionTitle!.length > 18 ? "..." : null}
                 </p>
-                <p className="text-g300">{currentPrice.toString()} 원</p>
+                <p className="text-g300">
+                  {currentPrice && currentPrice.toString()} 원
+                </p>
               </div>
             </div>
             <div className="bg-g300 my-2 h-[1px] border-0" />

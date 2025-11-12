@@ -37,10 +37,12 @@ const ChatMe = ({
           />
           <div className="text-left">
             <p className="font-bold">
-              {auctionTitle.substring(0, 20)}
-              {auctionTitle.length > 20 ? "..." : null}
+              {auctionTitle!.substring(0, 20)}
+              {auctionTitle!.length > 20 ? "..." : null}
             </p>
-            <p className="text-g300">{currentPrice.toString()} 원</p>
+            <p className="text-g300">
+              {currentPrice && currentPrice.toString()} 원
+            </p>
           </div>
         </div>
         <div className="bg-g300 my-2 h-[1px] border-0" />
