@@ -85,7 +85,7 @@ export type FetchAuctionsParams = {
   sortBy?: SortBy;
   page?: number;
   size?: number;
-  email?: string;
+  userEmail?: string; // 작성자 이메일 검색 (관리자용)
 };
 
 export const fetchAuctions = async (
