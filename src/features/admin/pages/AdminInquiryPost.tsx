@@ -47,8 +47,10 @@ const AdminInquiryPost = () => {
 
         <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-[12px] text-neutral-500 sm:text-[13px]">
           <span className="flex items-center gap-1">
-            <span className="text-neutral-400">분류</span>
-            <span className="font-medium text-neutral-700">{inquiry.type}</span>
+            <span className="text-neutral-400">유형</span>
+            <span className="font-medium text-neutral-700">
+              {inquiry.type === "REPORT" ? "신고" : "문의"}
+            </span>
           </span>
 
           <span className="flex items-center gap-1">
