@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { formatDate } from "../../../shared/utils/datetime";
-import { StatusBadge } from "../../mypage/components/support/DetailCard";
+import InquiryStatusBadge from "./InquiryStatusBadge";
 import type { AdminInquiryListProps } from "../types/AdminType";
 
 const AdminInquiryList = ({ inquiryList }: AdminInquiryListProps) => {
@@ -38,7 +38,7 @@ const AdminInquiryList = ({ inquiryList }: AdminInquiryListProps) => {
             <td>{item.userNickname}</td>
             <td>{formatDate(item.createdAt)}</td>
             <td>
-              <StatusBadge status={item.status} />
+              <InquiryStatusBadge status={item.status} />
             </td>
           </tr>
         ))}

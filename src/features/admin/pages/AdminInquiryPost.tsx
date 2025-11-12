@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import adminApi from "../api/adminAxiosInstance";
 import { formatDate } from "../../../shared/utils/datetime";
-import { StatusBadge } from "../../mypage/components/support/DetailCard";
+import InquiryStatusBadge from "../components/InquiryStatusBadge";
 import type { AdminInquiryPostProps } from "../types/AdminType";
 import AdminInquiryAnswerForm from "../components/AdminInquiryAnswerForm";
 
@@ -65,7 +65,7 @@ const AdminInquiryPost = () => {
             </span>
           </span>
 
-          <StatusBadge status={inquiry.status} />
+          <InquiryStatusBadge status={inquiry.status} />
         </div>
       </div>
 

@@ -157,8 +157,8 @@ const AdmininquiryBoard = () => {
             <span className="text-sm font-bold text-gray-700">답변 상태</span>
             {[
               { label: "전체", value: "ALL" as const },
-              { label: "답변 전", value: "WAITING" as const },
-              { label: "답변 완료", value: "COMPLETE" as const },
+              { label: "답변전", value: "WAITING" as const },
+              { label: "답변완료", value: "COMPLETE" as const },
             ].map(({ label, value }) => (
               <label
                 key={value}
