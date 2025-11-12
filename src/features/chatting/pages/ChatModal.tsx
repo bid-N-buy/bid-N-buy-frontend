@@ -207,11 +207,6 @@ const ChatModal = ({ onClose }: ModalProps) => {
               채팅 목록 로딩 중...
             </p>
           )}
-          {/* {listApi.error && (
-            <p className="flex-column flex h-[100%] items-center justify-center p-4 text-red-500">
-              {listApi.error}
-            </p>
-          )} */}
           {currentView === "room" && loading && <p>채팅방 정보 로딩 중...</p>}
           {currentView === "room" && !loading && selectedChatroomId && (
             <ChatRoom

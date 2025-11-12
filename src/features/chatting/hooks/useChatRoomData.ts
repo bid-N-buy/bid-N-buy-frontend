@@ -35,36 +35,39 @@ export const useChatRoomData = (chatroomId: number) => {
         if (!listItem) {
           throw new Error("CHAT_ROOM_NOT_FOUND");
         }
-        const isCounterpartWithdrawn = listItem.counterpartId === null;
+
+        const auctionRes = await api.get(`/auctions/${listItem.auctionId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+          validateStatus: (status) => status >= 200 && status < 500,
+        });
+
+        const isCounterpartWithdrawn =
+          listItem.counterpartNickname === "탈퇴회원";
 
         if (isCounterpartWithdrawn) {
           const withdrawnRoomData: ChatRoomProps = {
             chatroomId: chatroomId,
             sellerId: null,
             chatroomInfo: {
-              auctionId: null,
-              auctionImageUrl: null,
-              auctionTitle: "탈퇴회원의 상품",
+              auctionId: listItem.auctionId,
+              auctionImageUrl: listItem.auctionImageUrl,
+              auctionTitle: listItem.auctionTitle,
               counterpartId: null,
-              counterpartNickname: "탈퇴회원",
+              counterpartNickname: listItem.counterpartNickname,
               counterpartProfileImageUrl: null,
             },
             productInfo: {
-              currentPrice: null,
-              sellingStatus: null,
+              currentPrice: auctionRes.data.currentPrice,
+              sellingStatus: auctionRes.data.sellingStatus,
             },
             isLocked: true,
+            lockReason: "WITHDRAWN",
             lockMessage: "상대방이 탈퇴하여 더 이상 대화할 수 없습니다.",
           };
           setChatRoomData(withdrawnRoomData);
           setIsLoading(false);
           return;
         }
-
-        const auctionRes = await api.get(`/auctions/${listItem.auctionId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-          validateStatus: (status) => status >= 200 && status < 500,
-        });
 
         const isAuctionDeleted = !auctionRes.data.currentPrice;
 

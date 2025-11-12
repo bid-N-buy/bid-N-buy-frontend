@@ -27,10 +27,8 @@ const ChatProductInfo = ({
         />
       </div>
       <div
-        className={`text-sm ${
-          isLocked
-            ? `w-[80%]`
-            : `flex min-w-[60%] flex-col gap-1 md:w-[60%] lg:w-[72%]`
+        className={`flex flex-col gap-1 text-sm ${
+          isLocked ? `w-[80%]` : `min-w-[60%] md:w-[60%] lg:w-[72%]`
         }`}
       >
         <p className="text-xs">{sellingStatus}</p>
@@ -40,7 +38,7 @@ const ChatProductInfo = ({
         </p>
         <p className="text-g300">{currentPrice && currentPrice!.toString()}</p>
       </div>
-      {currentPrice && (
+      {isLocked ? null : (
         <div className="flex w-[23%] min-w-[15%] flex-col gap-2 md:w-[15%]">
           {userId === sellerId && (
             <button
