@@ -35,7 +35,14 @@ const AdminInquiryList = ({ inquiryList }: AdminInquiryListProps) => {
                 {item.title}
               </Link>
             </td>
-            <td>{item.userEmail}</td>
+            <td>
+              <Link
+                to={`/admin/users/${item.userId}`}
+                className="text-gray-700 hover:text-purple transition-colors"
+              >
+                {item.userEmail}
+              </Link>
+            </td>
             <td>{formatDate(item.createdAt)}</td>
             <td>
               <InquiryStatusBadge status={item.status} />

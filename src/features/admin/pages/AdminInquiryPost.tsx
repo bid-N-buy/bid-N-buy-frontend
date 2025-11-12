@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, Link } from "react-router-dom";
+import { ChevronLeft } from "lucide-react";
 import adminApi from "../api/adminAxiosInstance";
 import { formatDate } from "../../../shared/utils/datetime";
 import InquiryStatusBadge from "../components/InquiryStatusBadge";
@@ -35,9 +36,10 @@ const AdminInquiryPost = () => {
       <button
         type="button"
         onClick={() => navigate(-1)}
-        className="mb-4 text-sm text-neutral-400 hover:text-neutral-900"
+        className="mb-4 flex cursor-pointer items-center gap-1.5 text-sm text-gray-500 transition-colors hover:text-purple"
       >
-        ← 목록
+        <ChevronLeft className="h-4 w-4" />
+        <span>목록</span>
       </button>
 
       <div className="border-b pb-4">
@@ -55,9 +57,12 @@ const AdminInquiryPost = () => {
 
           <span className="flex items-center gap-1">
             <span className="text-neutral-400">아이디(이메일)</span>
-            <span className="font-medium text-neutral-700">
+            <Link
+              to={`/admin/users/${inquiry.userId}`}
+              className="text-neutral-700 hover:text-purple transition-colors"
+            >
               {inquiry.userEmail}
-            </span>
+            </Link>
           </span>
 
           <span className="flex items-center gap-1">
