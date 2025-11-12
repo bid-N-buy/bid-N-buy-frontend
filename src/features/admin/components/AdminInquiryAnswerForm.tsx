@@ -20,7 +20,9 @@ const AdminInquiryAnswerForm = () => {
 
   const validate = (): string | null => {
     if (!form.title.trim()) return "제목을 입력해 주세요.";
+    if (form.title.trim().length > 50) return "제목은 최대 50자까지 입력 가능합니다.";
     if (!form.content.trim()) return "내용을 입력해 주세요.";
+    if (form.content.trim().length > 1000) return "내용은 최대 1000자까지 입력 가능합니다.";
     return null;
   };
 
@@ -72,12 +74,12 @@ const AdminInquiryAnswerForm = () => {
             value={form.title}
             onChange={onChange}
             placeholder="제목을 입력하세요"
-            maxLength={100}
-            className="focus:border-purple focus:ring-light-purple w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-[14px] text-neutral-900 placeholder:text-neutral-400 focus:ring-2 focus:outline-none"
+            maxLength={50}
+            className="focus:border-purple w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-[14px] text-gray-900 placeholder:text-gray-400 focus:outline-none transition-colors"
             disabled={loading}
           />
           <div className="mt-1 text-right text-[12px] text-neutral-400">
-            {form.title.length}/100
+            {form.title.length}/50
           </div>
         </label>
 
@@ -92,11 +94,12 @@ const AdminInquiryAnswerForm = () => {
             onChange={onChange}
             placeholder={"답변을 입력하세요"}
             rows={8}
-            className="focus:border-purple focus:ring-light-purple w-full resize-y rounded-md border border-neutral-300 bg-white px-3 py-2 text-[14px] leading-6 text-neutral-900 placeholder:text-neutral-400 focus:ring-2 focus:outline-none"
+            maxLength={1000}
+            className="focus:border-purple w-full resize-y rounded-md border border-gray-300 bg-white px-3 py-2 text-[14px] leading-6 text-gray-900 placeholder:text-gray-400 focus:outline-none transition-colors"
             disabled={loading}
           />
           <div className="mt-1 text-right text-[12px] text-neutral-400">
-            최소 10자 이상 입력해 주세요.
+            {form.content.length}/1000
           </div>
         </label>
 
@@ -105,7 +108,7 @@ const AdminInquiryAnswerForm = () => {
           <button
             type="button"
             onClick={() => setForm({ title: "", content: "" })}
-            className="rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-50 disabled:opacity-60"
+            className="cursor-pointer rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-50 disabled:opacity-60"
             disabled={loading}
           >
             초기화
@@ -114,7 +117,7 @@ const AdminInquiryAnswerForm = () => {
           <button
             type="submit"
             disabled={loading}
-            className="bg-purple hover:bg-deep-purple focus:ring-light-purple rounded-md px-4 py-2 text-sm font-medium text-white focus:ring-2 focus:outline-none disabled:opacity-60"
+            className="bg-purple hover:bg-deep-purple cursor-pointer rounded-md px-4 py-2 text-sm font-medium text-white transition-colors disabled:opacity-60"
           >
             {loading ? "전송 중..." : "답변 등록"}
           </button>
