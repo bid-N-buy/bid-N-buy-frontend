@@ -20,7 +20,7 @@ const AdminUserList = ({ userList }: AdminUserListProps) => {
           <th>아이디(이메일)</th>
           <th>닉네임</th>
           <th>가입일시</th>
-          <th>패널티</th>
+          <th>페널티</th>
           <th>활동상태</th>
         </tr>
       </thead>
