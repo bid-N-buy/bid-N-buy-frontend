@@ -30,7 +30,7 @@ const AdminAuctionBoard = ({ params }: Props) => {
 
   return (
     <div className="w-full">
-      <h2 className="mb-4 font-bold">거래글 관리</h2>
+      <h3 className="mb-4 font-bold text-gray-900">거래글 관리</h3>
       <div></div>
       <AdminAuctionList auctions={auctions} />
       {pages && pages.totalPages > 0 && (
@@ -40,8 +40,8 @@ const AdminAuctionBoard = ({ params }: Props) => {
             disabled={pages.first}
             className={`p-1 transition-colors ${
               pages.first
-                ? "text-gray-300 cursor-not-allowed"
-                : "text-gray-600 hover:text-purple"
+                ? "cursor-not-allowed text-gray-300"
+                : "hover:text-purple text-gray-600"
             }`}
             aria-label="이전 페이지"
           >
@@ -58,8 +58,8 @@ const AdminAuctionBoard = ({ params }: Props) => {
             disabled={pages.last}
             className={`p-1 transition-colors ${
               pages.last
-                ? "text-gray-300 cursor-not-allowed"
-                : "text-gray-600 hover:text-purple"
+                ? "cursor-not-allowed text-gray-300"
+                : "hover:text-purple text-gray-600"
             }`}
             aria-label="다음 페이지"
           >

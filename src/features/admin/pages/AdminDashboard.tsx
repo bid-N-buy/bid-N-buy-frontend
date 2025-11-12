@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import AdminAuctionList from "../components/AdminAuctionList";
 import AdmininquiryList from "../components/AdminInquiryList";
 import AdminUserList from "../components/AdminUserList";
@@ -9,23 +9,30 @@ import {
 } from "../hooks/useAdminDashboard";
 
 const AdminDashboard = () => {
-  const { inquiryList } = useInquiryList({ size: 10 });
-  const { userList } = useUserList({ size: 10 });
-  const { auctions } = useAuctionList({ params: { size: 10 } });
+  const { inquiryList, getInquiryList } = useInquiryList({ size: 10 });
+  const { userList, getUserList } = useUserList({ size: 10 });
+  const { auctions, getAuctionsList } = useAuctionList({ params: { size: 10 } });
+
+  useEffect(() => {
+    getInquiryList(0, 10);
+    getUserList(0, 10);
+    getAuctionsList();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="h-screen overflow-y-auto">
       <div className="flex flex-col gap-10">
         <div className="rounded-lg border border-gray-300 p-6">
-          <h3 className="mb-4 font-bold">문의/신고 현황</h3>
+          <h3 className="mb-4 font-bold text-gray-900">문의/신고 현황</h3>
           <AdmininquiryList inquiryList={inquiryList} />
         </div>
         <div className="rounded-lg border border-gray-300 p-6">
-          <h3 className="mb-4 font-bold">회원 목록</h3>
+          <h3 className="mb-4 font-bold text-gray-900">회원 목록</h3>
           <AdminUserList userList={userList} />
         </div>
         <div className="rounded-lg border border-gray-300 p-6">
-          <h3 className="mb-4 font-bold">거래글 목록</h3>
+          <h3 className="mb-4 font-bold text-gray-900">거래글 목록</h3>
           <AdminAuctionList auctions={auctions} />
         </div>
       </div>
