@@ -26,7 +26,7 @@ const AdminUserBoard = () => {
 
   return (
     <div>
-      <h2 className="mb-4 font-bold">회원 관리</h2>
+      <h3 className="mb-4 font-bold text-gray-900">회원 관리</h3>
       <div></div>
       <AdminUserList userList={userList} />
       {pages && pages.totalPages > 0 && (
@@ -36,8 +36,8 @@ const AdminUserBoard = () => {
             disabled={pages.first}
             className={`p-1 transition-colors ${
               pages.first
-                ? "text-gray-300 cursor-not-allowed"
-                : "text-gray-600 hover:text-purple"
+                ? "cursor-not-allowed text-gray-300"
+                : "hover:text-purple text-gray-600"
             }`}
             aria-label="이전 페이지"
           >
@@ -54,8 +54,8 @@ const AdminUserBoard = () => {
             disabled={pages.last}
             className={`p-1 transition-colors ${
               pages.last
-                ? "text-gray-300 cursor-not-allowed"
-                : "text-gray-600 hover:text-purple"
+                ? "cursor-not-allowed text-gray-300"
+                : "hover:text-purple text-gray-600"
             }`}
             aria-label="다음 페이지"
           >

@@ -12,17 +12,38 @@ import {
 } from "../../auction/api/auctions";
 import type { AuctionItem, AuctionsRes } from "../../auction/types/auctions";
 
+export type InquiryFilterParams = {
+  title?: string;
+  userEmail?: string;
+  type?: "GENERAL" | "REPORT";
+  status?: "WAITING" | "COMPLETE";
+};
+
 export const useInquiryList = (options?: { size?: number }) => {
   const [inquiryList, setInquiryList] = useState<AdminManageInquiry[]>([]);
   const [pages, setPages] = useState<ManageInquiryProps>();
 
-  const getInquiryList = async (page: number, size?: number) => {
+  const getInquiryList = async (
+    page: number,
+    size?: number,
+    filters?: InquiryFilterParams
+  ) => {
     try {
       const sizeParam = size ?? options?.size;
-      const url = sizeParam
-        ? `/admin/inquiries?page=${page}&size=${sizeParam}`
-        : `/admin/inquiries?page=${page}`;
-      const inquiries = (await adminApi.get(url)).data;
+      const params: Record<string, string | number> = { page };
+      if (typeof sizeParam === "number") params.size = sizeParam;
+
+      if (filters) {
+        const { title, userEmail, type, status } = filters;
+        if (title) params.title = title;
+        if (userEmail) params.userEmail = userEmail;
+        if (type) params.type = type;
+        if (status) params.status = status;
+      }
+
+      const inquiries = (
+        await adminApi.get(`/admin/inquiries`, { params })
+      ).data;
       const pageInfo: ManageInquiryProps = inquiries;
       setInquiryList(inquiries.data);
       setPages(pageInfo);
@@ -31,11 +52,6 @@ export const useInquiryList = (options?: { size?: number }) => {
       setInquiryList([]);
     }
   };
-
-  useEffect(() => {
-    getInquiryList(0, options?.size);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   return { inquiryList, pages, getInquiryList };
 };
@@ -60,16 +76,11 @@ export const useUserList = (options?: { size?: number }) => {
     }
   };
 
-  useEffect(() => {
-    getUserList(0, options?.size);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   return { userList, pages, getUserList };
 };
 
 export type AdminAuctionProps = {
-  params?: Omit<FetchAuctionsParams, "page">;
+  params?: FetchAuctionsParams;
 };
 
 export const useAuctionList = ({ params }: AdminAuctionProps) => {
