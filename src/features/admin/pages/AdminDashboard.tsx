@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import AdminAuctionList from "../components/AdminAuctionList";
 import AdmininquiryList from "../components/AdminInquiryList";
 import AdminUserList from "../components/AdminUserList";
@@ -9,20 +9,9 @@ import {
 } from "../hooks/useAdminDashboard";
 
 const AdminDashboard = () => {
-  const { inquiryList, getInquiryList } = useInquiryList();
-  const { userList, getUserList } = useUserList();
-  const { auctions, getAuctionsList } = useAuctionList({});
-
-  useEffect(() => {
-    try {
-      getInquiryList(0);
-      getUserList(0);
-      getAuctionsList();
-    } catch (e) {
-      console.error("데이터 불러오기 실패:", e);
-      return;
-    }
-  }, []);
+  const { inquiryList } = useInquiryList({ size: 10 });
+  const { userList } = useUserList({ size: 10 });
+  const { auctions } = useAuctionList({ params: { size: 10 } });
 
   return (
     <div className="h-screen overflow-y-auto">
