@@ -41,9 +41,8 @@ export const useInquiryList = (options?: { size?: number }) => {
         if (status) params.status = status;
       }
 
-      const inquiries = (
-        await adminApi.get(`/admin/inquiries`, { params })
-      ).data;
+      const inquiries = (await adminApi.get(`/admin/inquiries`, { params }))
+        .data;
       const pageInfo: ManageInquiryProps = inquiries;
       setInquiryList(inquiries.data);
       setPages(pageInfo);
@@ -56,23 +55,43 @@ export const useInquiryList = (options?: { size?: number }) => {
   return { inquiryList, pages, getInquiryList };
 };
 
+export type UserFilterParams = {
+  email?: string;
+  activityStatus?: string;
+};
+
 export const useUserList = (options?: { size?: number }) => {
   const [userList, setUserList] = useState<AdminManageUser[]>([]);
   const [pages, setPages] = useState<ManageUserProps>();
 
-  const getUserList = async (page: number, size?: number) => {
+  const getUserList = async (
+    page: number,
+    size?: number,
+    filters?: UserFilterParams
+  ): Promise<{ data: AdminManageUser[]; pages: ManageUserProps } | null> => {
     try {
       const sizeParam = size ?? options?.size;
-      const url = sizeParam
-        ? `/admin/users?page=${page}&size=${sizeParam}`
-        : `/admin/users?page=${page}`;
-      const users = (await adminApi.get(url)).data;
+      const params: Record<string, string | number> = { page };
+      if (typeof sizeParam === "number") params.size = sizeParam;
+
+      if (filters) {
+        const { email, activityStatus } = filters;
+        if (email) params.email = email;
+      }
+
+      if (import.meta.env.DEV) {
+        console.log("[getUserList] 요청 파라미터:", params);
+      }
+
+      const users = (await adminApi.get(`/admin/users`, { params })).data;
       const pageInfo: ManageUserProps = users;
       setUserList(users.data);
       setPages(pageInfo);
+      return { data: users.data, pages: pageInfo };
     } catch (e) {
       console.error("유저 데이터 불러오기 실패:", e);
       setUserList([]);
+      return null;
     }
   };
 
