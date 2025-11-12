@@ -85,7 +85,7 @@ export const useAuctionList = ({ params }: AdminAuctionProps) => {
       const query: FetchAuctionsParams = {
         sortBy: "latest",
         includeEnded: true,
-        page: 0,
+        page: params?.page ?? 0,
         size: params?.size ?? 20,
         ...(params ?? {}),
       };
