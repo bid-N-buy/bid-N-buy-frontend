@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import adminApi from "../api/adminAxiosInstance";
 import type {
   ManageInquiryProps,
@@ -75,7 +75,7 @@ export const useUserList = (options?: { size?: number }) => {
       if (typeof sizeParam === "number") params.size = sizeParam;
 
       if (filters) {
-        const { email, activityStatus } = filters;
+        const { email } = filters; // activityStatus는 백에서 필터링 지원x 프론트에서 처리(AdminUserBoard에서)
         if (email) params.email = email;
       }
 
@@ -108,36 +108,69 @@ export const useAuctionList = ({ params }: AdminAuctionProps) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const getAuctionsList = async () => {
+  const getAuctionsList = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const query: FetchAuctionsParams = {
-        sortBy: "latest",
-        includeEnded: true,
-        page: params?.page ?? 0,
-        size: params?.size ?? 20,
-        ...(params ?? {}),
-      };
-      const data: AuctionsRes = await fetchAuctions(query);
-      const list =
-        (data as any).data ??
-        (data as any).items ??
-        (data as any).content ??
-        [];
-      setAuctions(list);
+
+      // params 있으면 사용, 없으면 기본값 설정
+      const query: FetchAuctionsParams = params
+        ? {
+            sortBy: "latest",
+            includeEnded: true,
+            ...params,
+          }
+        : {
+            sortBy: "latest",
+            includeEnded: true,
+            page: 0,
+            size: 20,
+          };
+
+      if (import.meta.env.DEV) {
+        console.log("[getAuctionsList] 요청 파라미터:", query);
+      }
+
+      // fetchAuctions 재활용
+      const data = await fetchAuctions(query);
+      setAuctions(data.data);
       setPages(data);
-    } catch (e) {
+    } catch (e: unknown) {
       console.error("데이터 불러오기 실패:", e);
-      setLoading(false);
+      setError(
+        e instanceof Error ? e.message : "알 수 없는 오류가 발생했습니다."
+      );
+      if (import.meta.env.DEV) {
+        const error = e as {
+          message?: string;
+          response?: { data?: unknown; status?: number };
+          config?: { url?: string; params?: unknown; headers?: unknown };
+          request?: unknown;
+        };
+        console.error("[getAuctionsList] 에러 상세:", {
+          message: error?.message,
+          response: error?.response?.data,
+          status: error?.response?.status,
+          config: error?.config,
+          request: error?.request,
+        });
+        if (error?.config) {
+          console.error("[getAuctionsList] 요청 URL:", error.config.url);
+          console.error(
+            "[getAuctionsList] 요청 파라미터:",
+            error.config.params
+          );
+          console.error("[getAuctionsList] 요청 헤더:", error.config.headers);
+        }
+      }
     } finally {
       setLoading(false);
     }
-  };
+  }, [params]);
 
   useEffect(() => {
     getAuctionsList();
-  }, [params]);
+  }, [getAuctionsList]);
 
-  return { auctions, pages, getAuctionsList };
+  return { auctions, pages, loading, error, getAuctionsList };
 };

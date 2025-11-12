@@ -11,12 +11,12 @@ import {
 const AdminDashboard = () => {
   const { inquiryList, getInquiryList } = useInquiryList({ size: 10 });
   const { userList, getUserList } = useUserList({ size: 10 });
-  const { auctions, getAuctionsList } = useAuctionList({ params: { size: 10 } });
+  const { auctions } = useAuctionList({ params: { size: 10 } });
 
   useEffect(() => {
     getInquiryList(0, 10);
     getUserList(0, 10);
-    getAuctionsList();
+    // useAuctionList는 내부 useEffect에서 호출
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
