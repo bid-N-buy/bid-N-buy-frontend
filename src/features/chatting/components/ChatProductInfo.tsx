@@ -1,5 +1,6 @@
 import type { ChatProductInfoProps } from "../types/ChatType";
 import { useAuthStore } from "../../auth/store/authStore";
+// import AddressEditorModal from "../../mypage/components/myAddress/AddressEditorModal";
 
 const ChatProductInfo = ({
   sellerId,
@@ -71,6 +72,15 @@ const ChatProductInfo = ({
           )}
         </div>
       )}
+      {/* <AddressEditorModal
+        open={addrOpen}
+        initial={mainAddress}
+        saving={addrSaving}
+        onClose={() => {
+          setAddrOpen(false);
+        }}
+        onSave={handleSaveAddress}
+      /> */}
     </div>
   );
 };

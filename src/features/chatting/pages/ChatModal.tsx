@@ -124,7 +124,7 @@ const ChatModal = ({ onClose }: ModalProps) => {
   return (
     <>
       <div
-        className="border-g500 fixed inset-0 z-51 h-full w-full border-1 bg-white text-wrap shadow-lg md:absolute md:inset-auto md:top-[72px] md:right-8 md:h-150 md:w-100 md:rounded-md"
+        className="border-g500 fixed inset-0 z-49 h-full w-full border-1 bg-white text-wrap shadow-lg md:absolute md:inset-auto md:top-[72px] md:right-8 md:h-150 md:w-100 md:rounded-md"
         ref={modalRef}
       >
         <div className="border-purple flex flex-shrink-0 items-center justify-between border-b p-2">
