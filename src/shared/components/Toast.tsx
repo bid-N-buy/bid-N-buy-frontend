@@ -50,19 +50,19 @@ const Toast = ({ message, type, onClose, duration = 3000 }: ToastProps) => {
         }`}
       >
         {type === "success" ? (
-          <CheckCircle className="mt-0.5 h-5 w-5 flex-shrink-0 sm:mt-0" />
+          <CheckCircle className="mt-0.5 h-5 w-5 flex-shrink-0 sm:mt-0.5 sm:h-6 sm:w-6" />
         ) : (
-          <XCircle className="mt-0.5 h-5 w-5 flex-shrink-0 sm:mt-0" />
+          <XCircle className="mt-0.5 h-5 w-5 flex-shrink-0 sm:mt-0.5 sm:h-6 sm:w-6" />
         )}
         <span className="flex-1 text-sm font-medium leading-relaxed break-keep whitespace-pre-wrap sm:text-base">
           {message}
         </span>
         <button
           onClick={onClose}
-          className="ml-2 mt-0.5 flex-shrink-0 transition-opacity hover:opacity-80 sm:mt-0"
+          className="ml-2 mt-0.5 flex-shrink-0 transition-opacity hover:opacity-80 sm:mt-0.5"
           aria-label="닫기"
         >
-          <X className="h-4 w-4" />
+          <X className="h-4 w-4 sm:h-5 sm:w-5" />
         </button>
       </div>
     </div>

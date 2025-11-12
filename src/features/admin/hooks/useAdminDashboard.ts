@@ -12,14 +12,17 @@ import {
 } from "../../auction/api/auctions";
 import type { AuctionItem, AuctionsRes } from "../../auction/types/auctions";
 
-export const useInquiryList = () => {
+export const useInquiryList = (options?: { size?: number }) => {
   const [inquiryList, setInquiryList] = useState<AdminManageInquiry[]>([]);
   const [pages, setPages] = useState<ManageInquiryProps>();
 
-  const getInquiryList = async (page: number) => {
+  const getInquiryList = async (page: number, size?: number) => {
     try {
-      const inquiries = (await adminApi.get(`/admin/inquiries?page=${page}`))
-        .data;
+      const sizeParam = size ?? options?.size;
+      const url = sizeParam
+        ? `/admin/inquiries?page=${page}&size=${sizeParam}`
+        : `/admin/inquiries?page=${page}`;
+      const inquiries = (await adminApi.get(url)).data;
       const pageInfo: ManageInquiryProps = inquiries;
       setInquiryList(inquiries.data);
       setPages(pageInfo);
@@ -30,19 +33,24 @@ export const useInquiryList = () => {
   };
 
   useEffect(() => {
-    getInquiryList(0);
+    getInquiryList(0, options?.size);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return { inquiryList, pages, getInquiryList };
 };
 
-export const useUserList = () => {
+export const useUserList = (options?: { size?: number }) => {
   const [userList, setUserList] = useState<AdminManageUser[]>([]);
   const [pages, setPages] = useState<ManageUserProps>();
 
-  const getUserList = async (page: number) => {
+  const getUserList = async (page: number, size?: number) => {
     try {
-      const users = (await adminApi.get(`/admin/users?page=${page}`)).data;
+      const sizeParam = size ?? options?.size;
+      const url = sizeParam
+        ? `/admin/users?page=${page}&size=${sizeParam}`
+        : `/admin/users?page=${page}`;
+      const users = (await adminApi.get(url)).data;
       const pageInfo: ManageUserProps = users;
       setUserList(users.data);
       setPages(pageInfo);
@@ -53,14 +61,15 @@ export const useUserList = () => {
   };
 
   useEffect(() => {
-    getUserList(0);
+    getUserList(0, options?.size);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return { userList, pages, getUserList };
 };
 
 export type AdminAuctionProps = {
-  params?: Omit<FetchAuctionsParams, "size" | "page">;
+  params?: Omit<FetchAuctionsParams, "page">;
 };
 
 export const useAuctionList = ({ params }: AdminAuctionProps) => {
@@ -76,8 +85,8 @@ export const useAuctionList = ({ params }: AdminAuctionProps) => {
       const query: FetchAuctionsParams = {
         sortBy: "latest",
         includeEnded: true,
-        page: 0,
-        size: 20,
+        page: params?.page ?? 0,
+        size: params?.size ?? 20,
         ...(params ?? {}),
       };
       const data: AuctionsRes = await fetchAuctions(query);
