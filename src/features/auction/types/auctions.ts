@@ -66,7 +66,7 @@ export interface AuctionItem {
   createdAt: string;
   endTime: string;
   mainImageUrl: string | null;
-  sellingStatus: "시작전" | "진행중" | "완료" | "종료";
+  sellingStatus: "시작전" | "진행중" | "완료" | "종료" | "삭제";
   sellerId?: number;
   sellerNickname: string;
   wishCount: number;
