@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { ChevronLeft } from "lucide-react";
 import { useAuctionDetailStore } from "../../auction/store/auctionDetailStore";
 import { formatDate } from "../../../shared/utils/datetime";
 import ProductImage from "../../auction/components/ProductImage";
@@ -65,9 +66,10 @@ const AdminAuctionPost = () => {
       <button
         type="button"
         onClick={() => navigate(-1)}
-        className="mb-4 text-sm text-neutral-400 hover:text-neutral-900"
+        className="mb-4 flex cursor-pointer items-center gap-1.5 text-sm text-gray-500 transition-colors hover:text-purple"
       >
-        ← 목록
+        <ChevronLeft className="h-4 w-4" />
+        <span>목록</span>
       </button>
 
       {/* 제목 + 메타 */}
