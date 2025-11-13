@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import AdminAuctionList from "../components/AdminAuctionList";
 import AdmininquiryList from "../components/AdminInquiryList";
 import AdminUserList from "../components/AdminUserList";
@@ -11,7 +11,8 @@ import {
 const AdminDashboard = () => {
   const { inquiryList, getInquiryList } = useInquiryList({ size: 10 });
   const { userList, getUserList } = useUserList({ size: 10 });
-  const { auctions } = useAuctionList({ params: { size: 10 } });
+  const auctionParams = useMemo(() => ({ size: 10 }), []);
+  const { auctions } = useAuctionList({ params: auctionParams });
 
   useEffect(() => {
     getInquiryList(0, 10);

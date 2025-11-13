@@ -30,6 +30,7 @@ export type AdminAuctionListProps = {
 
 export interface AdminPenaltyPostProps {
   userId: number;
+  userEmail?: string;
   onClose: () => void;
 }
 

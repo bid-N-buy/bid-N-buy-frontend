@@ -4,7 +4,11 @@ import adminApi from "../api/adminAxiosInstance";
 import type { AdminInquiryAnswer } from "../types/AdminType";
 import useToast from "../../../shared/hooks/useToast";
 
-const AdminInquiryAnswerForm = () => {
+type Props = {
+  onSuccess?: () => void;
+};
+
+const AdminInquiryAnswerForm = ({ onSuccess }: Props) => {
   const { id } = useParams();
   const [form, setForm] = useState({ title: "", content: "" });
   const [loading, setLoading] = useState(false);
@@ -20,7 +24,11 @@ const AdminInquiryAnswerForm = () => {
 
   const validate = (): string | null => {
     if (!form.title.trim()) return "제목을 입력해 주세요.";
+    if (form.title.trim().length > 50)
+      return "제목은 최대 50자까지 입력 가능합니다.";
     if (!form.content.trim()) return "내용을 입력해 주세요.";
+    if (form.content.trim().length > 1000)
+      return "내용은 최대 1000자까지 입력 가능합니다.";
     return null;
   };
 
@@ -44,9 +52,17 @@ const AdminInquiryAnswerForm = () => {
         payload,
         { headers }
       );
-      showToast("문의가 등록되었습니다.", "success");
+      showToast("답변이 등록되었습니다.", "success");
 
       setForm({ title: "", content: "" });
+
+      // 부모 컴포넌트에 성공 알림 (데이터 재로딩용)
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        // onSuccess 없으면 페이지 새로고침
+        window.location.reload();
+      }
     } catch (e) {
       console.error("답변 처리 중 오류 발생:", e);
       showToast("답변 처리 중 오류가 발생했습니다.", "error");
@@ -72,12 +88,12 @@ const AdminInquiryAnswerForm = () => {
             value={form.title}
             onChange={onChange}
             placeholder="제목을 입력하세요"
-            maxLength={100}
-            className="focus:border-purple focus:ring-light-purple w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-[14px] text-neutral-900 placeholder:text-neutral-400 focus:ring-2 focus:outline-none"
+            maxLength={50}
+            className="focus:border-purple w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-[14px] text-gray-900 transition-colors placeholder:text-gray-400 focus:outline-none"
             disabled={loading}
           />
           <div className="mt-1 text-right text-[12px] text-neutral-400">
-            {form.title.length}/100
+            {form.title.length}/50
           </div>
         </label>
 
@@ -92,11 +108,12 @@ const AdminInquiryAnswerForm = () => {
             onChange={onChange}
             placeholder={"답변을 입력하세요"}
             rows={8}
-            className="focus:border-purple focus:ring-light-purple w-full resize-y rounded-md border border-neutral-300 bg-white px-3 py-2 text-[14px] leading-6 text-neutral-900 placeholder:text-neutral-400 focus:ring-2 focus:outline-none"
+            maxLength={1000}
+            className="focus:border-purple w-full resize-y rounded-md border border-gray-300 bg-white px-3 py-2 text-[14px] leading-6 text-gray-900 transition-colors placeholder:text-gray-400 focus:outline-none"
             disabled={loading}
           />
           <div className="mt-1 text-right text-[12px] text-neutral-400">
-            최소 10자 이상 입력해 주세요.
+            {form.content.length}/1000
           </div>
         </label>
 
@@ -105,7 +122,7 @@ const AdminInquiryAnswerForm = () => {
           <button
             type="button"
             onClick={() => setForm({ title: "", content: "" })}
-            className="rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-50 disabled:opacity-60"
+            className="cursor-pointer rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-50 disabled:opacity-60"
             disabled={loading}
           >
             초기화
@@ -114,7 +131,7 @@ const AdminInquiryAnswerForm = () => {
           <button
             type="submit"
             disabled={loading}
-            className="bg-purple hover:bg-deep-purple focus:ring-light-purple rounded-md px-4 py-2 text-sm font-medium text-white focus:ring-2 focus:outline-none disabled:opacity-60"
+            className="bg-purple hover:bg-deep-purple cursor-pointer rounded-md px-4 py-2 text-sm font-medium text-white transition-colors disabled:opacity-60"
           >
             {loading ? "전송 중..." : "답변 등록"}
           </button>

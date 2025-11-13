@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { formatDate } from "../../../shared/utils/datetime";
-import { StatusBadge } from "../../mypage/components/support/DetailCard";
+import InquiryStatusBadge from "./InquiryStatusBadge";
 import type { AdminInquiryListProps } from "../types/AdminType";
 
 const AdminInquiryList = ({ inquiryList }: AdminInquiryListProps) => {
@@ -20,7 +20,7 @@ const AdminInquiryList = ({ inquiryList }: AdminInquiryListProps) => {
           <th>No.</th>
           <th>유형</th>
           <th>제목</th>
-          <th>닉네임</th>
+          <th>아이디(이메일)</th>
           <th>작성일시</th>
           <th>답변상태</th>
         </tr>
@@ -35,10 +35,17 @@ const AdminInquiryList = ({ inquiryList }: AdminInquiryListProps) => {
                 {item.title}
               </Link>
             </td>
-            <td>{item.userNickname}</td>
+            <td>
+              <Link
+                to={`/admin/users/${item.userId}`}
+                className="text-gray-700 hover:text-purple transition-colors"
+              >
+                {item.userEmail}
+              </Link>
+            </td>
             <td>{formatDate(item.createdAt)}</td>
             <td>
-              <StatusBadge status={item.status} />
+              <InquiryStatusBadge status={item.status} />
             </td>
           </tr>
         ))}

@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate, useParams, Link } from "react-router-dom";
+import { ChevronLeft } from "lucide-react";
 import adminApi from "../api/adminAxiosInstance";
 import { formatDate } from "../../../shared/utils/datetime";
-import { StatusBadge } from "../../mypage/components/support/DetailCard";
+import InquiryStatusBadge from "../components/InquiryStatusBadge";
 import type { AdminInquiryPostProps } from "../types/AdminType";
 import AdminInquiryAnswerForm from "../components/AdminInquiryAnswerForm";
 
@@ -11,7 +12,8 @@ const AdminInquiryPost = () => {
   const { id } = useParams();
   const [inquiry, setInquiry] = useState<AdminInquiryPostProps | null>(null);
 
-  const getInquiry = async () => {
+  const getInquiry = useCallback(async () => {
+    if (!id) return;
     try {
       const post = (await adminApi.get(`/admin/inquiries/${id}`)).data;
       setInquiry(post);
@@ -19,12 +21,11 @@ const AdminInquiryPost = () => {
       setInquiry(null);
       return;
     }
-  };
+  }, [id]);
 
   useEffect(() => {
-    if (!id) return;
     getInquiry();
-  }, [id]);
+  }, [getInquiry]);
 
   if (!inquiry) {
     return null;
@@ -35,9 +36,10 @@ const AdminInquiryPost = () => {
       <button
         type="button"
         onClick={() => navigate(-1)}
-        className="mb-4 text-sm text-neutral-400 hover:text-neutral-900"
+        className="mb-4 flex cursor-pointer items-center gap-1.5 text-sm text-gray-500 transition-colors hover:text-purple"
       >
-        ← 목록
+        <ChevronLeft className="h-4 w-4" />
+        <span>목록</span>
       </button>
 
       <div className="border-b pb-4">
@@ -47,15 +49,20 @@ const AdminInquiryPost = () => {
 
         <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-[12px] text-neutral-500 sm:text-[13px]">
           <span className="flex items-center gap-1">
-            <span className="text-neutral-400">분류</span>
-            <span className="font-medium text-neutral-700">{inquiry.type}</span>
+            <span className="text-neutral-400">유형</span>
+            <span className="font-medium text-neutral-700">
+              {inquiry.type === "REPORT" ? "신고" : "문의"}
+            </span>
           </span>
 
           <span className="flex items-center gap-1">
-            <span className="text-neutral-400">작성자</span>
-            <span className="font-medium text-neutral-700">
-              {inquiry.userNickname}
-            </span>
+            <span className="text-neutral-400">아이디(이메일)</span>
+            <Link
+              to={`/admin/users/${inquiry.userId}`}
+              className="text-neutral-700 hover:text-purple transition-colors"
+            >
+              {inquiry.userEmail}
+            </Link>
           </span>
 
           <span className="flex items-center gap-1">
@@ -65,7 +72,7 @@ const AdminInquiryPost = () => {
             </span>
           </span>
 
-          <StatusBadge status={inquiry.status} />
+          <InquiryStatusBadge status={inquiry.status} />
         </div>
       </div>
 
@@ -93,7 +100,7 @@ const AdminInquiryPost = () => {
           </div>
         </div>
       ) : (
-        <AdminInquiryAnswerForm />
+        <AdminInquiryAnswerForm onSuccess={getInquiry} />
       )}
     </div>
   );

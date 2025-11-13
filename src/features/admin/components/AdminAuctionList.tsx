@@ -8,16 +8,18 @@ const AdminAuctionList = ({ auctions }: AdminAuctionListProps) => {
     <table className="w-full text-center">
       <colgroup>
         <col width={"3%"} />
+        <col width={"12%"} />
+        <col width={"40%"} />
         <col width={"15%"} />
-        <col width={"50%"} />
         <col width={"15%"} />
         <col width={"15%"} />
       </colgroup>
       <thead className="border-deep-purple text-deep-purple bg-light-purple border-b">
         <tr>
-          <th>id</th>
+          <th>ID</th>
           <th>대표 이미지</th>
           <th>제목</th>
+          <th>판매자</th>
           <th>등록일시</th>
           <th>진행 상태</th>
         </tr>
@@ -36,6 +38,7 @@ const AdminAuctionList = ({ auctions }: AdminAuctionListProps) => {
             <td className="text-left">
               <Link to={`/admin/auctions/${item.auctionId}`}>{item.title}</Link>
             </td>
+            <td>{item.sellerNickname || "-"}</td>
             <td>{formatDate(item.createdAt)}</td>
             <td>{item.sellingStatus}</td>
           </tr>
