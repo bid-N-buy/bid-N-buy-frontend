@@ -69,7 +69,7 @@ const ChatProductInfo = ({
             zonecode: rawAddr.zonecode ?? "",
             address: rawAddr.address ?? "",
             detailAddress: rawAddr.detailAddress ?? "",
-            addressId: rawAddr.addressId ?? "",
+            addressId: rawAddr.addressId,
           });
         } else {
           setMainAddress(null);
