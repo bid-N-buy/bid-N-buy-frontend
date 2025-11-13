@@ -137,12 +137,8 @@ export const useChatSocket = (chatroomId: number) => {
     }
   };
 
-  // [전송] 주소 입력 완료 알림
-  const handleSendAddress = (
-    auctionId: number,
-    buyerId: number,
-    sellerId: number
-  ) => {
+  // [전송] 주소 입력 메시지
+  const handleSendAddress = async (address: string) => {
     const client = clientRef.current;
 
     // 유효성 검사
@@ -150,12 +146,11 @@ export const useChatSocket = (chatroomId: number) => {
       console.warn("연결 상태가 좋지 않습니다.");
       return;
     }
+
     const messageAddress = {
       chatroomId: chatroomId,
-      auctionId: auctionId,
-      buyerId: buyerId,
-      senderId: sellerId,
-      message: "주소를 입력했습니다.",
+      senderId: userId,
+      message: address,
       messageType: "SYSTEM",
     };
 
@@ -248,33 +243,6 @@ export const useChatSocket = (chatroomId: number) => {
     //   headers: { "content-type": "multipart/form-data" },
     // });
   };
-
-  // [전송] 채팅(기본) 메시지
-  // const sendMessage = () => {
-  //   const client = clientRef.current;
-
-  //   if (!client || !client.connected || !inputMessage.trim()) {
-  //     console.warn("연결되지 않았거나 메시지가 비어있습니다.");
-  //     return;
-  //   }
-  //   // 메시지 생성
-  //   const chatMessage = {
-  //     chatroomId: chatroomId,
-  //     senderId: userId,
-  //     message: inputMessage.trim(),
-  //     messageType: "CHAT",
-  //   };
-
-  //   // 전송 실행
-  //   client.publish({
-  //     destination: `/app/chat/message`,
-  //     body: JSON.stringify(chatMessage),
-  //     headers: { "content-type": "application/json" },
-  //   });
-
-  //   // 입력 상태 초기화
-  //   setInputMessage("");
-  // };
 
   // [전송] 읽음 상태
   const sendReadStatus = useCallback(async () => {

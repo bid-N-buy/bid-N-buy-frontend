@@ -8,9 +8,6 @@ import type { ModalProps } from "../../../shared/types/CommonType";
 import { useChatModalStore } from "../../../shared/store/ChatModalStore";
 import ChatList from "./ChatList";
 import ChatRoom from "./ChatRoom";
-// import AddressModal from "./AddressModal";
-// import type { Address } from "../../mypage/types/address";
-// import type { ChatAddressModalProps } from "../types/ChatType";
 import { X, ChevronLeft, EllipsisVertical } from "lucide-react";
 
 const ChatModal = ({ onClose }: ModalProps) => {
@@ -49,29 +46,6 @@ const ChatModal = ({ onClose }: ModalProps) => {
   // chatroom에서 해당 채팅방 삭제 메뉴 열기
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
-
-  // const [isAdOpen, setIsAdOpen] = useState(false); // 주소
-  // const [editing, setEditing] = useState<Address | null>(null);
-  // const [addrMock, setAddrMock] = useState<boolean>(false);
-  // const [addressesMock, setAddressesMock] = useState<Address[]>([
-  //   {
-  //     addressId: 1,
-  //     zonecode: "04524",
-  //     address: "서울 중구 세종대로 110",
-  //     detailAddress: "1층",
-  //     createdAt: new Date().toISOString(),
-  //     updatedAt: new Date().toISOString(),
-  //   },
-  // ]);
-
-  // const onToggleModal = () => {
-  //   setIsAdOpen((prev) => !prev);
-  // };
-
-  // const handleComplete = (data: Address) => {
-  //   console.log(data);
-  //   onToggleModal(); // 주소창은 자동으로 사라지므로 모달만 꺼주면 된다.
-  // };
 
   // modal창 닫기: 여백 누를 시 꺼지도록
   useEffect(() => {
@@ -172,32 +146,6 @@ const ChatModal = ({ onClose }: ModalProps) => {
             </>
           )}
         </div>
-        {/* {isAdOpen && (
-          <AddressModal
-            open={isAdOpen}
-            initial={editing}
-            onClose={() => {
-              setIsAdOpen(false);
-              setEditing(null);
-            }}
-            onSave={async (draft) => {
-              const payload: AddressDraft = {
-                zonecode: draft.zonecode.trim(),
-                address: draft.address.trim(),
-                detailAddress: (draft.detailAddress ?? "").trim(),
-              };
-
-              if ((draft as any).addressId) {
-                const id = (draft as any).addressId as number;
-                await (addrMock
-                  ? updateMock(id, payload)
-                  : update(id, payload));
-              } else {
-                await (addrMock ? addMock(payload) : add(payload));
-              }
-            }}
-          />
-        )} */}
         <div className="h-[calc(100%-59px)] overflow-x-hidden overflow-y-auto">
           {currentView === "list" && (
             <ChatList chatList={chatList} onSelectRoom={handleSelectRoom} />
