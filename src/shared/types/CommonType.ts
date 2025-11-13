@@ -44,8 +44,8 @@ export interface LoginResponse {
 }
 
 export interface ReissueRequest {
-  accesstoken: string; // 서버 스펙: 소문자 키
-  refreshtoken: string; // 서버 스펙: 소문자 키
+  accessToken: string; // 서버 스펙: 소문자 키
+  refreshToken: string; // 서버 스펙: 소문자 키
 }
 
 export interface ReissueResponse {

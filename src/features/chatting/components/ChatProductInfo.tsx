@@ -1,6 +1,9 @@
-import type { ChatProductInfoProps } from "../types/ChatType";
+import { useEffect, useState } from "react";
 import { useAuthStore } from "../../auth/store/authStore";
-// import AddressEditorModal from "../../mypage/components/myAddress/AddressEditorModal";
+import type { ChatProductInfoProps } from "../types/ChatType";
+import ChatAddressModal from "./ChatAddressModal";
+import type { Address } from "../../mypage/types/address";
+import api from "../../../shared/api/axiosInstance";
 
 const ChatProductInfo = ({
   sellerId,
@@ -15,6 +18,132 @@ const ChatProductInfo = ({
     auctionInfo;
   const userId = useAuthStore.getState().userId;
   const buyerId = userId === sellerId ? counterpartId : userId;
+
+  // 주소 모달
+  const [mainAddress, setMainAddress] = useState<Address | null>(null);
+  const [addrLoading, setAddrLoading] = useState<boolean>(true);
+  const [addrSaving, setAddrSaving] = useState<boolean>(false);
+  const [addrError, setAddrError] = useState<any>(null);
+  const [addrOpen, setAddrOpen] = useState<boolean>(false);
+
+  // 메시지 (토스트)
+  const [msg, setMsg] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+
+  const toast = (ok: string | null, error: string | null) => {
+    setMsg(ok);
+    setErr(error);
+    window.setTimeout(() => {
+      setMsg(null);
+      setErr(null);
+    }, 2200);
+  };
+
+  useEffect(() => {
+    const fetchMainAddress = async () => {
+      try {
+        setAddrLoading(true);
+
+        const res = await api.get("/address", {
+          withCredentials: true,
+          validateStatus: (s) => s >= 200 && s < 500,
+        });
+
+        const data = res.data;
+
+        // 서버 응답 모양 다 커버: 배열 / 단일 / data 래핑
+        const rawAddr = Array.isArray(data)
+          ? data[0]
+          : data?.name
+            ? data
+            : data?.data
+              ? data.data
+              : data?.address
+                ? data.address
+                : null;
+
+        if (rawAddr) {
+          setMainAddress({
+            name: rawAddr.name ?? "",
+            phoneNumber: rawAddr.phoneNumber ?? "",
+            zonecode: rawAddr.zonecode ?? "",
+            address: rawAddr.address ?? "",
+            detailAddress: rawAddr.detailAddress ?? "",
+            addressId: rawAddr.addressId ?? "",
+          });
+        } else {
+          setMainAddress(null);
+        }
+      } catch (e) {
+        console.error("대표 주소 로딩 실패:", e);
+        setAddrError(e ?? e);
+        setMainAddress(null);
+      }
+    };
+
+    if (userId) {
+      fetchMainAddress();
+    }
+  }, [userId]);
+
+  const handleSaveAddress = async (draft: Address) => {
+    try {
+      setAddrSaving(true);
+
+      const addressId = draft.addressId;
+      const isUpdate = !!addressId;
+
+      const body = {
+        name: draft.name,
+        phoneNumber: draft.phoneNumber,
+        zonecode: draft.zonecode,
+        address: draft.address,
+        detailAddress: draft.detailAddress ?? "",
+      };
+
+      let response;
+      if (isUpdate) {
+        console.log("update!");
+        response = await api.put(`/address/${addressId}`, body, {
+          withCredentials: true,
+        });
+      } else {
+        console.log("add!");
+        response = await api.post("/address", body, {
+          withCredentials: true,
+        });
+      }
+
+      const newAddressId = response.data?.addressId;
+
+      setMainAddress({
+        name: body.name,
+        phoneNumber: body.phoneNumber,
+        zonecode: body.zonecode,
+        address: body.address,
+        detailAddress: body.detailAddress,
+        addressId: isUpdate ? addressId : newAddressId,
+      });
+
+      const formattedAddress = `${body.name} / ${body.phoneNumber} / (${body.zonecode}) ${body.address} ${body.detailAddress}`;
+
+      if (!isUpdate) {
+        toast(response?.data?.message ?? "주소가 저장되었습니다.", null);
+      }
+
+      handleSendAddress(formattedAddress);
+      setAddrOpen(false);
+    } catch (e: any) {
+      console.error("주소 정보를 저장하지 못했습니다.", e);
+      const m =
+        e?.response?.data?.message ??
+        e?.response?.data?.error ??
+        "주소 정보를 저장하지 못했습니다.";
+      toast(null, m);
+    } finally {
+      setAddrSaving(false);
+    }
+  };
 
   return (
     <div
@@ -63,7 +192,7 @@ const ChatProductInfo = ({
                 type="button"
                 className="bg-purple w-full rounded-md px-2 py-1.5 text-xs text-white"
                 onClick={() => {
-                  handleSendAddress(auctionId!, buyerId!, sellerId!);
+                  setAddrOpen(true);
                 }}
               >
                 주소 입력
@@ -72,7 +201,7 @@ const ChatProductInfo = ({
           )}
         </div>
       )}
-      {/* <AddressEditorModal
+      <ChatAddressModal
         open={addrOpen}
         initial={mainAddress}
         saving={addrSaving}
@@ -80,7 +209,7 @@ const ChatProductInfo = ({
           setAddrOpen(false);
         }}
         onSave={handleSaveAddress}
-      /> */}
+      />
     </div>
   );
 };
