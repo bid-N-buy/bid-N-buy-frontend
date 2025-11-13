@@ -137,8 +137,8 @@ api.interceptors.response.use(
 
       // ✅ 서버 스펙: 소문자 키!
       const body = {
-        accesstoken: accessToken,
-        refreshtoken: refreshToken,
+        accessToken: accessToken,
+        refreshToken: refreshToken,
       };
 
       // 인터셉터 재귀 방지 위해 axios 기본 인스턴스 사용
