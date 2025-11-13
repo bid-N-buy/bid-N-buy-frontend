@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
 import adminApi from "../api/adminAxiosInstance";
@@ -12,7 +12,8 @@ const AdminInquiryPost = () => {
   const { id } = useParams();
   const [inquiry, setInquiry] = useState<AdminInquiryPostProps | null>(null);
 
-  const getInquiry = async () => {
+  const getInquiry = useCallback(async () => {
+    if (!id) return;
     try {
       const post = (await adminApi.get(`/admin/inquiries/${id}`)).data;
       setInquiry(post);
@@ -20,12 +21,11 @@ const AdminInquiryPost = () => {
       setInquiry(null);
       return;
     }
-  };
+  }, [id]);
 
   useEffect(() => {
-    if (!id) return;
     getInquiry();
-  }, [id]);
+  }, [getInquiry]);
 
   if (!inquiry) {
     return null;
@@ -100,7 +100,7 @@ const AdminInquiryPost = () => {
           </div>
         </div>
       ) : (
-        <AdminInquiryAnswerForm />
+        <AdminInquiryAnswerForm onSuccess={getInquiry} />
       )}
     </div>
   );

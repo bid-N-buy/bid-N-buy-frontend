@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate, useParams } from "react-router-dom";
+import { ChevronLeft } from "lucide-react";
 import adminApi from "../api/adminAxiosInstance";
 import type { UserDetailProps } from "../types/AdminType";
 import useToast from "../../../shared/hooks/useToast";
@@ -18,7 +19,8 @@ const AdminUserDetail = () => {
 
   const modalRoot: HTMLElement | null = document.getElementById("modal-root");
 
-  const getUser = async () => {
+  const getUser = useCallback(async () => {
+    if (!id) return;
     try {
       const userInfo = (await adminApi.get(`/admin/users/${id}`)).data;
       setUser(userInfo);
@@ -27,12 +29,11 @@ const AdminUserDetail = () => {
       console.error("유저 데이터 불러오기 실패:", e);
       showToast("회원 데이터를 불러오는 데에 실패했습니다.", "error");
     }
-  };
+  }, [id, showToast]);
 
   useEffect(() => {
-    if (!id) return;
     getUser();
-  }, [id]);
+  }, [getUser]);
 
   if (!user) {
     return null;
@@ -48,9 +49,10 @@ const AdminUserDetail = () => {
       <button
         type="button"
         onClick={() => navigate(-1)}
-        className="mb-4 text-sm text-neutral-400 hover:text-neutral-900"
+        className="mb-4 flex cursor-pointer items-center gap-1.5 text-sm text-gray-500 transition-colors hover:text-purple"
       >
-        ← 목록
+        <ChevronLeft className="h-4 w-4" />
+        <span>목록</span>
       </button>
 
       {/* 제목 + 메타 */}
@@ -67,7 +69,7 @@ const AdminUserDetail = () => {
               className="bg-purple rounded-md p-2 font-bold text-white"
               onClick={() => setIsModalOpen(true)}
             >
-              패널티 부과
+              페널티 부과
             </button>
           </div>
 
@@ -92,7 +94,7 @@ const AdminUserDetail = () => {
             </span>
 
             <span className="flex items-center gap-1">
-              <span className="text-neutral-400">패널티</span>
+              <span className="text-neutral-400">페널티</span>
               <span className="font-medium text-neutral-700">
                 {user.penaltyPoints}
               </span>
@@ -194,6 +196,7 @@ const AdminUserDetail = () => {
         createPortal(
           <AdminPenaltyPostModal
             userId={user.userId}
+            userEmail={user.email}
             onClose={() => setIsModalOpen(false)}
           />,
           modalRoot
