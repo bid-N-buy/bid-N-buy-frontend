@@ -103,6 +103,8 @@ const AdmininquiryBoard = () => {
         ...prev,
         keyword: trimmed,
         keywordType: filters.keywordType,
+        type: filters.type,
+        status: filters.status,
       };
     });
     setCurrentPage(0);
