@@ -100,7 +100,7 @@ export const useChatModalStore = create<ChatModalStoreProps>((set, get) => ({
       set({ error: "초기 unreadCount 로드 실패", loading: false });
       return;
     } finally {
-      set({ error: "초기 unreadCount 로드 실패", loading: false });
+      set({ loading: false });
     }
   },
   // 모달 열려 있는 중 재갱신
