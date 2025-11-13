@@ -52,11 +52,7 @@ export interface ChatProductInfoProps {
     sellerId: number,
     currentPrice: number
   ) => void;
-  handleSendAddress: (
-    auctionId: number,
-    buyerId: number,
-    sellerId: number
-  ) => void;
+  handleSendAddress: (address: string) => void;
   isLocked?: boolean;
 }
 
@@ -108,10 +104,4 @@ export interface ChatInputProps {
   setInputMessage: (message: string) => void;
   sendMessage: () => void;
   handleSendImage: (image: File) => void;
-}
-
-export interface ChatAddressModalProps {
-  postcode: string;
-  address1: string;
-  address2?: string;
 }
