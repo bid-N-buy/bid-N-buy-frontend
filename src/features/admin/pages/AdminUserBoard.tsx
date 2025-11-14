@@ -188,7 +188,7 @@ const AdminUserBoard = () => {
               type="search"
               value={filters.email}
               onChange={(e) => handleEmailChange(e.target.value)}
-              placeholder="이메일을 입력해 주세요"
+              placeholder="이메일을 입력하세요"
               className="focus:border-purple h-8 w-56 rounded-md border border-gray-300 px-3 text-sm text-gray-700 focus:outline-none"
             />
             <button
