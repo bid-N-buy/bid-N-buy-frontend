@@ -163,7 +163,7 @@ const AdminUserBoard = () => {
                 className={`flex cursor-pointer items-center gap-1 rounded-full border px-3 py-1 text-sm transition-colors ${
                   filters.activityStatus === value
                     ? "border-purple bg-purple text-white"
-                    : "hover:border-purple/60 border-gray-300 text-gray-600"
+                    : "hover:border-purple hover:text-purple border-gray-300 text-gray-600"
                 }`}
               >
                 <input
@@ -193,7 +193,7 @@ const AdminUserBoard = () => {
             />
             <button
               type="submit"
-              className="bg-purple hover:bg-deep-purple h-8 min-w-[64px] rounded-md px-4 text-sm font-semibold text-white transition-colors"
+              className="bg-purple hover:bg-deep-purple h-8 min-w-[64px] cursor-pointer rounded-md px-4 text-sm font-semibold text-white transition-colors"
             >
               검색
             </button>
@@ -203,7 +203,7 @@ const AdminUserBoard = () => {
               disabled={!isFilterDirty}
               className={`h-8 min-w-[64px] rounded-md px-4 text-sm transition-colors ${
                 isFilterDirty
-                  ? "hover:border-purple hover:text-purple border border-gray-300 text-gray-600"
+                  ? "hover:border-purple hover:text-purple cursor-pointer border border-gray-300 text-gray-600"
                   : "cursor-not-allowed border border-gray-200 bg-gray-100 text-gray-400"
               }`}
             >
