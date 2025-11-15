@@ -38,7 +38,18 @@ const AdminAuctionList = ({ auctions }: AdminAuctionListProps) => {
             <td className="text-left">
               <Link to={`/admin/auctions/${item.auctionId}`}>{item.title}</Link>
             </td>
-            <td>{item.sellerNickname || "-"}</td>
+            <td>
+              {item.sellerId ? (
+                <Link
+                  to={`/admin/users/${item.sellerId}`}
+                  className="text-gray-700 cursor-pointer"
+                >
+                  {item.sellerNickname || "-"}
+                </Link>
+              ) : (
+                item.sellerNickname || "-"
+              )}
+            </td>
             <td>{formatDate(item.createdAt)}</td>
             <td>{item.sellingStatus}</td>
           </tr>

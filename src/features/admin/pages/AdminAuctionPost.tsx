@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, Link } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
 import { useAuctionDetailStore } from "../../auction/store/auctionDetailStore";
 import { formatDate } from "../../../shared/utils/datetime";
@@ -97,9 +97,18 @@ const AdminAuctionPost = () => {
 
           <span className="flex items-center gap-1">
             <span className="text-neutral-400">작성자</span>
-            <span className="font-medium text-neutral-700">
-              {auction.sellerNickname}
-            </span>
+            {auction.sellerId ? (
+              <Link
+                to={`/admin/users/${auction.sellerId}`}
+                className="font-medium text-neutral-700 cursor-pointer"
+              >
+                {auction.sellerNickname}
+              </Link>
+            ) : (
+              <span className="font-medium text-neutral-700">
+                {auction.sellerNickname}
+              </span>
+            )}
           </span>
 
           <span className="flex items-center gap-1">
