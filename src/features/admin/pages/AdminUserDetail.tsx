@@ -19,6 +19,10 @@ const AdminUserDetail = () => {
 
   const modalRoot: HTMLElement | null = document.getElementById("modal-root");
 
+  const handleCloseModal = useCallback(() => {
+    setIsModalOpen(false);
+  }, []);
+
   const getUser = useCallback(async () => {
     if (!id) return;
     try {
@@ -49,7 +53,7 @@ const AdminUserDetail = () => {
       <button
         type="button"
         onClick={() => navigate(-1)}
-        className="mb-4 flex cursor-pointer items-center gap-1.5 text-sm text-gray-500 transition-colors hover:text-purple"
+        className="hover:text-purple mb-4 flex cursor-pointer items-center gap-1.5 text-sm text-gray-500 transition-colors"
       >
         <ChevronLeft className="h-4 w-4" />
         <span>목록</span>
@@ -66,7 +70,7 @@ const AdminUserDetail = () => {
 
             <button
               type="button"
-              className="bg-purple rounded-md p-2 font-bold text-white"
+              className="bg-purple hover:bg-deep-purple cursor-pointer rounded-md p-2 font-bold text-white transition-colors"
               onClick={() => setIsModalOpen(true)}
             >
               페널티 부과
@@ -197,7 +201,8 @@ const AdminUserDetail = () => {
           <AdminPenaltyPostModal
             userId={user.userId}
             userEmail={user.email}
-            onClose={() => setIsModalOpen(false)}
+            onClose={handleCloseModal}
+            onSuccess={getUser}
           />,
           modalRoot
         )}

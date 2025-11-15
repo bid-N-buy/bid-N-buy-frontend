@@ -32,6 +32,7 @@ export interface AdminPenaltyPostProps {
   userId: number;
   userEmail?: string;
   onClose: () => void;
+  onSuccess?: (() => void) | (() => Promise<void>);
 }
 
 export interface AdminPagination<T> extends PageProps {
