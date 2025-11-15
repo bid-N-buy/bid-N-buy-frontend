@@ -68,13 +68,25 @@ const AdminUserDetail = () => {
               {user.nickname}
             </h3>
 
-            <button
-              type="button"
-              className="bg-purple hover:bg-deep-purple cursor-pointer rounded-md p-2 font-bold text-white transition-colors"
-              onClick={() => setIsModalOpen(true)}
-            >
-              페널티 부과
-            </button>
+            {user.activityStatus === "강퇴" ||
+            user.activityStatus === "탈퇴" ? (
+              <button
+                type="button"
+                disabled
+                className="cursor-not-allowed rounded-md bg-gray-400 p-2 font-bold text-white"
+                title="탈퇴/강퇴한 회원에게는 페널티를 부과할 수 없습니다"
+              >
+                페널티 부과
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="bg-purple hover:bg-deep-purple cursor-pointer rounded-md p-2 font-bold text-white transition-colors"
+                onClick={() => setIsModalOpen(true)}
+              >
+                페널티 부과
+              </button>
+            )}
           </div>
 
           <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-[12px] text-neutral-500 sm:text-[13px]">
