@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, Link } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
 import { useAuctionDetailStore } from "../../auction/store/auctionDetailStore";
 import { formatDate } from "../../../shared/utils/datetime";
@@ -78,16 +78,47 @@ const AdminAuctionPost = () => {
           <h3 className="text-[18px] font-bold text-neutral-900 sm:text-[20px] sm:leading-[1.4]">
             {auction.title}
           </h3>
-          <button
-            type="button"
-            className="bg-purple rounded-md p-2 font-bold text-white"
-            onClick={() => handleDeleteAuc()}
-          >
-            상품 삭제
-          </button>
+          <div className="flex gap-2">
+            <Link
+              to={`/auctions/${auction.auctionId}`}
+              className="bg-purple hover:bg-deep-purple cursor-pointer rounded-md px-2.5 py-1.5 text-sm font-semibold text-white transition-colors"
+            >
+              경매 페이지 이동
+            </Link>
+            <button
+              type="button"
+              className="hover:border-red hover:text-red cursor-pointer border border-gray-300 rounded-md px-2.5 py-1.5 text-sm font-semibold text-gray-600 transition-colors"
+              onClick={() => handleDeleteAuc()}
+            >
+              삭제
+            </button>
+          </div>
         </div>
 
         <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-[12px] text-neutral-500 sm:text-[13px]">
+          <span className="flex items-center gap-1">
+            <span className="text-neutral-400">판매자</span>
+            {auction.sellerId ? (
+              <Link
+                to={`/admin/users/${auction.sellerId}`}
+                className="font-medium text-neutral-700 cursor-pointer"
+              >
+                {auction.sellerNickname}
+              </Link>
+            ) : (
+              <span className="font-medium text-neutral-700">
+                {auction.sellerNickname}
+              </span>
+            )}
+          </span>
+
+          <span className="flex items-center gap-1">
+            <span className="text-neutral-400">현재가</span>
+            <span className="font-medium text-neutral-700">
+              {auction.currentPrice?.toLocaleString() || 0}원
+            </span>
+          </span>
+
           <span className="flex items-center gap-1">
             <span className="text-neutral-400">카테고리</span>
             <span className="font-medium text-neutral-700">
@@ -96,14 +127,7 @@ const AdminAuctionPost = () => {
           </span>
 
           <span className="flex items-center gap-1">
-            <span className="text-neutral-400">작성자</span>
-            <span className="font-medium text-neutral-700">
-              {auction.sellerNickname}
-            </span>
-          </span>
-
-          <span className="flex items-center gap-1">
-            <span className="text-neutral-400">작성일시</span>
+            <span className="text-neutral-400">등록일시</span>
             <span className="font-medium text-neutral-700">
               {formatDate(auction.createdAt)}
             </span>

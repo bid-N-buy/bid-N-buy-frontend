@@ -17,11 +17,11 @@ const AdminAuctionList = ({ auctions }: AdminAuctionListProps) => {
       <thead className="border-deep-purple text-deep-purple bg-light-purple border-b">
         <tr>
           <th>ID</th>
-          <th>대표 이미지</th>
+          <th>대표이미지</th>
           <th>제목</th>
           <th>판매자</th>
           <th>등록일시</th>
-          <th>진행 상태</th>
+          <th>진행상태</th>
         </tr>
       </thead>
       <tbody>
@@ -38,7 +38,18 @@ const AdminAuctionList = ({ auctions }: AdminAuctionListProps) => {
             <td className="text-left">
               <Link to={`/admin/auctions/${item.auctionId}`}>{item.title}</Link>
             </td>
-            <td>{item.sellerNickname || "-"}</td>
+            <td>
+              {item.sellerId ? (
+                <Link
+                  to={`/admin/users/${item.sellerId}`}
+                  className="text-gray-700 cursor-pointer"
+                >
+                  {item.sellerNickname || "-"}
+                </Link>
+              ) : (
+                item.sellerNickname || "-"
+              )}
+            </td>
             <td>{formatDate(item.createdAt)}</td>
             <td>{item.sellingStatus}</td>
           </tr>
