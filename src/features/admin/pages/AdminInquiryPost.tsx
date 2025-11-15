@@ -59,7 +59,7 @@ const AdminInquiryPost = () => {
             <span className="text-neutral-400">아이디(이메일)</span>
             <Link
               to={`/admin/users/${inquiry.userId}`}
-              className="text-neutral-700 hover:text-purple transition-colors"
+              className="text-neutral-700 cursor-pointer"
             >
               {inquiry.userEmail}
             </Link>

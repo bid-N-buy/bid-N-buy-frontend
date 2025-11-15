@@ -38,7 +38,7 @@ const AdminInquiryList = ({ inquiryList }: AdminInquiryListProps) => {
             <td>
               <Link
                 to={`/admin/users/${item.userId}`}
-                className="text-gray-700 hover:text-purple transition-colors"
+                className="text-gray-700 cursor-pointer"
               >
                 {item.userEmail}
               </Link>
