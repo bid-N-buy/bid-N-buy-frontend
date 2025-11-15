@@ -17,11 +17,11 @@ const AdminAuctionList = ({ auctions }: AdminAuctionListProps) => {
       <thead className="border-deep-purple text-deep-purple bg-light-purple border-b">
         <tr>
           <th>ID</th>
-          <th>대표 이미지</th>
+          <th>대표이미지</th>
           <th>제목</th>
           <th>판매자</th>
           <th>등록일시</th>
-          <th>진행 상태</th>
+          <th>진행상태</th>
         </tr>
       </thead>
       <tbody>
