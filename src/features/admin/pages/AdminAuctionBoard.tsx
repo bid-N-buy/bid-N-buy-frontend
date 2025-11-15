@@ -160,7 +160,7 @@ const AdminAuctionBoard = ({ params }: Props) => {
             className={`p-1 transition-colors ${
               pages.first
                 ? "cursor-not-allowed text-gray-300"
-                : "hover:text-purple text-gray-600"
+                : "hover:text-purple cursor-pointer text-gray-600"
             }`}
             aria-label="이전 페이지"
           >
@@ -178,7 +178,7 @@ const AdminAuctionBoard = ({ params }: Props) => {
             className={`p-1 transition-colors ${
               pages.last
                 ? "cursor-not-allowed text-gray-300"
-                : "hover:text-purple text-gray-600"
+                : "hover:text-purple cursor-pointer text-gray-600"
             }`}
             aria-label="다음 페이지"
           >
