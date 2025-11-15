@@ -59,7 +59,7 @@ const AdminInquiryPost = () => {
             <span className="text-neutral-400">아이디(이메일)</span>
             <Link
               to={`/admin/users/${inquiry.userId}`}
-              className="text-neutral-700 hover:text-purple transition-colors"
+              className="text-neutral-700 cursor-pointer"
             >
               {inquiry.userEmail}
             </Link>
@@ -78,18 +78,18 @@ const AdminInquiryPost = () => {
 
       {/* 내 문의(본문) */}
       <div className="mt-6 rounded-md border border-neutral-200 bg-white p-5">
-        <div className="mb-2 text-[13px] font-semibold text-neutral-500">
+        <div className="mb-2 text-[14px] font-semibold text-neutral-500 sm:text-[15px]">
           문의 내용
         </div>
-        <p className="text-[14px] leading-7 whitespace-pre-line text-neutral-800">
+        <p className="text-[14px] leading-6 whitespace-pre-line text-neutral-700">
           {inquiry.content}
         </p>
       </div>
 
       {/* 관리자 답변 */}
       {inquiry.requestContent ? (
-        <div className="border-purple bg-light-purple mt-6 flex flex-col gap-3 rounded-md border p-5 sm:gap-4">
-          <span className="bg-purple inline-block w-20 rounded-md px-2 py-[2px] text-center text-[11px] font-medium text-white">
+        <div className="border-purple mt-6 flex flex-col gap-3 rounded-md border bg-white p-5 sm:gap-4">
+          <span className="bg-purple inline-block w-fit rounded-md px-2.5 py-1 text-xs font-medium text-white">
             답변
           </span>
           <h4 className="text-[14px] font-semibold text-neutral-900 sm:text-[15px]">
