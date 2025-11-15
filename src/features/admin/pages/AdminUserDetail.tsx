@@ -145,46 +145,61 @@ const AdminUserDetail = () => {
 
       <div className="md:flex md:gap-4">
         <div className="block md:w-1/2">
-          <h6 className="mt-4 font-bold">징계 내역</h6>
+          <h6 className="mt-4 font-bold">페널티 내역</h6>
           <div className="mt-2 gap-4 rounded-md border border-neutral-200 bg-white p-5">
             {user.penaltyHistory && user.penaltyHistory.length > 0 ? (
               <ul>
-                {user.penaltyHistory.map((penalty) => (
-                  <li
-                    key={penalty.penaltyId}
-                    className="border-b py-2 first:pt-0"
-                  >
-                    <p>
-                      <strong>유형:</strong> {penalty.type} ({penalty.points}점)
-                    </p>
-                    <p>
-                      <strong>부과일:</strong> {penalty.createdAt}
-                      {penalty.active && <span> (현재 유효)</span>}
-                    </p>
-                  </li>
-                ))}
-                {user.suspended ? (
+                {[...user.penaltyHistory]
+                  .sort(
+                    (a, b) =>
+                      new Date(a.createdAt).getTime() -
+                      new Date(b.createdAt).getTime()
+                  )
+                  .map((penalty) => (
+                    <li
+                      key={penalty.penaltyId}
+                      className="border-b py-2 first:pt-0"
+                    >
+                      <p>
+                        <strong>부과 점수:</strong> {penalty.points}점
+                      </p>
+                      <p>
+                        <strong>부과 일시:</strong>{" "}
+                        {formatDate(penalty.createdAt)}
+                      </p>
+                    </li>
+                  ))}
+                {user.suspended && user.suspendedUntil ? (
                   <li className="border-b py-2">
                     <p>
-                      <strong>정지 기간 :</strong> {user.suspendedUntil}
+                      <strong>정지 기간 :</strong>{" "}
+                      {user.penaltyHistory && user.penaltyHistory.length > 0
+                        ? (() => {
+                            // 가장 최근 부과 일시를 시작일로
+                            const latestPenalty = [...user.penaltyHistory].sort(
+                              (a, b) =>
+                                new Date(b.createdAt).getTime() -
+                                new Date(a.createdAt).getTime()
+                            )[0];
+                            return `${formatDate(latestPenalty.createdAt)} ~ ${formatDate(user.suspendedUntil)}`;
+                          })()
+                        : `~ ${formatDate(user.suspendedUntil)}`}
                     </p>
                     <p>
                       <strong>정지 전적 :</strong>{" "}
-                      {user.suspensionCount === 1 ? "있음" : "없음"}
+                      {user.suspensionCount === 1 ? "O" : "X"}
                     </p>
                   </li>
-                ) : (
-                  ""
-                )}
+                ) : null}
                 <li className="py-2">
                   <p>
-                    <strong>강퇴여부 :</strong>{" "}
+                    <strong>강퇴 여부 :</strong>{" "}
                     {user.banCount === 1 ? "O" : "X"}
                   </p>
                 </li>
               </ul>
             ) : (
-              <p>징계 내역이 없습니다.</p>
+              <p>페널티 내역이 없습니다.</p>
             )}
           </div>
         </div>
