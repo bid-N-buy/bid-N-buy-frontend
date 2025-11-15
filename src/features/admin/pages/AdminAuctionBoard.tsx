@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import type { FetchAuctionsParams } from "../../auction/api/auctions";
 import AdminAuctionList from "../components/AdminAuctionList";
 import { useAuctionList } from "../hooks/useAdminDashboard";
@@ -19,10 +20,54 @@ const createDefaultFilters = (): FilterState => ({
 });
 
 const AdminAuctionBoard = ({ params }: Props) => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const userEmailFromUrl = searchParams.get("userEmail");
+  const prevUserEmailRef = useRef<string | null>(userEmailFromUrl);
+
   const [currentPage, setCurrentPage] = useState(0);
-  const [filters, setFilters] = useState<FilterState>(createDefaultFilters);
-  const [appliedFilters, setAppliedFilters] =
-    useState<FilterState>(createDefaultFilters);
+  const [filters, setFilters] = useState<FilterState>(() => {
+    if (userEmailFromUrl) {
+      return {
+        keywordType: "userEmail",
+        keyword: userEmailFromUrl,
+      };
+    }
+    return createDefaultFilters();
+  });
+  const [appliedFilters, setAppliedFilters] = useState<FilterState>(() => {
+    if (userEmailFromUrl) {
+      return {
+        keywordType: "userEmail",
+        keyword: userEmailFromUrl,
+      };
+    }
+    return createDefaultFilters();
+  });
+
+  // url 쿼리파라미터 변경되면 필터 업데이트
+  useEffect(() => {
+    const prevUserEmail = prevUserEmailRef.current;
+    prevUserEmailRef.current = userEmailFromUrl;
+
+    if (userEmailFromUrl) {
+      // url에 userEmail 있으면 필터 적용
+      setFilters({
+        keywordType: "userEmail",
+        keyword: userEmailFromUrl,
+      });
+      setAppliedFilters({
+        keywordType: "userEmail",
+        keyword: userEmailFromUrl,
+      });
+      setCurrentPage(0);
+    } else if (prevUserEmail && !userEmailFromUrl) {
+      // url에서 userEmail 제거됐으면 필터 초기화
+      const defaults = createDefaultFilters();
+      setFilters(defaults);
+      setAppliedFilters(defaults);
+      setCurrentPage(0);
+    }
+  }, [userEmailFromUrl]);
 
   const auctionParams = useMemo(() => {
     const baseParams: FetchAuctionsParams = {
@@ -85,6 +130,15 @@ const AdminAuctionBoard = ({ params }: Props) => {
       };
     });
     setCurrentPage(0);
+
+    // url 쿼리파라미터 업데이트
+    const newSearchParams = new URLSearchParams(searchParams);
+    if (trimmed && filters.keywordType === "userEmail") {
+      newSearchParams.set("userEmail", trimmed);
+    } else {
+      newSearchParams.delete("userEmail");
+    }
+    setSearchParams(newSearchParams, { replace: true });
   };
 
   const handleResetFilters = () => {
@@ -92,6 +146,12 @@ const AdminAuctionBoard = ({ params }: Props) => {
     setFilters(defaults);
     setAppliedFilters(defaults);
     setCurrentPage(0);
+    // url 쿼리파라미터도 제거
+    if (searchParams.has("userEmail")) {
+      const newSearchParams = new URLSearchParams(searchParams);
+      newSearchParams.delete("userEmail");
+      setSearchParams(newSearchParams, { replace: true });
+    }
   };
 
   const isFilterDirty = filters.keyword.trim().length > 0;

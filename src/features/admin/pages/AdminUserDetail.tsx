@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, Link } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
 import adminApi from "../api/adminAxiosInstance";
 import type { UserDetailProps } from "../types/AdminType";
@@ -73,7 +73,7 @@ const AdminUserDetail = () => {
               <button
                 type="button"
                 disabled
-                className="cursor-not-allowed rounded-md bg-gray-400 p-2 font-bold text-white"
+                className="cursor-not-allowed rounded-md bg-gray-400 px-2 py-1 text-xs font-semibold text-white"
                 title="탈퇴/강퇴한 회원에게는 페널티를 부과할 수 없습니다"
               >
                 페널티 부과
@@ -81,7 +81,7 @@ const AdminUserDetail = () => {
             ) : (
               <button
                 type="button"
-                className="bg-purple hover:bg-deep-purple cursor-pointer rounded-md p-2 font-bold text-white transition-colors"
+                className="bg-purple hover:bg-deep-purple cursor-pointer rounded-md px-2 py-1 text-xs font-semibold text-white transition-colors"
                 onClick={() => setIsModalOpen(true)}
               >
                 페널티 부과
@@ -149,48 +149,49 @@ const AdminUserDetail = () => {
           <div className="mt-2 gap-4 rounded-md border border-neutral-200 bg-white p-5">
             {user.penaltyHistory && user.penaltyHistory.length > 0 ? (
               <ul>
-                {[...user.penaltyHistory]
-                  .sort(
+                {(() => {
+                  // 페널티 히스토리 시간순 정렬
+                  const sortedHistory = [...user.penaltyHistory].sort(
                     (a, b) =>
                       new Date(a.createdAt).getTime() -
                       new Date(b.createdAt).getTime()
-                  )
-                  .map((penalty) => (
-                    <li
-                      key={penalty.penaltyId}
-                      className="border-b py-2 first:pt-0"
-                    >
-                      <p>
-                        <strong>부과 점수:</strong> {penalty.points}점
-                      </p>
-                      <p>
-                        <strong>부과 일시:</strong>{" "}
-                        {formatDate(penalty.createdAt)}
-                      </p>
-                    </li>
-                  ))}
-                {user.suspended && user.suspendedUntil ? (
-                  <li className="border-b py-2">
-                    <p>
-                      <strong>정지 기간 :</strong>{" "}
-                      {user.penaltyHistory && user.penaltyHistory.length > 0
-                        ? (() => {
-                            // 가장 최근 부과 일시를 시작일로
-                            const latestPenalty = [...user.penaltyHistory].sort(
-                              (a, b) =>
-                                new Date(b.createdAt).getTime() -
-                                new Date(a.createdAt).getTime()
-                            )[0];
-                            return `${formatDate(latestPenalty.createdAt)} ~ ${formatDate(user.suspendedUntil)}`;
-                          })()
-                        : `~ ${formatDate(user.suspendedUntil)}`}
-                    </p>
-                    <p>
-                      <strong>정지 전적 :</strong>{" "}
-                      {user.suspensionCount === 1 ? "O" : "X"}
-                    </p>
-                  </li>
-                ) : null}
+                  );
+                  // 가장 최근 페널티 (정지 시작일로 사용)
+                  const latestPenalty = sortedHistory[sortedHistory.length - 1];
+
+                  return (
+                    <>
+                      {sortedHistory.map((penalty) => (
+                        <li
+                          key={penalty.penaltyId}
+                          className="border-b py-2 first:pt-0"
+                        >
+                          <p>
+                            <strong>부과 점수:</strong> {penalty.points}점
+                          </p>
+                          <p>
+                            <strong>부과 일시:</strong>{" "}
+                            {formatDate(penalty.createdAt)}
+                          </p>
+                        </li>
+                      ))}
+                      {user.suspended &&
+                      user.suspendedUntil &&
+                      latestPenalty ? (
+                        <li className="border-b py-2">
+                          <p>
+                            <strong>정지 기간 :</strong>{" "}
+                            {`${formatDate(latestPenalty.createdAt)} ~ ${formatDate(user.suspendedUntil)}`}
+                          </p>
+                          <p>
+                            <strong>정지 전적 :</strong>{" "}
+                            {user.suspensionCount === 1 ? "O" : "X"}
+                          </p>
+                        </li>
+                      ) : null}
+                    </>
+                  );
+                })()}
                 <li className="py-2">
                   <p>
                     <strong>강퇴 여부 :</strong>{" "}
@@ -204,7 +205,17 @@ const AdminUserDetail = () => {
           </div>
         </div>
         <div className="block md:w-1/2">
-          <h6 className="mt-4 font-bold">거래 관련 정보</h6>
+          <div className="mt-4 flex items-center gap-2">
+            <h6 className="font-bold">거래 내역</h6>
+            {user.auctionCount > 0 && (
+              <Link
+                to={`/admin/auctions?userEmail=${encodeURIComponent(user.email)}`}
+                className="bg-purple hover:bg-deep-purple cursor-pointer rounded-md px-2 py-1 text-xs font-semibold text-white transition-colors"
+              >
+                거래글 확인
+              </Link>
+            )}
+          </div>
           <div className="mt-2 gap-4 rounded-md border border-neutral-200 bg-white p-5">
             <ul>
               {user.auctionCount > 0 ? (
@@ -213,11 +224,11 @@ const AdminUserDetail = () => {
                     <strong>거래 횟수:</strong> {user.auctionCount}
                   </p>
                   <p>
-                    <strong>현재 거래 온도:</strong> {user.userTemperature}
+                    <strong>현재 온도:</strong> {user.userTemperature}
                   </p>
                 </li>
               ) : (
-                <p>거래 관련 정보가 없습니다.</p>
+                <p>거래 내역이 없습니다.</p>
               )}
             </ul>
           </div>
