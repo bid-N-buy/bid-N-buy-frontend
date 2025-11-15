@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigate } from "react-router-dom";
 import adminApi from "../api/adminAxiosInstance";
@@ -15,6 +15,10 @@ const AdminAsideMenu = () => {
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const clearAuth = useAdminAuthStore((s) => s.clear);
+
+  const handleCloseModal = useCallback(() => {
+    setIsModalOpen(false);
+  }, []);
 
   const modalRoot: HTMLElement | null = document.getElementById("modal-root");
 
@@ -109,7 +113,7 @@ const AdminAsideMenu = () => {
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(true)}
-                  className="group relative flex aspect-square size-10 items-center justify-center rounded-sm hover:bg-gray-50"
+                  className="group relative flex aspect-square size-10 items-center justify-center rounded-sm hover:bg-gray-50 cursor-pointer"
                 >
                   <Megaphone />
 
@@ -120,7 +124,7 @@ const AdminAsideMenu = () => {
               </li>
               {isModalOpen &&
                 createPortal(
-                  <AdminAlarmPostModal onClose={() => setIsModalOpen(false)} />,
+                  <AdminAlarmPostModal onClose={handleCloseModal} />,
                   modalRoot
                 )}
             </ul>
@@ -132,7 +136,7 @@ const AdminAsideMenu = () => {
         <div className="flex justify-center">
           <button
             onClick={Logout}
-            className="group relative flex aspect-square size-10 items-center justify-center rounded-sm hover:bg-gray-50"
+            className="group relative flex aspect-square size-10 items-center justify-center rounded-sm hover:bg-gray-50 cursor-pointer"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"

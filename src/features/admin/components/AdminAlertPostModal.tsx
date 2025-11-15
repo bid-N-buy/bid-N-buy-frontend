@@ -28,12 +28,13 @@ const AdminAlertPostModal = ({ onClose }: ModalProps) => {
         withCredentials: true,
       });
       showToast("알림이 발송되었습니다.", "success");
+
+      onClose();
+
+      setForm({ userId: "", content: "" });
     } catch (error) {
       console.error("알림 발송 실패:", error);
       showToast("알림 발송에 실패했습니다.", "error");
-      return;
-    } finally {
-      setForm({ userId: "", content: "" });
     }
   };
 
@@ -58,7 +59,7 @@ const AdminAlertPostModal = ({ onClose }: ModalProps) => {
     };
     window.addEventListener("mousedown", handleClick);
     return () => window.removeEventListener("mousedown", handleClick);
-  }, [modalRef, onClose]);
+  }, [onClose]);
 
   return (
     <>
@@ -68,8 +69,12 @@ const AdminAlertPostModal = ({ onClose }: ModalProps) => {
       >
         <div className="bg-deep-purple flex justify-between rounded-t-md p-3 text-white">
           <p className="font-bold">알림 발송</p>
-          <button onClick={onClose} aria-label="모달 닫기" className="">
-            <X />
+          <button
+            onClick={onClose}
+            aria-label="모달 닫기"
+            className="flex cursor-pointer items-center justify-center"
+          >
+            <X className="h-4 w-4" />
           </button>
         </div>
         <form onSubmit={submitAlert} className="mt-2 mb-4 px-4 py-2">
@@ -99,7 +104,7 @@ const AdminAlertPostModal = ({ onClose }: ModalProps) => {
             required
           />
           <button
-            className="border-purple text-purple w-full rounded-md border py-2"
+            className="border-purple text-purple hover:bg-light-purple w-full cursor-pointer rounded-md border py-2 transition-colors"
             type="submit"
           >
             전송

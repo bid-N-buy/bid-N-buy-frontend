@@ -9,6 +9,7 @@ const AdminPenaltyPostModal = ({
   userId,
   userEmail,
   onClose,
+  onSuccess,
 }: AdminPenaltyPostProps) => {
   const modalRef = useRef<HTMLDivElement>(null);
   const adminToken = useAdminAuthStore.getState().accessToken;
@@ -32,12 +33,22 @@ const AdminPenaltyPostModal = ({
         withCredentials: true,
       });
       showToast("페널티 부과 완료", "success");
+
+      // 성공 시 부모 컴포넌트에 알림 (데이터 재로딩용)
+      if (onSuccess) {
+        try {
+          await onSuccess();
+        } catch (error) {
+          console.error("데이터 새로고침 중 오류:", error);
+        }
+      }
+
+      onClose();
+
+      setForm({ userId: userId, type: "LEVEL_1" });
     } catch (e) {
       console.error("페널티 부과 실패:", e);
       showToast("페널티 부과 실패", "error");
-      return;
-    } finally {
-      setForm({ userId: userId, type: "LEVEL_1" });
     }
   };
 
@@ -64,7 +75,7 @@ const AdminPenaltyPostModal = ({
     };
     window.addEventListener("mousedown", handleClick);
     return () => window.removeEventListener("mousedown", handleClick);
-  }, [modalRef, onClose]);
+  }, [onClose]);
 
   return (
     <>
