@@ -1,3 +1,4 @@
+// src/features/mypage/pages/InquiryList.tsx
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -82,8 +83,103 @@ function makeFallbackKey(prefix: string, title?: string, createdAt?: string) {
 }
 
 /* ===========================
+ *     공용 Pagination Bar
+ * =========================== */
+type PaginationBarProps = {
+  page: number; // 1-base
+  totalPages: number;
+  onChange: (next: number) => void;
+  className?: string;
+};
+
+const PaginationBar: React.FC<PaginationBarProps> = ({
+  page,
+  totalPages,
+  onChange,
+  className,
+}) => {
+  if (totalPages <= 1) return null;
+
+  // 페이지 버튼(현재 페이지 ±2 범위) + 양 끝
+  const around = 2;
+  const pages = new Set<number>([
+    1,
+    totalPages,
+    ...Array.from(
+      { length: around * 2 + 1 },
+      (_, i) => page - around + i
+    ).filter((p) => p >= 1 && p <= totalPages),
+  ]);
+  const pageList = Array.from(pages).sort((a, b) => a - b);
+
+  // 중간 생략 "…" 삽입
+  const display: (number | "...")[] = [];
+  for (let i = 0; i < pageList.length; i++) {
+    const current = pageList[i];
+    display.push(current);
+    const next = pageList[i + 1];
+    if (next && next - current > 1) display.push("...");
+  }
+
+  const btnCls =
+    "min-w-8 h-8 px-2 rounded-md border text-sm font-medium transition";
+  const activeCls = "border-purple text-white bg-purple hover:bg-deep-purple";
+  const normalCls =
+    "border-neutral-300 text-neutral-700 bg-white hover:bg-neutral-50";
+
+  return (
+    <div
+      className={[
+        "mt-4 flex items-center justify-center gap-2 select-none",
+        className ?? "",
+      ].join(" ")}
+    >
+      <button
+        type="button"
+        className={`${btnCls} ${page === 1 ? "cursor-not-allowed opacity-40" : normalCls}`}
+        onClick={() => page > 1 && onChange(page - 1)}
+        disabled={page === 1}
+        aria-label="이전 페이지"
+      >
+        이전
+      </button>
+
+      {display.map((p, idx) =>
+        p === "..." ? (
+          <span key={`dots-${idx}`} className="px-1 text-neutral-400">
+            …
+          </span>
+        ) : (
+          <button
+            key={p}
+            type="button"
+            className={`${btnCls} ${p === page ? activeCls : normalCls}`}
+            onClick={() => onChange(p)}
+            aria-current={p === page ? "page" : undefined}
+          >
+            {p}
+          </button>
+        )
+      )}
+
+      <button
+        type="button"
+        className={`${btnCls} ${page === totalPages ? "cursor-not-allowed opacity-40" : normalCls}`}
+        onClick={() => page < totalPages && onChange(page + 1)}
+        disabled={page === totalPages}
+        aria-label="다음 페이지"
+      >
+        다음
+      </button>
+    </div>
+  );
+};
+
+/* ===========================
  *        컴포넌트
  * =========================== */
+const PAGE_SIZE = 20; // ✅ 페이지당 20개
+
 const InquiryList: React.FC = () => {
   const accessToken = useAuthStore((s: AuthState) => s.accessToken);
   const navigate = useNavigate();
@@ -91,6 +187,9 @@ const InquiryList: React.FC = () => {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+
+  // 페이지네이션 상태(1-base)
+  const [page, setPage] = useState<number>(1);
 
   const headers = useMemo(
     () =>
@@ -173,7 +272,11 @@ const InquiryList: React.FC = () => {
           return tb - ta;
         });
 
-        if (mounted) setRows(dedup);
+        if (mounted) {
+          setRows(dedup);
+          // ✅ 데이터 변동 시 페이지 리셋
+          setPage(1);
+        }
 
         if (
           inqRes.status === "rejected" &&
@@ -200,6 +303,21 @@ const InquiryList: React.FC = () => {
     };
   }, [headers]);
 
+  // 페이지네이션 계산
+  const total = rows.length;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const clampedPage = Math.min(Math.max(page, 1), totalPages);
+  const startIdx = (clampedPage - 1) * PAGE_SIZE;
+  const endIdx = startIdx + PAGE_SIZE;
+  const pageRows = rows.slice(startIdx, endIdx);
+
+  // 페이지 변경 핸들러
+  const handleChangePage = (next: number) => {
+    setPage(Math.min(Math.max(next, 1), totalPages));
+    // 스크롤 상단 이동(선택)
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   return (
     <div className="mx-auto w-full max-w-[840px] px-4">
       {/* 헤더 */}
@@ -221,17 +339,17 @@ const InquiryList: React.FC = () => {
         </div>
       )}
       <div className="mb-3 text-sm text-neutral-500">
-        {loading ? "불러오는 중…" : `총 ${rows.length}건`}
+        {loading ? "불러오는 중…" : `총 ${total}건`}
       </div>
 
       {/* 모바일 카드 */}
       <ul className="flex flex-col gap-3 md:hidden">
-        {rows.length === 0 && !loading ? (
+        {pageRows.length === 0 && !loading ? (
           <li className="rounded-lg border border-neutral-200 bg-white py-10 text-center text-neutral-500">
             등록된 문의/신고가 없습니다.
           </li>
         ) : (
-          rows.map((it) => {
+          pageRows.map((it) => {
             const to = getDetailPath(it);
             return (
               <li key={it.keyStr}>
@@ -292,14 +410,14 @@ const InquiryList: React.FC = () => {
           </thead>
 
           <tbody className="text-sm">
-            {rows.length === 0 && !loading ? (
+            {pageRows.length === 0 && !loading ? (
               <tr>
                 <td colSpan={4} className="py-10 text-center text-neutral-500">
                   등록된 문의/신고가 없습니다.
                 </td>
               </tr>
             ) : (
-              rows.map((it) => {
+              pageRows.map((it) => {
                 const to = getDetailPath(it);
                 return (
                   <tr
@@ -352,6 +470,14 @@ const InquiryList: React.FC = () => {
           </tbody>
         </table>
       </div>
+
+      {/* 페이지네이션 (하단) */}
+      <PaginationBar
+        page={clampedPage}
+        totalPages={totalPages}
+        onChange={handleChangePage}
+        className="mb-[200px]"
+      />
 
       <div className="h-12 md:h-16" />
     </div>

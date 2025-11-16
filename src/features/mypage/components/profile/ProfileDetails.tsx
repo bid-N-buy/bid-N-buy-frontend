@@ -23,15 +23,12 @@ type Props = {
   onItemClick?: (id: string | number) => void;
   onClickStartAuction?: () => void;
 
-  /** ✅ 데이터가 비었을 때 목업을 보여줄지 (기본: true) */
   useMockOnEmpty?: boolean;
-  /** ✅ 섹션별 커스텀 목업 주입(선택). 미전달 시 기본 목업 사용 */
   mockSoldItems?: Item[];
   mockSellingItems?: Item[];
 };
 
-/* ---------------- Mock Data (기본 제공) ---------------- */
-/** 외부 파일이 없어도 바로 보이게 picsum 이미지를 사용합니다. */
+/* ---------------- Mock Data ---------------- */
 const MOCK_SOLD: Item[] = [
   {
     id: "m-sold-1",
@@ -69,36 +66,17 @@ const MOCK_SELLING: Item[] = [
 ];
 
 /* ---------------- Utils ---------------- */
-const clamp = (n: number, min: number, max: number) =>
+const clampNum = (n: number, min: number, max: number) =>
   Math.max(min, Math.min(max, n));
 
 /* ---------------- Small Components ---------------- */
-// 프로필 이미지 없을 때 이니셜 (현재는 defaultAvatar 사용 중이라 미사용)
-function Initials({ name }: { name: string }) {
-  const trimmed = (name || "").trim();
-  const parts = trimmed.split(/\s+/);
-  const first = parts[0]?.[0] ?? "";
-  const second = parts.length > 1 ? (parts[1][0] ?? "") : "";
-  const initials = (first + second).toUpperCase() || "U";
-  return (
-    <div className="from-purple flex h-full w-full items-center justify-center bg-gradient-to-br to-indigo-600 text-4xl font-bold text-white">
-      {initials}
-    </div>
-  );
-}
-
-/** 공용 리스트 + 목업 처리 */
 const ItemRowList: React.FC<{
   items: Item[];
   emptyText: string;
   onItemClick?: (id: string | number) => void;
-  onClickStartAuction?: () => void; // 비었을 때 CTA
-  /** ✅ 비었을 때 목업 보여주기 */
+  onClickStartAuction?: () => void;
   useMockOnEmpty?: boolean;
-  /** ✅ 이 섹션 전용 목업 (없으면 기본 목업) */
   mockItems?: Item[];
-  /** 목업임을 표시할지(작은 뱃지) */
-  showMockBadge?: boolean;
 }> = ({
   items,
   emptyText,
@@ -106,7 +84,6 @@ const ItemRowList: React.FC<{
   onClickStartAuction,
   useMockOnEmpty = true,
   mockItems,
-  showMockBadge = true,
 }) => {
   const base = (items ?? []).slice(0, 3);
   const shouldUseMock = useMockOnEmpty && base.length === 0;
@@ -117,11 +94,6 @@ const ItemRowList: React.FC<{
       <div className="overflow-hidden rounded-xl border border-violet-200 bg-white">
         <div className="flex items-center justify-between border-b border-violet-200 bg-violet-50 px-3 py-2">
           <span className="text-xs text-gray-600">{emptyText}</span>
-          {/* {showMockBadge && (
-            <span className="rounded-full bg-violet-600/90 px-2 py-[2px] text-[10px] font-semibold text-white">
-              MOCK
-            </span>
-          )} */}
         </div>
         <ul className="divide-y divide-gray-200">
           {mock.map((it) => (
@@ -143,7 +115,6 @@ const ItemRowList: React.FC<{
               <p className="min-w-0 flex-1 truncate text-sm text-gray-800">
                 {it.title}
               </p>
-              {/* 목업은 클릭 막기 아이콘만 표시 */}
               <svg
                 className="h-4 w-4 shrink-0 text-gray-300"
                 viewBox="0 0 24 24"
@@ -161,7 +132,6 @@ const ItemRowList: React.FC<{
             </li>
           ))}
         </ul>
-        {/* 비었을 때만 CTA 버튼 노출 */}
         {onClickStartAuction && (
           <div className="flex justify-center border-t border-gray-200 p-3">
             <button
@@ -177,9 +147,7 @@ const ItemRowList: React.FC<{
     );
   }
 
-  // 실제 데이터가 있으면 기존 리스트
   if (base.length === 0) {
-    // 목업 사용 안 할 때의 기존 빈 상태
     return (
       <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-gray-300 bg-gray-50 py-10 text-sm text-gray-600">
         <span>{emptyText}</span>
@@ -250,7 +218,6 @@ const ItemRowList: React.FC<{
   );
 };
 
-/** 섹션 헤더 */
 const SectionHeader: React.FC<{
   label: string;
   count: number;
@@ -297,24 +264,20 @@ const ProfileDetails: React.FC<Props> = ({
   mockSoldItems,
   mockSellingItems,
 }) => {
-  // 매너온도
   const hasTemp =
     typeof temperature === "number" && Number.isFinite(temperature);
   const temp = hasTemp
-    ? parseFloat(clamp(temperature as number, 0, 100).toFixed(1))
+    ? parseFloat(clampNum(temperature as number, 0, 100).toFixed(1))
     : null;
   const knobLeft = temp !== null ? `${temp}%` : "0%";
 
-  // 섹션 데이터
   const soldList = soldPreview.slice(0, 3);
   const sellingList = sellingPreview.slice(0, 3);
 
-  // 카운트 표기
   const displaySoldCount =
     typeof soldCount === "number" && soldCount >= 0
       ? soldCount
       : soldList.length;
-
   const displaySellingCount =
     typeof sellingCount === "number" && sellingCount >= 0
       ? sellingCount
@@ -325,26 +288,26 @@ const ProfileDetails: React.FC<Props> = ({
       {/* 프로필 헤더 */}
       <div className="mb-10 flex items-center gap-6">
         <div
-          className="h-36 w-36 overflow-hidden rounded-full bg-gray-200 ring-1 ring-gray-300"
+          className="relative aspect-square size-[clamp(72px,14vw,144px)] flex-none overflow-hidden rounded-full bg-gray-200 ring-1 ring-gray-300"
           aria-label={`${nickname}의 프로필 이미지`}
         >
           {avatarUrl ? (
             <img
               src={avatarUrl}
               alt=""
-              className="h-full w-full object-cover"
+              className="absolute inset-0 h-full w-full object-cover object-center [image-rendering:auto]"
               loading="lazy"
             />
           ) : (
             <img
               src={defaultAvatar}
               alt="default avatar"
-              className="h-full w-full object-cover p-2"
+              className="absolute inset-0 h-full w-full object-contain object-center p-2"
             />
           )}
         </div>
 
-        <div className="flex min-w-0 flex-col">
+        <div className="min-w-0 flex-1">
           <h2 className="truncate text-2xl font-semibold text-gray-800">
             {nickname || "사용자"}
           </h2>
@@ -353,8 +316,8 @@ const ProfileDetails: React.FC<Props> = ({
             <p className="mt-1 truncate text-sm text-gray-500">{email}</p>
           ) : null}
 
-          {/* 매너온도 */}
-          <div className="mt-4 w-[350px] max-w-full">
+          {/* 매너온도 — ▶ 폭을 clamp 로 반응형 축소/확대 */}
+          <div className="mt-4 w-[clamp(160px,50vw,350px)]">
             <div className="mb-1 flex items-center justify-between text-[11px] leading-none text-gray-700">
               <span className="font-medium text-gray-700">매너온도</span>
               {temp === null ? (
@@ -363,13 +326,14 @@ const ProfileDetails: React.FC<Props> = ({
                 <span className="text-purple font-semibold">
                   {temp}
                   <span className="text-purple align-top text-[10px] font-normal">
+                    {" "}
                     ℃
                   </span>
                 </span>
               )}
             </div>
 
-            <div className="relative h-[10px] rounded-full bg-gray-900/90 shadow-[inset_0_0_4px_rgba(0,0,0,0.4)]">
+            <div className="relative h-2 rounded-full bg-gray-900/90 shadow-[inset_0_0_4px_rgba(0,0,0,0.4)] sm:h-[10px]">
               {temp !== null && (
                 <>
                   <div
@@ -377,7 +341,7 @@ const ProfileDetails: React.FC<Props> = ({
                     style={{ width: `${temp}%` }}
                   />
                   <div
-                    className="bg-purple absolute top-1/2 h-[18px] w-[18px] -translate-x-1/2 -translate-y-1/2 rounded-full border-[2px] border-white shadow-[0_4px_12px_rgba(131,34,191,0.5)]"
+                    className="bg-purple absolute top-1/2 h-[14px] w-[14px] -translate-x-1/2 -translate-y-1/2 rounded-full border-[2px] border-white shadow-[0_4px_12px_rgba(131,34,191,0.5)] sm:h-[18px] sm:w-[18px]"
                     style={{ left: knobLeft }}
                     aria-hidden="true"
                   />
@@ -404,7 +368,6 @@ const ProfileDetails: React.FC<Props> = ({
           onItemClick={(id) => onItemClick?.(id)}
           useMockOnEmpty={useMockOnEmpty}
           mockItems={mockSoldItems ?? MOCK_SOLD}
-          // 판매완료 섹션은 CTA 불필요
         />
       </section>
 
