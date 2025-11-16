@@ -44,28 +44,26 @@ const RatingModal: React.FC<RatingModalProps> = ({
 
   const modal = (
     <div
-      className="pointer-events-auto fixed inset-0 z-[9999] flex items-center justify-center bg-black/40"
+      className="pointer-events-auto fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 p-4 sm:p-6"
       onMouseDown={(e) => {
-        // 바깥(검은 영역) 클릭 시 닫기
         if (e.target === e.currentTarget) onCancel();
       }}
     >
       <div
         role="dialog"
         aria-modal="true"
-        className="pointer-events-auto w-[320px] rounded-lg bg-white p-4 shadow-lg"
-        // 내부 클릭은 전파 차단 (리스트 li onClick 방지)
+        className="pointer-events-auto w-[92vw] max-w-[420px] rounded-xl bg-white p-4 shadow-lg sm:max-w-[500px] sm:p-5"
         onMouseDown={(e) => e.stopPropagation()}
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="mb-3 text-base font-semibold text-neutral-900">
+        <h3 className="mb-2 text-base font-semibold text-neutral-900 sm:text-lg">
           구매 확정 & 별점 주기
         </h3>
-        <p className="mb-2 text-sm text-neutral-600">
+        <p className="mb-3 text-sm text-neutral-600 sm:text-[15px]">
           이번 거래는 만족하셨나요?
         </p>
 
-        <div className="mb-4 flex flex-wrap gap-2">
+        <div className="mb-4 flex flex-wrap gap-2 sm:gap-2.5">
           {Array.from({ length: 10 }, (_, i) => i + 1).map((score) => {
             const selected = score === rating;
             return (
@@ -73,7 +71,7 @@ const RatingModal: React.FC<RatingModalProps> = ({
                 key={score}
                 type="button"
                 className={[
-                  "flex h-8 w-8 items-center justify-center rounded border text-sm font-semibold select-none",
+                  "flex h-8 w-8 items-center justify-center rounded border text-sm font-semibold select-none sm:h-9 sm:w-9",
                   selected
                     ? "border-purple text-purple"
                     : "hover:border-purple hover:text-purple text-purple border-neutral-300",
@@ -91,10 +89,10 @@ const RatingModal: React.FC<RatingModalProps> = ({
           })}
         </div>
 
-        <div className="flex justify-end gap-2 text-sm">
+        <div className="flex justify-end gap-2 text-sm sm:text-[15px]">
           <button
             type="button"
-            className="rounded border border-neutral-300 px-3 py-1 text-neutral-500 hover:bg-neutral-50 disabled:opacity-40"
+            className="rounded border border-neutral-300 px-3 py-1.5 text-neutral-600 hover:bg-neutral-50 disabled:opacity-40"
             onClick={(e) => {
               e.stopPropagation();
               if (!submitting) onCancel();
@@ -106,7 +104,7 @@ const RatingModal: React.FC<RatingModalProps> = ({
           <button
             type="button"
             className={[
-              "rounded border px-3 py-1 font-semibold disabled:opacity-40",
+              "rounded border px-3 py-1.5 font-semibold disabled:opacity-40",
               submitting
                 ? "cursor-not-allowed border-neutral-300 bg-neutral-100 text-neutral-400"
                 : "border-purple text-purple hover:bg-deep-purple hover:text-white",
@@ -117,7 +115,7 @@ const RatingModal: React.FC<RatingModalProps> = ({
             }}
             disabled={submitting}
           >
-            {submitting ? "전송 중..." : "제출"}
+            {submitting ? "전송 중..." : "Submit"}
           </button>
         </div>
       </div>
@@ -215,8 +213,9 @@ function canShowConfirmButton(
   return false;
 }
 
-/* ---------- 메인 (무한스크롤) ---------- */
-const PAGE_SIZE = 20;
+/* ---------- 메인 (무한스크롤: 첫 20개, 이후 10개) ---------- */
+const PAGE_SIZE_FIRST = 10;
+const PAGE_SIZE_NEXT = 10;
 
 const PurchasesPage: React.FC = () => {
   const [filter, setFilter] = useState<TriFilterValue>("all");
@@ -237,9 +236,12 @@ const PurchasesPage: React.FC = () => {
   const [hasMore, setHasMore] = useState(true);
   const [initialLoaded, setInitialLoaded] = useState(false);
 
+  // ✅ 페이지별 사이즈 분기
+  const pageSize = page === 0 ? PAGE_SIZE_FIRST : PAGE_SIZE_NEXT;
+
   const { data, loading, error } = usePurchases({
     page,
-    size: PAGE_SIZE,
+    size: pageSize,
     sort: "end",
   });
 
@@ -255,13 +257,25 @@ const PurchasesPage: React.FC = () => {
       }
     }
     setItems(next);
-    setHasMore(Array.isArray(data) && data.length === PAGE_SIZE);
+    // ✅ pageSize 기준으로 hasMore 결정
+    setHasMore(Array.isArray(data) && data.length === pageSize);
     if (!initialLoaded) setInitialLoaded(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const isFetchingNext = loading && initialLoaded;
+
+  // ▼▼ 지연 바닥 로더 표시 (300ms 이후에만) ▼▼
+  const [showBottomLoader, setShowBottomLoader] = useState(false);
+  useEffect(() => {
+    if (!isFetchingNext) {
+      setShowBottomLoader(false);
+      return;
+    }
+    const t = setTimeout(() => setShowBottomLoader(true), 300);
+    return () => clearTimeout(t);
+  }, [isFetchingNext]);
 
   useEffect(() => {
     if (!hasMore || isFetchingNext) return;
@@ -275,7 +289,6 @@ const PurchasesPage: React.FC = () => {
     return () => obs.disconnect();
   }, [hasMore, isFetchingNext]);
 
-  // 디버그 로그
   useEffect(() => {
     const probe = items.slice(0, 3);
     probe.forEach((it, i) => {
@@ -373,11 +386,10 @@ const PurchasesPage: React.FC = () => {
     if (isSettledOrDone(it, settledMap)) return "거래 완료";
     if (isEndedByTime(it)) return "종료";
     return "진행 중";
-    // 서버가 주는 '상태 정보 없음' 같은 값은 숨기고 기본값으로 대체
   };
 
   const renderList = (list: TradeItem[]) => (
-    <ul className="divide-y divide-neutral-200">
+    <ul className="divide-y divide-neutral-200 rounded-lg bg-white">
       {list.map((it) => {
         const orderId = (it as any).orderId ?? it.id;
         const showConfirm = canShowConfirmButton(it, settledMap);
@@ -396,13 +408,29 @@ const PurchasesPage: React.FC = () => {
     </ul>
   );
 
+  // ▼▼ 로딩 스켈레톤 (TradeRowCompact 높이에 맞춤) ▼▼
+  const RowSkeleton: React.FC = () => (
+    <li className="animate-pulse px-4 py-3">
+      <div className="flex items-center gap-3">
+        <div className="h-14 w-14 rounded-lg bg-neutral-200" />
+        <div className="min-w-0 flex-1">
+          <div className="mb-2 h-3 w-3/4 rounded bg-neutral-200" />
+          <div className="h-3 w-2/5 rounded bg-neutral-200" />
+        </div>
+        <div className="h-4 w-4 rounded bg-neutral-200" />
+      </div>
+    </li>
+  );
+
   const renderEmptyState = () => (
-    <div className="flex min-h-[300px] flex-col items-center justify-center gap-4 rounded-xl border border-dashed border-neutral-300 bg-neutral-50 p-10 text-center">
-      <p className="text-sm text-neutral-500">구매 내역이 없습니다.</p>
+    <div className="flex min-h-[220px] flex-col items-center justify-center gap-4 rounded-xl border border-dashed border-neutral-300 bg-neutral-50 p-6 text-center sm:min-h-[300px] sm:p-10">
+      <p className="text-sm text-neutral-500 sm:text-[15px]">
+        구매 내역이 없습니다.
+      </p>
       <button
         type="button"
         onClick={() => (window.location.href = "/auctions")}
-        className="bg-purple hover:bg-deep-purple rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-md"
+        className="bg-purple hover:bg-deep-purple rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-md sm:text-[15px]"
       >
         지금 구경하러 가기
       </button>
@@ -410,14 +438,14 @@ const PurchasesPage: React.FC = () => {
   );
 
   return (
-    <div className="min-h-[800px] p-4">
-      <h2 className="mb-3 text-lg font-semibold">구매 내역</h2>
+    <div className="mx-auto w-full max-w-[1000px] px-4 py-6 sm:px-6 sm:py-8 md:py-10 lg:px-8">
+      <h2 className="mb-3 text-xl font-semibold sm:text-2xl">구매 내역</h2>
 
       <StatusTriFilter
         value={filter}
         onChange={setFilter}
         counts={counts}
-        className="mb-3"
+        className="mb-3 sm:mb-4"
       />
 
       {!initialLoaded && loading ? (
@@ -435,10 +463,16 @@ const PurchasesPage: React.FC = () => {
         <>
           {renderList(sorted)}
           <div ref={sentinelRef} className="h-[1px]" />
-          {isFetchingNext && (
-            <div className="py-4 text-center text-sm text-neutral-500">
-              추가 로딩 중…
-            </div>
+          {/* ▼▼ 지연 스켈레톤 로더 (바닥) ▼▼ */}
+          {showBottomLoader && (
+            <ul
+              className="divide-y divide-neutral-200 rounded-lg bg-white"
+              aria-busy="true"
+            >
+              <RowSkeleton />
+              <RowSkeleton />
+              <RowSkeleton />
+            </ul>
           )}
           {!hasMore && initialLoaded && (
             <div className="py-4 text-center text-xs text-neutral-400">

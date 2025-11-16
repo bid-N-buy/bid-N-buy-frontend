@@ -1,11 +1,16 @@
+// src/containers/profile/ProfileDetailsContainer.tsx
 import React from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import ProfileDetails from "../components/profile/ProfileDetails";
+import ProfileDetails, {
+  type Item as PreviewItemUI,
+} from "../components/profile/ProfileDetails";
 import { useProfile } from "../hooks/useProfile";
 import { useSalePreview } from "../hooks/useSalePreview";
+import { useOtherUserSales } from "../hooks/useOtherUserSales";
 import api from "../../../shared/api/axiosInstance";
 import { useAuthStore } from "../../auth/store/authStore";
 
+/* ---------------- Types ---------------- */
 type OtherProfileRes = {
   nickname: string;
   temperature: number | null;
@@ -14,14 +19,43 @@ type OtherProfileRes = {
   salesCompletedCount: number;
 };
 
+type AnyPreview = {
+  id?: number | string;
+  auctionId?: number | string;
+  title?: string;
+  itemImageUrl?: string | null;
+  mainImageUrl?: string | null;
+  thumbnailUrl?: string | null;
+  imageUrl?: string | null;
+  thumbnail?: string | null; // 내 훅에서 올 수 있는 이름
+  productImageUrl?: string | null; // 혹시 모를 다른 이름
+};
+
+/* ---------------- Image Mapper ---------------- */
+/** 백엔드/훅별 제각각인 이미지 필드를 UI 컴포넌트가 기대하는 { thumbnail }로 통일 */
+function toUIItem(src: AnyPreview): PreviewItemUI {
+  return {
+    id: (src.auctionId ?? src.id) as number | string,
+    title: src.title ?? "",
+    thumbnail:
+      src.thumbnail ?? // useSalePreview 에서 오는 경우
+      src.productImageUrl ?? // 여분 명칭
+      src.itemImageUrl ?? // 타인 판매완료 API
+      src.mainImageUrl ?? // 타인 판매중 API
+      src.thumbnailUrl ?? // 기타
+      src.imageUrl ?? // 기타
+      undefined,
+  };
+}
+
 const ProfileDetailsContainer: React.FC = () => {
   const nav = useNavigate();
-  const myUserId = useAuthStore((s) => s.userId); // 로그인 유저 id
+  const myUserId = useAuthStore((s) => s.userId);
 
   const { targetUserId } = useParams<{ targetUserId?: string }>();
   const isOtherUserPage = Boolean(targetUserId);
 
-  // ✅ 내 id로 /users/:id 접근하면 /profile 로 보내 혼동 방지
+  /* 내 ID로 /users/:id 접근하면 /profile 로 리다이렉트 */
   React.useEffect(() => {
     if (!targetUserId || myUserId == null) return;
     if (String(myUserId) === String(targetUserId)) {
@@ -29,7 +63,7 @@ const ProfileDetailsContainer: React.FC = () => {
     }
   }, [targetUserId, myUserId, nav]);
 
-  // 1) 내 프로필 데이터 (/mypage) - 내 페이지에서만 호출
+  /* 1) 내 프로필 */
   const {
     data: myProfile,
     loading: myProfileLoading,
@@ -39,7 +73,7 @@ const ProfileDetailsContainer: React.FC = () => {
     enabled: !isOtherUserPage,
   });
 
-  // 2) 다른 유저 프로필 데이터 (/auth/other/:id) - 남의 페이지에서만 호출
+  /* 2) 타인 프로필 */
   const [otherProfile, setOtherProfile] =
     React.useState<OtherProfileRes | null>(null);
   const [otherLoading, setOtherLoading] = React.useState(false);
@@ -49,25 +83,19 @@ const ProfileDetailsContainer: React.FC = () => {
     if (!isOtherUserPage || !targetUserId) return;
 
     let alive = true;
-
     (async () => {
       try {
         setOtherLoading(true);
         setOtherError(null);
-
         const { data } = await api.get<OtherProfileRes>(
           `/auth/other/${targetUserId}`,
           {
-            withCredentials: true,
+            withCredentials: false,
           }
         );
-
-        if (!alive) return;
-        setOtherProfile(data ?? null);
+        if (alive) setOtherProfile(data ?? null);
       } catch (err) {
-        if (!alive) return;
-        console.error("[PDC] otherProfile error =", err);
-        setOtherError(err);
+        if (alive) setOtherError(err);
       } finally {
         if (alive) setOtherLoading(false);
       }
@@ -78,11 +106,11 @@ const ProfileDetailsContainer: React.FC = () => {
     };
   }, [isOtherUserPage, targetUserId]);
 
-  // 3) 판매 프리뷰
+  /* 3) 판매 프리뷰 */
 
-  // (A-1) 내 판매완료 프리뷰 (그대로)
+  // 3-A) 내 판매완료
   const {
-    items: completedPreviewMine,
+    items: completedPreviewMineRaw,
     count: completedCountMine,
     loading: completedLoading,
     error: completedError,
@@ -90,60 +118,44 @@ const ProfileDetailsContainer: React.FC = () => {
     page: 0,
     size: 3,
     sort: "end",
-    enabled: !isOtherUserPage, // 내 페이지에서만
-    ownerUserId: undefined, // <= 중요: undefined 유지해야 /mypage/sales 탐
+    enabled: !isOtherUserPage,
+    ownerUserId: undefined,
     ownerNickname: myProfile?.nickname,
   });
 
-  // ✅ (A-2) 타인 '판매완료' 프리뷰 — /auctions 재활용 후 필터링
+  // 3-B) 내 진행중
+  const ongoingEnabledMine = !isOtherUserPage && Boolean(myProfile?.nickname);
   const {
-    items: completedPreviewOther,
-    count: completedCountOther,
-    loading: completedOtherLoading,
-    error: completedOtherError,
-  } = useSalePreview("COMPLETED", {
-    page: 0,
-    size: 3,
-    sort: "end",
-    enabled: isOtherUserPage && Boolean(targetUserId),
-    ownerUserId: targetUserId, // 핵심
-    ownerNickname: otherProfile?.nickname, // 선택
-  });
-
-  // (B) 진행중 프리뷰 (내/타인 공통)
-  const ongoingEnabled = isOtherUserPage
-    ? Boolean(otherProfile?.nickname)
-    : Boolean(myProfile?.nickname);
-
-  const {
-    items: ongoingPreviewRaw,
-    count: ongoingCountRaw,
-    loading: ongoingLoading,
-    error: ongoingError,
+    items: ongoingPreviewMineRaw,
+    count: ongoingCountMine,
+    loading: ongoingLoadingMine,
+    error: ongoingErrorMine,
   } = useSalePreview("ONGOING", {
     page: 0,
     size: 3,
     sort: "end",
-    enabled: ongoingEnabled,
-    ...(isOtherUserPage
-      ? targetUserId != null
-        ? { ownerUserId: targetUserId }
-        : {}
-      : myUserId != null
-        ? { ownerUserId: myUserId }
-        : {}),
-    ownerNickname: isOtherUserPage
-      ? otherProfile?.nickname
-      : myProfile?.nickname,
+    enabled: ongoingEnabledMine,
+    ...(myUserId != null ? { ownerUserId: myUserId } : {}),
+    ownerNickname: myProfile?.nickname,
   });
 
-  // 4) 로딩/에러 상태
+  // 3-C) 타인 판매완료/판매중 (전용 API)
+  const {
+    data: otherSalesData, // { completedSalesCount, completedSales, onSaleCount, onSale }
+    loading: otherSalesLoading,
+    error: otherSalesError,
+  } = useOtherUserSales({
+    targetUserId,
+    enabled: isOtherUserPage,
+  });
+
+  /* 4) 로딩 / 에러 */
   const stillPreparingOther =
     isOtherUserPage && (!otherProfile || otherLoading);
 
   const isLoading = isOtherUserPage
-    ? stillPreparingOther || ongoingLoading || completedOtherLoading
-    : myProfileLoading || completedLoading || ongoingLoading;
+    ? stillPreparingOther || otherSalesLoading
+    : myProfileLoading || completedLoading || ongoingLoadingMine;
 
   if (isLoading) {
     return (
@@ -154,8 +166,8 @@ const ProfileDetailsContainer: React.FC = () => {
   }
 
   const loadError = isOtherUserPage
-    ? otherError || ongoingError || completedOtherError
-    : myProfileError || completedError || ongoingError;
+    ? otherError || otherSalesError
+    : myProfileError || completedError || ongoingErrorMine;
 
   if (loadError) {
     return (
@@ -165,21 +177,16 @@ const ProfileDetailsContainer: React.FC = () => {
     );
   }
 
-  // 5) 최종 뷰 데이터 조립
-
-  // 닉네임 / 이메일
+  /* 5) 최종 데이터 조립 */
   const nickname = isOtherUserPage
     ? otherProfile?.nickname || "사용자"
     : myProfile?.nickname || "NickName";
-
   const email = isOtherUserPage ? undefined : myProfile?.email || "";
 
-  // 아바타
   const avatarUrl = isOtherUserPage
     ? otherProfile?.profileImageUrl || undefined
     : myProfile?.avatarUrl || (myProfile as any)?.profileImageUrl || undefined;
 
-  // 매너온도
   const temperature = isOtherUserPage
     ? typeof otherProfile?.temperature === "number" &&
       Number.isFinite(otherProfile.temperature)
@@ -190,51 +197,58 @@ const ProfileDetailsContainer: React.FC = () => {
       ? myProfile.temperature
       : null;
 
-  // 판매완료 카운트 (타인은 completedPreviewOther 기반)
+  // 판매완료 카운트
   const soldCount = isOtherUserPage
-    ? (completedCountOther ?? completedPreviewOther?.length ?? 0)
-    : (completedCountMine ?? completedPreviewMine?.length ?? 0);
+    ? (otherSalesData?.completedSalesCount ?? 0)
+    : (completedCountMine ?? completedPreviewMineRaw?.length ?? 0);
 
   // 판매중 카운트
-  const effectiveOngoingCount =
-    ongoingCountRaw ?? (ongoingPreviewRaw ? ongoingPreviewRaw.length : 0);
-
   const sellingCount = isOtherUserPage
-    ? Math.max(
-        0,
-        (otherProfile?.totalProductsCount ?? 0) -
-          (otherProfile?.salesCompletedCount ?? 0)
-      )
-    : effectiveOngoingCount;
+    ? (otherSalesData?.onSaleCount ?? otherSalesData?.onSale?.length ?? 0)
+    : (ongoingCountMine ??
+      (ongoingPreviewMineRaw ? ongoingPreviewMineRaw.length : 0));
 
-  // 미리보기 아이템들
-  const soldPreview = isOtherUserPage
-    ? (completedPreviewOther ?? [])
-    : (completedPreviewMine ?? []);
+  // 프리뷰 리스트(이미지 필드 통일)
+  const soldPreview: PreviewItemUI[] = isOtherUserPage
+    ? (otherSalesData?.completedSales ?? []).slice(0, 3).map(toUIItem)
+    : (completedPreviewMineRaw ?? []).map(toUIItem);
 
-  const sellingPreview = ongoingPreviewRaw ?? [];
+  const sellingPreview: PreviewItemUI[] = isOtherUserPage
+    ? (otherSalesData?.onSale ?? []).slice(0, 3).map(toUIItem)
+    : (ongoingPreviewMineRaw ?? []).map(toUIItem);
 
-  // 6) 핸들러
+  /* 6) 핸들러 */
   const handleClickSoldList = () => {
-    if (isOtherUserPage) nav(`/users/${targetUserId}/sales?tab=completed`);
-    else nav("/mypage/sales?tab=completed");
+    if (isOtherUserPage) {
+      // 타인 프로필 → 경매 목록으로
+      // 절대 URL로 나가고 싶다면 window.location.assign("http://localhost:5173/auctions");
+      nav("/auctions?includeEnded=1");
+      return;
+    }
+    // 내 프로필
+    nav("/mypage/sales?tab=completed");
   };
 
   const handleClickSellingList = () => {
-    if (isOtherUserPage) nav(`/users/${targetUserId}/sales?tab=ongoing`);
-    else nav(`/mypage/sales?tab=ongoing`);
+    if (isOtherUserPage) {
+      // 타인 프로필 → 경매 목록으로
+      // 절대 URL로 나가고 싶다면 window.location.assign("http://localhost:5173/auctions");
+      nav("/auctions");
+      return;
+    }
+    // 내 프로필
+    nav("/mypage/sales?tab=ongoing");
   };
 
   const handleClickItem = (id: string | number) => {
     nav(`/auctions/${id}`);
   };
 
-  // ✅ 새 핸들러: 경매 시작하기 버튼 눌렀을 때 이동
   const handleClickStartAuction = () => {
     nav("/auctions/new");
   };
 
-  // 7) 렌더
+  /* 7) Render */
   return (
     <ProfileDetails
       avatarUrl={avatarUrl}
@@ -249,6 +263,8 @@ const ProfileDetailsContainer: React.FC = () => {
       onClickSelling={handleClickSellingList}
       onItemClick={handleClickItem}
       onClickStartAuction={handleClickStartAuction}
+      // 내 페이지에는 목업 허용, 타인 페이지는 실데이터만
+      useMockOnEmpty={!isOtherUserPage}
     />
   );
 };

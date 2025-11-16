@@ -29,7 +29,7 @@ const SideBar: React.FC = () => {
   return (
     <>
       {/* ===================== 모바일(<=md): 3열 꽉 채우기, 스크롤/최소폭 제거 ===================== */}
-      <div className="w-full md:hidden ">
+      <div className="w-full md:hidden">
         <div className="grid w-full grid-cols-3 gap-x-3 gap-y-3">
           {/* 1행: 제목 */}
           <h3 className="col-span-1 text-center text-sm font-extrabold">
@@ -72,7 +72,7 @@ const SideBar: React.FC = () => {
       </div>
 
       {/* ===================== PC(>=md): 기존 사이드바 유지 ===================== */}
-      <div className="mb-[150px] hidden h-[514px] w-[225px] flex-col text-neutral-900 md:flex">
+      <div className="mb-[200px] hidden h-[514px] w-[225px] flex-col text-neutral-900 md:flex">
         <NavLink to="/mypage">
           {({ isActive }) => (
             <h1 className={isActive ? "mb-8 font-extrabold" : "mb-8 font-bold"}>

@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import axios, { AxiosError } from "axios";
 import { useNavigate } from "react-router-dom";
-import Toast from "../../../../shared/components/Toast"; // ✅ 토스트 경로 확인
+import Toast from "../../../../shared/components/Toast";
 
 const BASE = import.meta.env.VITE_BACKEND_ADDRESS ?? "http://localhost:8080";
 
@@ -130,10 +130,7 @@ const SignUpForm: React.FC = () => {
       });
       setIsVerified(true);
       setLeftSec(0);
-      setToast({
-        message: "이메일 인증이 완료되었습니다.",
-        type: "success",
-      });
+      setToast({ message: "이메일 인증이 완료되었습니다.", type: "success" });
     } catch (e) {
       const err = e as AxiosError<ApiErr>;
       setIsVerified(false);
@@ -180,7 +177,6 @@ const SignUpForm: React.FC = () => {
       });
 
       if (data?.email) {
-        // ✅ 성공 토스트 → 닫히면 이동
         const go = () => navigate("/login?signedUp=1", { replace: true });
         setToast({
           message: "회원가입이 완료되었습니다.",
@@ -204,6 +200,14 @@ const SignUpForm: React.FC = () => {
     }
   };
 
+  // ✅ 공통 클래스 (반응형 높이/폰트)
+  const inputCls =
+    "h-12 sm:h-[52px] md:h-[56px] w-full rounded-md border px-3 sm:px-3.5 outline-none " +
+    "focus:border-2 hover:border-purple focus:border-purple text-[14px] sm:text-[15px]";
+  const btnPrimaryCls =
+    "h-12 sm:h-[52px] md:h-[56px] w-full rounded-md text-white transition " +
+    "bg-purple hover:bg-deep-purple disabled:opacity-60 text-[15px] sm:text-[16px] font-semibold";
+
   return (
     <>
       {/* ✅ 토스트 출력 */}
@@ -215,174 +219,179 @@ const SignUpForm: React.FC = () => {
           onClose={() => {
             const cb = toast.onClose;
             setToast(null);
-            cb?.(); // 성공 시 로그인 페이지로 이동
+            cb?.();
           }}
         />
       )}
 
-      <form onSubmit={handleSubmit} className="m-auto w-[420px]">
-        {/* 이메일 */}
-        <div className="mb-[24px]">
-          <div className="mb-[8px] flex items-center justify-between">
-            <h5 className="text-h5 font-bold">이메일</h5>
-            {isVerified ? (
-              <span className="text-[13px] text-green-600">
-                이메일 인증이 완료되었습니다.
-              </span>
-            ) : (
-              !isEmailFormat(email) &&
-              email && (
-                <span className="text-[13px] text-red-500">
-                  형식이 올바르지 않습니다.
+      {/* ✅ 컨테이너: 뷰포트별 최대폭 조절 */}
+      <div className="mx-auto w-full max-w-[360px] px-4 py-8 sm:max-w-[420px] sm:px-0 sm:py-10 md:max-w-[480px] md:py-12 lg:max-w-[560px]">
+        <form onSubmit={handleSubmit} className="w-full space-y-6">
+          {/* 이메일 */}
+          <div>
+            <div className="mb-2 flex items-center justify-between">
+              <h5 className="text-h5 font-bold">이메일</h5>
+              {isVerified ? (
+                <span className="text-[13px] text-green-600">
+                  이메일 인증이 완료되었습니다.
                 </span>
-              )
-            )}
+              ) : (
+                !isEmailFormat(email) &&
+                email && (
+                  <span className="text-[13px] text-red-500">
+                    형식이 올바르지 않습니다.
+                  </span>
+                )
+              )}
+            </div>
+
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={isCodeSent && !isVerified}
+              className={`${inputCls} mb-3`}
+              placeholder="이메일을 입력해 주세요"
+              autoComplete="email"
+            />
+
+            {/* 인증번호 라벨 + 상태 */}
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-[14px] font-medium text-gray-700">
+                인증번호
+              </span>
+              {!isVerified && isCodeSent && leftSec > 0 && (
+                <span className="text-purple text-[13px]">
+                  인증번호를 입력해 주세요 (유효시간 {mm}:{ss})
+                </span>
+              )}
+              {!isVerified && isCodeSent && leftSec <= 0 && (
+                <span className="text-[13px] text-red-500">
+                  인증번호가 만료되었습니다. 재전송 해주세요
+                </span>
+              )}
+              {isVerified && (
+                <span className="text-[13px] text-green-600">인증 완료</span>
+              )}
+            </div>
+
+            {/* 모바일=세로 스택, sm 이상=3열 그리드 */}
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_auto_auto] sm:gap-2.5">
+              <input
+                type="text"
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                className={inputCls}
+                placeholder="인증번호 입력"
+                inputMode="numeric"
+                disabled={!isCodeSent || isVerified}
+                autoComplete="one-time-code"
+              />
+              <button
+                type="button"
+                onClick={sendCode}
+                disabled={
+                  isVerified ||
+                  loadingSend ||
+                  (isCodeSent && leftSec > 0) ||
+                  !isEmailFormat(email)
+                }
+                className={[
+                  "h-12 rounded-md border px-4 text-[14px] disabled:opacity-60 sm:h-[52px] sm:text-[15px] md:h-[56px]",
+                  isVerified
+                    ? "border-g300 text-g300 bg-g500/20 cursor-not-allowed"
+                    : "border-purple text-purple hover:bg-light-purple/40",
+                ].join(" ")}
+              >
+                {isVerified
+                  ? "전송됨"
+                  : isCodeSent && leftSec > 0
+                    ? `재전송 ${mm}:${ss}`
+                    : "코드 전송"}
+              </button>
+              <button
+                type="button"
+                onClick={verifyCode}
+                disabled={loadingVerify || isVerified || !isCodeSent}
+                className={`h-12 rounded-md px-4 text-[14px] font-medium text-white disabled:opacity-60 sm:h-[52px] sm:text-[15px] md:h-[56px] ${
+                  isVerified ? "bg-g400" : "bg-purple hover:opacity-90"
+                }`}
+              >
+                {isVerified ? "완료" : "인증"}
+              </button>
+            </div>
           </div>
 
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            disabled={isCodeSent && !isVerified}
-            className="focus:border-purple mb-[12px] h-[50px] w-[420px] rounded-md border px-3 outline-none focus:border-2"
-            placeholder="이메일을 입력해 주세요"
-            autoComplete="email"
-          />
-
-          {/* 인증번호 라벨 + 상태 */}
-          <div className="mb-[8px] flex items-center justify-between">
-            <span className="text-[14px] font-medium text-gray-700">
-              인증번호
-            </span>
-            {!isVerified && isCodeSent && leftSec > 0 && (
-              <span className="text-purple text-[13px]">
-                인증번호를 입력해 주세요 (유효시간 {mm}:{ss})
-              </span>
-            )}
-            {!isVerified && isCodeSent && leftSec <= 0 && (
-              <span className="text-[13px] text-red-500">
-                인증번호가 만료되었습니다. 재전송 해주세요
-              </span>
-            )}
-            {isVerified && (
-              <span className="text-[13px] text-green-600">인증 완료</span>
-            )}
+          {/* 비밀번호 */}
+          <div>
+            <div className="mb-2 flex items-center justify-between">
+              <h5 className="text-h5 font-bold">비밀번호</h5>
+              {password && password.length < 8 && (
+                <span className="text-[13px] text-red-500">
+                  8자 이상 입력하세요
+                </span>
+              )}
+            </div>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className={inputCls}
+              placeholder="비밀번호를 입력해 주세요"
+              autoComplete="new-password"
+            />
           </div>
 
-          <div className="flex gap-[10px]">
+          {/* 비밀번호 확인 */}
+          <div>
+            <div className="mb-2 flex items-center justify-between">
+              <h5 className="text-h5 font-bold">비밀번호 확인</h5>
+              {password2 && password !== password2 && (
+                <span className="text-[13px] text-red-500">
+                  비밀번호가 일치하지 않습니다
+                </span>
+              )}
+            </div>
+            <input
+              type="password"
+              value={password2}
+              onChange={(e) => setPassword2(e.target.value)}
+              className={inputCls}
+              placeholder="비밀번호를 다시 입력해 주세요"
+              autoComplete="new-password"
+            />
+          </div>
+
+          {/* 닉네임 */}
+          <div>
+            <div className="mb-2 flex items-center justify-between">
+              <h5 className="text-h5 font-bold">닉네임</h5>
+              {nickname.trim().length === 0 && (
+                <span className="text-[13px] text-red-500">
+                  닉네임을 입력해 주세요
+                </span>
+              )}
+            </div>
             <input
               type="text"
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              className="focus:border-purple h-[50px] w-[190px] rounded-md border px-3 outline-none focus:border-2"
-              placeholder="인증번호 입력"
-              inputMode="numeric"
-              disabled={!isCodeSent || isVerified}
-              autoComplete="one-time-code"
+              value={nickname}
+              onChange={(e) => setNickname(e.target.value)}
+              className={inputCls}
+              placeholder="닉네임을 입력해 주세요"
+              autoComplete="nickname"
             />
-            <button
-              type="button"
-              onClick={sendCode}
-              disabled={
-                isVerified ||
-                loadingSend ||
-                (isCodeSent && leftSec > 0) ||
-                !isEmailFormat(email)
-              }
-              className={[
-                "h-[50px] w-[120px] rounded-md border disabled:opacity-60",
-                isVerified
-                  ? "border-g300 text-g300 bg-g500/20 cursor-not-allowed"
-                  : "border-purple text-purple hover:bg-light-purple/40",
-              ].join(" ")}
-            >
-              {isVerified
-                ? "전송됨"
-                : isCodeSent && leftSec > 0
-                  ? `재전송 ${mm}:${ss}`
-                  : "코드 전송"}
-            </button>
-            <button
-              type="button"
-              onClick={verifyCode}
-              disabled={loadingVerify || isVerified || !isCodeSent}
-              className={`h-[50px] w-[90px] rounded-md font-medium text-white disabled:opacity-60 ${
-                isVerified ? "bg-g400" : "bg-purple hover:opacity-90"
-              }`}
-            >
-              {isVerified ? "완료" : "인증"}
-            </button>
           </div>
-        </div>
 
-        {/* 비밀번호 */}
-        <div className="mb-[24px]">
-          <div className="mb-[8px] flex items-center justify-between">
-            <h5 className="text-h5 font-bold">비밀번호</h5>
-            {password && password.length < 8 && (
-              <span className="text-[13px] text-red-500">
-                8자 이상 입력하세요
-              </span>
-            )}
-          </div>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="focus:border-purple h-[50px] w-[420px] rounded-md border px-3 outline-none focus:border-2"
-            placeholder="비밀번호를 입력해 주세요"
-            autoComplete="new-password"
-          />
-        </div>
-
-        {/* 비밀번호 확인 */}
-        <div className="mb-[24px]">
-          <div className="mb-[8px] flex items-center justify-between">
-            <h5 className="text-h5 font-bold">비밀번호 확인</h5>
-            {password2 && password !== password2 && (
-              <span className="text-[13px] text-red-500">
-                비밀번호가 일치하지 않습니다
-              </span>
-            )}
-          </div>
-          <input
-            type="password"
-            value={password2}
-            onChange={(e) => setPassword2(e.target.value)}
-            className="focus:border-purple h-[50px] w-[420px] rounded-md border px-3 outline-none focus:border-2"
-            placeholder="비밀번호를 다시 입력해 주세요"
-            autoComplete="new-password"
-          />
-        </div>
-
-        {/* 닉네임 */}
-        <div className="mb-[24px]">
-          <div className="mb-[8px] flex items-center justify-between">
-            <h5 className="text-h5 font-bold">닉네임</h5>
-            {nickname.trim().length === 0 && (
-              <span className="text-[13px] text-red-500">
-                닉네임을 입력해 주세요
-              </span>
-            )}
-          </div>
-          <input
-            type="text"
-            value={nickname}
-            onChange={(e) => setNickname(e.target.value)}
-            className="focus:border-purple h-[50px] w-[420px] rounded-md border px-3 outline-none focus:border-2"
-            placeholder="닉네임을 입력해 주세요"
-            autoComplete="nickname"
-          />
-        </div>
-
-        <button
-          type="submit"
-          disabled={loadingSubmit}
-          className="bg-purple hover:bg-deep-purple h-[50px] w-[420px] rounded-md text-white disabled:opacity-60"
-        >
-          {loadingSubmit ? "가입 중..." : "회원가입 하기"}
-        </button>
-      </form>
+          {/* 제출 버튼 */}
+          <button
+            type="submit"
+            disabled={loadingSubmit}
+            className={btnPrimaryCls}
+          >
+            {loadingSubmit ? "가입 중..." : "회원가입 하기"}
+          </button>
+        </form>
+      </div>
     </>
   );
 };
