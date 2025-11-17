@@ -4,6 +4,11 @@ import Avatar from "../../../shared/components/Avatar";
 import { formatListDate } from "../../../shared/utils/datetime";
 
 const ChatList = ({ chatList, onSelectRoom }: ChatListProps) => {
+  const sortedChatRooms = chatList.slice().sort((a, b) => {
+    const dateA = new Date(a.lastMessageTime).getTime();
+    const dateB = new Date(b.lastMessageTime).getTime();
+    return dateB - dateA;
+  });
   return (
     <ul className="h-full">
       {chatList.length === 0 && (
@@ -11,7 +16,7 @@ const ChatList = ({ chatList, onSelectRoom }: ChatListProps) => {
           개설된 채팅방이 없습니다.
         </div>
       )}
-      {chatList.map((chat) => (
+      {sortedChatRooms.map((chat) => (
         <li
           key={chat.chatroomId}
           onClick={() => onSelectRoom(chat.chatroomId!)}

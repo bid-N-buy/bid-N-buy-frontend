@@ -26,7 +26,6 @@ export const useChatBadge = () => {
             headers: { Authorization: `Bearer ${token}` },
           })
           .then((res) => {
-            // room 부분 수정했으므로 배포 후 다시 볼 것
             res.data.forEach((chatRoom) => {
               client.subscribe(
                 `/topic/chat/room/${chatRoom.chatroomId}`,
