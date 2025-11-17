@@ -16,15 +16,18 @@ const Footer = () => {
                 href="https://www.notion.so/bid-n-buy/Bid-Buy-2946456150d3809f8660eb6895052e60?source=copy_link"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:text-white"
+                className="transition-colors hover:text-white"
               >
                 이용약관 및 개인정보처리방침
               </a>
             </div>
 
             <div>
-              <Link to="/mypage/inquiries" className="hover:text-white">
-                문의하기
+              <Link
+                to="/admin"
+                className="transition-colors hover:text-white"
+              >
+                관리자
               </Link>
             </div>
           </div>
