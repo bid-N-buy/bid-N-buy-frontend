@@ -166,11 +166,13 @@ const ChatProductInfo = ({
           {auctionTitle!.substring(0, 18)}
           {auctionTitle!.length > 18 ? "..." : null}
         </p>
-        <p className="text-g300">{currentPrice && currentPrice!.toString()}</p>
+        <p className="text-g300">
+          {currentPrice ? currentPrice!.toString() : "삭제된 품목입니다."}
+        </p>
       </div>
       {isLocked ? null : (
         <div className="flex w-[23%] min-w-[15%] flex-col gap-2 md:w-[15%]">
-          {userId === sellerId && (
+          {userId === sellerId ? (
             <button
               type="button"
               onClick={() =>
@@ -185,8 +187,7 @@ const ChatProductInfo = ({
             >
               결제 요청
             </button>
-          )}
-          {userId !== sellerId && (
+          ) : (
             <>
               <button
                 type="button"
