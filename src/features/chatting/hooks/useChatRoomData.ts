@@ -47,12 +47,12 @@ export const useChatRoomData = (chatroomId: number) => {
         if (isCounterpartWithdrawn) {
           const withdrawnRoomData: ChatRoomProps = {
             chatroomId: chatroomId,
-            sellerId: null,
+            sellerId: listItem.sellerId,
             chatroomInfo: {
               auctionId: listItem.auctionId,
               auctionImageUrl: listItem.auctionImageUrl,
               auctionTitle: listItem.auctionTitle,
-              counterpartId: null,
+              counterpartId: listItem.sellerId,
               counterpartNickname: listItem.counterpartNickname,
               counterpartProfileImageUrl: null,
             },
@@ -66,6 +66,7 @@ export const useChatRoomData = (chatroomId: number) => {
           };
           setChatRoomData(withdrawnRoomData);
           setIsLoading(false);
+          console.log(withdrawnRoomData);
           return;
         }
 
@@ -90,6 +91,7 @@ export const useChatRoomData = (chatroomId: number) => {
           };
           setChatRoomData(dummyData);
           setIsLoading(false);
+          console.log(dummyData);
           return;
         }
 

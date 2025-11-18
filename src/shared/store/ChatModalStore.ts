@@ -93,8 +93,19 @@ export const useChatModalStore = create<ChatModalStoreProps>((set, get) => ({
       const response = await api.get("/chatrooms/list", {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
-
-      get().setChatList(response.data);
+      const rawList: ChatListItemProps[] = response.data;
+      console.log(rawList);
+      const standardizedList = rawList.map((item) => {
+        if (item.counterpartNickname === "탈퇴회원") {
+          return {
+            ...item,
+            counterpartId: null,
+            counterpartProfileImageUrl: null,
+          };
+        }
+        return item; // 일반 채팅방은 그대로 반환
+      });
+      get().setChatList(standardizedList);
     } catch (e) {
       console.error("초기 unreadCount 로드 실패:", e);
       set({ error: "초기 unreadCount 로드 실패", loading: false });

@@ -103,11 +103,11 @@ const Header = () => {
   }, [isAuthed, profile?.nickname, setProfile]);
 
   useEffect(() => {
-    if (!isAuthed || !accessToken) {
+    if (!ready || !isAuthed || !accessToken) {
       return;
     }
     fetchChatList(accessToken);
-  }, [isAuthed, accessToken, fetchChatList]);
+  }, [ready, isAuthed, accessToken, fetchChatList]);
 
   // url -> 입력 동기화
   useEffect(() => {

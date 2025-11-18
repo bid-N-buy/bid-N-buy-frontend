@@ -8,7 +8,6 @@ import type { ChatListItemProps } from "../../features/chatting/types/ChatType";
 
 export const useChatBadge = () => {
   const token = useAuthStore((s) => s.accessToken);
-  // const totalUnreadCount = useChatModalStore((s) => s.totalUnreadCount);
   const clientRef = useRef<Client | null>(null);
 
   useEffect(() => {
@@ -18,24 +17,42 @@ export const useChatBadge = () => {
       webSocketFactory: () => new SockJS(import.meta.env.VITE_WEBSOCKET_URL),
       connectHeaders: { "Auth-Token": token },
       reconnectDelay: 5000,
+      onStompError: (frame) => {
+        console.error("❌ STOMP 에러 발생:", frame);
+      },
+      onWebSocketError: (error) => {
+        console.error("❌ WebSocket 연결 에러 발생:", error);
+      },
       onConnect: () => {
-        // 서버에 있는 모든 방 구독
-        // 서버가 어떤 방에 내가 속했는지 push 안 해주므로 구독 목록 구성
-        api
-          .get<ChatListItemProps[]>("/chatrooms/list", {
-            headers: { Authorization: `Bearer ${token}` },
-          })
-          .then((res) => {
-            res.data.forEach((chatRoom) => {
-              client.subscribe(
-                `/topic/chat/room/${chatRoom.chatroomId}`,
-                (msg) => {
-                  const data = JSON.parse(msg.body);
-                  useChatModalStore.getState().handleNewChatMessage(data);
-                }
-              );
+        try {
+          api
+            .get<ChatListItemProps[]>("/chatrooms/list", {
+              headers: { Authorization: `Bearer ${token}` },
+            })
+            .then((res) => {
+              console.log(res.data);
+              res.data
+                .filter(
+                  (chatRoom) =>
+                    chatRoom.counterpartNickname !== "탈퇴회원" &&
+                    !!chatRoom.chatroomId
+                )
+                .forEach((chatRoom) => {
+                  client.subscribe(
+                    `/topic/chat/room/${chatRoom.chatroomId}`,
+                    (msg) => {
+                      const data = JSON.parse(msg.body);
+                      useChatModalStore.getState().handleNewChatMessage(data);
+                    }
+                  );
+                });
+            })
+            .catch((error) => {
+              console.error("채팅방 목록 조회 중 오류 발생:", error);
             });
-          });
+        } catch (e) {
+          console.error("웹소켓 구독 로직 중 심각한 오류 발생:", e);
+        }
       },
     });
 
