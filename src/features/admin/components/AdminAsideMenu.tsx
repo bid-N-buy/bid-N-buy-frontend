@@ -51,8 +51,8 @@ const AdminAsideMenu = () => {
               >
                 <LayoutDashboard color="#8322bf" />
 
-                <span className="invisible absolute start-full top-1/2 ms-4 -translate-y-1/2 rounded-sm bg-gray-900 px-2 py-1.5 text-xs font-medium text-white group-hover:visible">
-                  Main
+                <span className="invisible absolute start-full top-1/2 ms-4 -translate-y-1/2 whitespace-nowrap rounded-sm bg-gray-900 px-2 py-1.5 text-xs font-medium text-white group-hover:visible">
+                  대시보드
                 </span>
               </Link>
             </div>
@@ -117,8 +117,8 @@ const AdminAsideMenu = () => {
                 >
                   <Megaphone />
 
-                  <span className="invisible absolute start-full top-1/2 ms-4 w-18.5 -translate-y-1/2 rounded-sm bg-gray-900 px-2 py-1.5 text-xs font-medium text-white group-hover:visible">
-                    공지/경고 발송
+                  <span className="invisible absolute start-full top-1/2 ms-4 -translate-y-1/2 whitespace-nowrap rounded-sm bg-gray-900 px-2 py-1.5 text-xs font-medium text-white group-hover:visible">
+                    알림 발송
                   </span>
                 </button>
               </li>
@@ -153,8 +153,8 @@ const AdminAsideMenu = () => {
               />
             </svg>
 
-            <span className="invisible absolute start-full top-1/2 ms-4 -translate-y-1/2 rounded-sm bg-gray-900 px-2 py-1.5 text-xs font-medium text-white group-hover:visible">
-              Logout
+            <span className="invisible absolute start-full top-1/2 ms-4 -translate-y-1/2 whitespace-nowrap rounded-sm bg-gray-900 px-2 py-1.5 text-xs font-medium text-white group-hover:visible">
+              로그아웃
             </span>
           </button>
         </div>
