@@ -10,22 +10,17 @@ import { useNavigate } from "react-router-dom";
 import api from "../../../shared/api/axiosInstance";
 import { useAuthStore, type AuthState } from "../../auth/store/authStore";
 import Toast from "../../../shared/components/Toast";
-
 import AddressDetails from "../components/myAddress/AddressDetails";
 import AddressEditorModal from "../components/myAddress/AddressEditorModal";
 import type { AddressDraft } from "../types/address";
-
 import BankAccountDetails from "../components/bankAccount/BankAccountDetails";
 import BankAccountEditorModal from "../components/bankAccount/BankAccountEditorModal";
 import type { BankAccountDraft } from "../types/bankAccount";
 
-// ✅ 기본 아바타 (assets)
+// 기본 아바타
 import defaultAvatar from "../../../assets/avatar.svg";
 
-/* =======================
- * 타입
- * ======================= */
-
+// --- 타입 정의 ---
 type PasswordForm = {
   currentPassword: string;
   newPassword: string;
@@ -46,36 +41,27 @@ export type BankAccount = {
   accountHolder: string;
 };
 
-/* =======================
- * 상수 / 유틸
- * ======================= */
-
+// --- 상수 / 유틸 ---
 const MAX_IMG_MB = 5;
-
-// ✅ 기본 이미지: 로컬 에셋(svg)
 const DEFAULT_AVATAR = defaultAvatar as string;
 
-/** 서버가 상대경로를 줄 때도 안전하게 처리 */
 function makeAbsolute(u?: string | null): string | null {
   if (!u) return null;
-  if (/^https?:\/\//i.test(u)) return u; // 절대경로는 그대로
-  if (u.startsWith("/")) return u; // 루트 상대경로는 그대로 사용
-  return `/${u}`; // 그 외엔 루트에 붙여줌
+  if (/^https?:\/\//i.test(u)) return u;
+  if (u.startsWith("/")) return u;
+  return `/${u}`;
 }
 
-/* =======================
- * 메인 AccountSettings
- * ======================= */
-
+// --- 메인 컴포넌트 ---
 const AccountSettings: React.FC = () => {
   const navigate = useNavigate();
 
   // auth store
   const profile = useAuthStore((s: AuthState) => s.profile);
   const setProfile = useAuthStore((s: AuthState) => s.setProfile);
-  const clearAuth = useAuthStore((s: any) => s.clear);
-  const setUserId = useAuthStore((s: any) => s.setUserId);
-  const userIdFromStore = useAuthStore((s: any) => s.userId);
+  const clearAuth = useAuthStore((s: AuthState) => s.clear);
+  const setUserId = useAuthStore((s: AuthState) => s.setUserId);
+  const userIdFromStore = useAuthStore((s: AuthState) => s.userId);
 
   // 닉네임
   const [nickname, setNickname] = useState(profile?.nickname ?? "NickName");
@@ -94,36 +80,35 @@ const AccountSettings: React.FC = () => {
   const [imgPreview, setImgPreview] = useState<string | null>(null);
   const [imgFile, setImgFile] = useState<File | null>(null);
   const [imgLoading, setImgLoading] = useState(false);
-
-  // ✅ 현재 표시할 이미지 (기본 svg로 시작)
   const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(
     DEFAULT_AVATAR
   );
-  const fileRef = useRef<HTMLInputElement | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   // 탈퇴
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [delPw, setDelPw] = useState("");
   const [delLoading, setDelLoading] = useState(false);
 
-  // 단일 주소 상태
+  // 주소
   const [mainAddress, setMainAddress] = useState<Address | null>(null);
-  const [addrLoading, setAddrLoading] = useState<boolean>(true);
-  const [addrSaving, setAddrSaving] = useState<boolean>(false);
-  const [addrError, setAddrError] = useState<any>(null);
-  const [addrOpen, setAddrOpen] = useState<boolean>(false); // 주소 모달
+  const [addrLoading, setAddrLoading] = useState(true);
+  const [addrSaving, setAddrSaving] = useState(false);
+  const [addrError, setAddrError] = useState<string | null>(null);
+  const [addrOpen, setAddrOpen] = useState(false);
 
-  // 단일 계좌 상태
+  // 계좌
   const [bankAccount, setBankAccount] = useState<BankAccount | null>(null);
-  const [bankLoading, setBankLoading] = useState<boolean>(true);
-  const [bankSaving, setBankSaving] = useState<boolean>(false);
-  const [bankError, setBankError] = useState<any>(null);
-  const [bankOpen, setBankOpen] = useState<boolean>(false); // 계좌 모달
+  const [bankLoading, setBankLoading] = useState(true);
+  const [bankSaving, setBankSaving] = useState(false);
+  const [bankError, setBankError] = useState<string | null>(null);
+  const [bankOpen, setBankOpen] = useState(false);
 
-  // 메시지 (토스트)
+  // 토스트
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
+  // 이메일 마스킹
   const emailMasked = useMemo(() => {
     const e = profile?.email ?? "";
     if (!e) return "";
@@ -134,18 +119,19 @@ const AccountSettings: React.FC = () => {
     return `${safe}@${host}`;
   }, [profile?.email]);
 
-  const toast = (ok: string | null, error: string | null) => {
+  // 토스트 처리
+  const toast = useCallback((ok: string | null, error: string | null) => {
     setMsg(ok);
     setErr(error);
-    window.setTimeout(() => {
+    setTimeout(() => {
       setMsg(null);
       setErr(null);
     }, 2200);
-  };
+  }, []);
 
-  /** userId 복구 */
+  // userId 복구
   const resolveUserId = useCallback(async (): Promise<number | null> => {
-    let uid = useAuthStore.getState().userId;
+    let uid = userIdFromStore;
     if (uid) return uid;
 
     const tryGet = async (path: string) => {
@@ -155,10 +141,11 @@ const AccountSettings: React.FC = () => {
         });
         const cand =
           data?.id ?? data?.userId ?? data?.user_id ?? data?.data?.id ?? null;
-        if (typeof cand === "number") return cand as number;
-        if (typeof cand === "string" && /^\d+$/.test(cand))
-          return parseInt(cand, 10);
-        return null;
+        return typeof cand === "number"
+          ? cand
+          : typeof cand === "string" && /^\d+$/.test(cand)
+            ? parseInt(cand, 10)
+            : null;
       } catch {
         return null;
       }
@@ -171,15 +158,15 @@ const AccountSettings: React.FC = () => {
 
     if (uid) setUserId(uid);
     return uid ?? null;
-  }, [setUserId]);
+  }, [userIdFromStore, setUserId]);
 
-  /** 첫 로드: 프로필/이미지 + 주소 + 계좌 */
-  const onceRef = useRef(false);
+  // 초기 로드
   useEffect(() => {
-    if (onceRef.current) return;
-    onceRef.current = true;
+    let mounted = true;
 
     (async () => {
+      if (!mounted) return;
+
       // 1. 기본 프로필
       try {
         const { data } = await api.get("/mypage");
@@ -199,12 +186,11 @@ const AccountSettings: React.FC = () => {
 
       // 2. userId 확보 후 프로필 이미지
       const uid = (await resolveUserId()) ?? userIdFromStore;
-      if (uid) {
+      if (uid && mounted) {
         try {
           const { data } = await api.get(`/auth/${uid}/profile`);
           const raw = data?.profileImageUrl ?? null;
           const abs = makeAbsolute(raw) ?? DEFAULT_AVATAR;
-          // 캐시 버스트
           const bust = `${abs}${abs.includes("?") ? "&" : "?"}v=${Date.now()}`;
           setCurrentImageUrl(bust);
         } catch {
@@ -224,8 +210,6 @@ const AccountSettings: React.FC = () => {
         });
 
         const data = res.data;
-
-        // 서버 응답 모양 다 커버: 배열 / 단일 / data 래핑
         const rawAddr = Array.isArray(data)
           ? data[0]
           : data?.name
@@ -236,7 +220,7 @@ const AccountSettings: React.FC = () => {
                 ? data.address
                 : null;
 
-        if (rawAddr) {
+        if (rawAddr && mounted) {
           setMainAddress({
             name: rawAddr.name ?? "",
             phoneNumber: rawAddr.phoneNumber ?? "",
@@ -247,12 +231,11 @@ const AccountSettings: React.FC = () => {
         } else {
           setMainAddress(null);
         }
-
         setAddrError(null);
       } catch (e: any) {
-        setAddrError(e?.response ?? e);
+        setAddrError(e?.response?.data?.message ?? "주소 불러오기 실패");
       } finally {
-        setAddrLoading(false);
+        if (mounted) setAddrLoading(false);
       }
 
       // 4. 계좌 불러오기
@@ -263,8 +246,7 @@ const AccountSettings: React.FC = () => {
         });
 
         const payload = data?.bankName ? data : data?.data ? data.data : null;
-
-        if (payload) {
+        if (payload && mounted) {
           setBankAccount({
             bankName: payload.bankName ?? "",
             accountNumber: payload.accountNumber ?? "",
@@ -273,61 +255,53 @@ const AccountSettings: React.FC = () => {
         } else {
           setBankAccount(null);
         }
-
         setBankError(null);
       } catch (e: any) {
-        setBankError(e?.response ?? e);
+        setBankError(e?.response?.data?.message ?? "계좌 불러오기 실패");
       } finally {
-        setBankLoading(false);
+        if (mounted) setBankLoading(false);
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
-  /* ========== 닉네임 변경 ========== */
-  const submitNickname = async () => {
+    return () => {
+      mounted = false;
+    };
+  }, [resolveUserId, userIdFromStore, profile, setProfile, toast]);
+
+  // --- 닉네임 변경 ---
+  const submitNickname = useCallback(async () => {
     const v = nickname.trim();
     if (!v) return toast(null, "닉네임을 입력하세요.");
     if (v.length < 2 || v.length > 20)
       return toast(null, "닉네임은 2~20자로 입력하세요.");
 
-    const uid = (await resolveUserId()) ?? userIdFromStore;
+    const uid = await resolveUserId();
     if (!uid) return toast(null, "userId를 확인할 수 없습니다.");
 
     try {
       setNickLoading(true);
-      const { data } = await api.put(`/auth/${uid}/nickname`, {
-        nickname: v,
-      });
-
-      if (!profile || profile.nickname !== v) {
-        setProfile({ nickname: v, email: profile?.email });
-      }
-
+      const { data } = await api.put(`/auth/${uid}/nickname`, { nickname: v });
+      setProfile?.({ nickname: v, email: profile?.email });
       toast(data?.message ?? "닉네임이 변경되었습니다.", null);
       setIsEditName(false);
     } catch (e: any) {
-      const m =
-        e?.response?.data?.message ??
-        e?.response?.data?.error ??
-        "닉네임 변경에 실패했습니다.";
-      toast(null, m);
+      toast(null, e?.response?.data?.message ?? "닉네임 변경 실패");
     } finally {
       setNickLoading(false);
     }
-  };
+  }, [nickname, resolveUserId, profile?.email, setProfile, toast]);
 
-  /* ========== 비밀번호 변경 ========== */
-  const submitPassword = async () => {
+  // --- 비밀번호 변경 ---
+  const submitPassword = useCallback(async () => {
     const { currentPassword, newPassword, newPassword2 } = pw;
     if (!currentPassword || !newPassword || !newPassword2)
-      return toast(null, "현재/새 비밀번호를 모두 입력하세요.");
+      return toast(null, "모든 비밀번호를 입력하세요.");
     if (newPassword !== newPassword2)
       return toast(null, "새 비밀번호가 일치하지 않습니다.");
     if (newPassword.length < 8)
-      return toast(null, "새 비밀번호는 8자 이상 권장합니다.");
+      return toast(null, "새 비밀번호는 8자 이상입니다.");
     if (newPassword === currentPassword)
-      return toast(null, "새 비밀번호가 현재 비밀번호와 동일합니다.");
+      return toast(null, "현재와 동일한 비밀번호입니다.");
 
     try {
       setPwLoading(true);
@@ -335,225 +309,172 @@ const AccountSettings: React.FC = () => {
         currentPassword,
         newPassword,
       });
-
       toast(data?.message ?? "비밀번호가 변경되었습니다.", null);
       setPw({ currentPassword: "", newPassword: "", newPassword2: "" });
     } catch (e: any) {
-      const m =
-        e?.response?.data?.message ??
-        e?.response?.data?.error ??
-        "비밀번호 변경에 실패했습니다.";
-      toast(null, m);
+      toast(null, e?.response?.data?.message ?? "비밀번호 변경 실패");
     } finally {
       setPwLoading(false);
     }
-  };
+  }, [pw, toast]);
 
-  /* ========== 이미지 업로드 ========== */
-  const onPickImage = () => fileRef.current?.click();
+  // --- 이미지 업로드 ---
+  const onPickImage = useCallback(() => fileRef.current?.click(), []);
+  const onFileChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const f = e.target.files?.[0];
+      if (!f) return;
+      if (f.size > MAX_IMG_MB * 1024 * 1024)
+        return toast(null, `최대 ${MAX_IMG_MB}MB 초과`);
+      if (imgPreview) URL.revokeObjectURL(imgPreview);
+      setImgFile(f);
+      setImgPreview(URL.createObjectURL(f));
+    },
+    [imgPreview, toast]
+  );
 
-  const onFileChange: React.ChangeEventHandler<HTMLInputElement> = (e) => {
-    const f = e.target.files?.[0];
-    if (!f) return;
-    if (f.size > MAX_IMG_MB * 1024 * 1024)
-      return toast(null, `이미지 용량은 최대 ${MAX_IMG_MB}MB까지 가능합니다.`);
-
-    if (imgPreview) URL.revokeObjectURL(imgPreview);
-
-    setImgFile(f);
-    setImgPreview(URL.createObjectURL(f));
-  };
-
-  const submitImage = async () => {
-    const uid = (await resolveUserId()) ?? userIdFromStore;
-    if (!imgFile) return toast(null, "변경할 이미지를 먼저 선택하세요.");
-    if (!uid) return toast(null, "userId를 확인할 수 없습니다.");
+  const submitImage = useCallback(async () => {
+    const uid = await resolveUserId();
+    if (!imgFile || !uid) return toast(null, "이미지 또는 userId 확인 필요");
 
     const optimisticUrl = URL.createObjectURL(imgFile);
     setCurrentImageUrl(optimisticUrl);
 
     try {
       setImgLoading(true);
-
       const form = new FormData();
       form.append("images", imgFile);
 
       const { data } = await api.put(`/auth/${uid}/profile`, form, {
-        xsrfCookieName: "XSRF-TOKEN",
-        xsrfHeaderName: "X-XSRF-TOKEN",
         withCredentials: true,
-        transformRequest: [(body) => body], // 그대로 전송해서 multipart 유지
+        transformRequest: [(body) => body],
       });
 
-      const raw = data?.profileImageUrl ?? data?.imageUrl ?? data?.url ?? null;
-
-      let next = raw;
-      if (!next) {
-        const r = await api.get(`/auth/${uid}/profile`);
-        next = r?.data?.profileImageUrl ?? null;
-      }
-
-      const abs = makeAbsolute(next) ?? DEFAULT_AVATAR;
+      const raw = data?.profileImageUrl ?? data?.imageUrl ?? null;
+      const abs = makeAbsolute(raw) ?? DEFAULT_AVATAR;
       const bust = `${abs}${abs.includes("?") ? "&" : "?"}v=${Date.now()}`;
-
       setCurrentImageUrl(bust);
-
-      URL.revokeObjectURL(optimisticUrl);
-
       setProfile?.({
         nickname: profile?.nickname ?? "NickName",
         email: profile?.email ?? "",
       });
-
       toast("프로필 이미지가 변경되었습니다.", null);
     } catch (e: any) {
-      URL.revokeObjectURL(optimisticUrl);
       setCurrentImageUrl(DEFAULT_AVATAR);
-
-      const m =
-        e?.response?.data?.message ||
-        e?.response?.data?.error ||
-        e?.message ||
-        "이미지 업로드/변경에 실패했습니다.";
-
-      toast(null, m);
+      toast(null, e?.response?.data?.message ?? "이미지 업로드 실패");
     } finally {
       setImgLoading(false);
+      URL.revokeObjectURL(optimisticUrl);
       if (imgPreview) URL.revokeObjectURL(imgPreview);
       setImgFile(null);
       setImgPreview(null);
       if (fileRef.current) fileRef.current.value = "";
     }
-  };
+  }, [
+    imgFile,
+    resolveUserId,
+    profile?.nickname,
+    profile?.email,
+    setProfile,
+    toast,
+    imgPreview,
+  ]);
 
-  /* ========== 탈퇴 ========== */
-  const submitDelete = async () => {
-    const uid = (await resolveUserId()) ?? userIdFromStore;
-    if (!uid) return toast(null, "userId를 확인할 수 없습니다.");
-    if (!delPw) return toast(null, "비밀번호를 입력하세요.");
+  // --- 탈퇴 ---
+  const submitDelete = useCallback(async () => {
+    const uid = await resolveUserId();
+    if (!uid || !delPw) return toast(null, "userId 또는 비밀번호 확인 필요");
 
     try {
       setDelLoading(true);
-
       const { data } = await api.delete(`/auth/user/${uid}`, {
         data: { password: delPw },
         headers: { "Content-Type": "application/json" },
         withCredentials: true,
       });
-
-      toast(data?.message ?? "사용자 삭제 완료", null);
+      toast(data?.message ?? "탈퇴 완료", null);
       clearAuth?.();
       navigate("/login", { replace: true });
     } catch (e: any) {
-      const m =
-        e?.response?.data?.message ??
-        e?.response?.data?.error ??
-        "탈퇴에 실패했습니다.";
-      toast(null, m);
+      toast(null, e?.response?.data?.message ?? "탈퇴 실패");
     } finally {
       setDelLoading(false);
       setDeleteOpen(false);
     }
-  };
+  }, [delPw, resolveUserId, clearAuth, navigate, toast]);
 
-  /* ========== 주소 저장 ========== */
-  const handleSaveAddress = async (draft: AddressDraft) => {
-    if (!draft.name.trim()) return toast(null, "수령인 이름을 입력하세요.");
-    if (!draft.phoneNumber.trim()) return toast(null, "전화번호를 입력하세요.");
-    if (!draft.zonecode.trim()) return toast(null, "우편번호를 입력하세요.");
-    if (!draft.address.trim()) return toast(null, "주소를 입력하세요.");
+  // --- 주소 저장 ---
+  const handleSaveAddress = useCallback(
+    async (draft: AddressDraft) => {
+      if (
+        !draft.name.trim() ||
+        !draft.phoneNumber.trim() ||
+        !draft.zonecode.trim() ||
+        !draft.address.trim()
+      )
+        return toast(null, "필수 입력값을 확인하세요.");
 
-    try {
-      setAddrSaving(true);
+      try {
+        setAddrSaving(true);
+        const body = {
+          name: draft.name,
+          phoneNumber: draft.phoneNumber,
+          zonecode: draft.zonecode,
+          address: draft.address,
+          detailAddress: draft.detailAddress ?? "",
+        };
+        const { data } = await api.post("/address", body, {
+          withCredentials: true,
+        });
+        setMainAddress(body);
+        toast(data?.message ?? "주소 저장 성공", null);
+        setAddrOpen(false);
+      } catch (e: any) {
+        toast(null, e?.response?.data?.message ?? "주소 저장 실패");
+      } finally {
+        setAddrSaving(false);
+      }
+    },
+    [toast]
+  );
 
-      const body = {
-        name: draft.name,
-        phoneNumber: draft.phoneNumber,
-        zonecode: draft.zonecode,
-        address: draft.address,
-        detailAddress: draft.detailAddress ?? "",
-      };
+  // --- 계좌 저장 ---
+  const handleSaveBank = useCallback(
+    async (draft: BankAccountDraft) => {
+      if (
+        !draft.bankName.trim() ||
+        !draft.accountNumber.trim() ||
+        !draft.accountHolder.trim()
+      )
+        return toast(null, "필수 입력값을 확인하세요.");
 
-      const { data } = await api.post("/address", body, {
-        withCredentials: true,
-      });
+      try {
+        setBankSaving(true);
+        const body = {
+          bankName: draft.bankName,
+          accountNumber: draft.accountNumber,
+          accountHolder: draft.accountHolder,
+        };
+        const { data } = await api.post("/bank-account", body, {
+          withCredentials: true,
+        });
+        setBankAccount(body);
+        toast(data?.message ?? "계좌 저장 성공", null);
+        setBankOpen(false);
+      } catch (e: any) {
+        toast(null, e?.response?.data?.message ?? "계좌 저장 실패");
+      } finally {
+        setBankSaving(false);
+      }
+    },
+    [toast]
+  );
 
-      setMainAddress({
-        name: body.name,
-        phoneNumber: body.phoneNumber,
-        zonecode: body.zonecode,
-        address: body.address,
-        detailAddress: body.detailAddress,
-      });
-
-      toast(data?.message ?? "주소가 저장되었습니다.", null);
-      setAddrOpen(false);
-    } catch (e: any) {
-      const m =
-        e?.response?.data?.message ??
-        e?.response?.data?.error ??
-        "주소 정보를 저장하지 못했습니다.";
-      toast(null, m);
-    } finally {
-      setAddrSaving(false);
-    }
-  };
-
-  /* ========== 계좌 저장 ========== */
-  const handleSaveBank = async (draft: BankAccountDraft) => {
-    if (!draft.bankName.trim()) {
-      toast(null, "은행명을 입력하세요.");
-      return;
-    }
-    if (!draft.accountNumber.trim()) {
-      toast(null, "계좌번호를 입력하세요.");
-      return;
-    }
-    if (!draft.accountHolder.trim()) {
-      toast(null, "예금주를 입력하세요.");
-      return;
-    }
-
-    try {
-      setBankSaving(true);
-
-      const body = {
-        bankName: draft.bankName,
-        accountNumber: draft.accountNumber,
-        accountHolder: draft.accountHolder,
-      };
-
-      const { data } = await api.post("/bank-account", body, {
-        withCredentials: true,
-      });
-
-      setBankAccount({
-        bankName: body.bankName,
-        accountNumber: body.accountNumber,
-        accountHolder: body.accountHolder,
-      });
-
-      toast(data?.message ?? "계좌 정보가 저장되었습니다.", null);
-      setBankOpen(false);
-    } catch (e: any) {
-      const m =
-        e?.response?.data?.message ??
-        e?.response?.data?.error ??
-        "계좌 정보를 저장하지 못했습니다.";
-      toast(null, m);
-    } finally {
-      setBankSaving(false);
-    }
-  };
-
-  /* 디자인 토큰 */
+  // --- 디자인 토큰 ---
   const lineInput =
     "w-full rounded-none border-0 border-b border-neutral-300 bg-transparent px-0 py-[10px] text-[15px] placeholder:text-neutral-400 focus:border-neutral-800 focus:ring-0";
-
-  // ✅ 버튼 토큰(통일)
   const btnBase =
-    "inline-flex items-center justify-center rounded-md h-9 px-4 text-[13px] font-medium \
-   transition-colors disabled:opacity-60 whitespace-nowrap leading-[1.1] min-w-[72px]";
+    "inline-flex items-center justify-center rounded-md h-9 px-4 text-[13px] font-medium transition-colors disabled:opacity-60 whitespace-nowrap leading-[1.1] min-w-[72px]";
   const btnPrimary = `${btnBase} bg-purple text-white hover:bg-deep-purple`;
   const btnGhost = `${btnBase} border border-purple text-purple hover:bg-neutral-50`;
   const btnDanger = `${btnBase} bg-rose-600 text-white hover:bg-rose-700`;
@@ -562,7 +483,6 @@ const AccountSettings: React.FC = () => {
 
   return (
     <div className="mx-auto w-full max-w-[720px]">
-      {/* 상단 토스트 */}
       {msg && (
         <Toast
           message={msg}
@@ -580,29 +500,23 @@ const AccountSettings: React.FC = () => {
         />
       )}
 
-      {/* 상단: 아바타 + 이름 + 이미지 변경 */}
       <div className="mb-8 flex items-center gap-4">
         <div className="relative h-[96px] w-[96px] overflow-hidden rounded-full bg-neutral-200">
           <img
             src={imgPreview || currentImageUrl || DEFAULT_AVATAR}
             alt="프로필"
             className="h-full w-full object-cover"
-            onError={(e) => {
-              (e.currentTarget as HTMLImageElement).src = DEFAULT_AVATAR;
-            }}
+            onError={(e) => (e.currentTarget.src = DEFAULT_AVATAR)}
           />
         </div>
-
         <div className="flex flex-col">
           <div className="text-[20px] font-semibold text-neutral-900">
             {profile?.nickname ?? "NickName"}
           </div>
-
           <div className="mt-2">
             <button type="button" onClick={onPickImage} className={btnGhost}>
               이미지 변경
             </button>
-
             <input
               ref={fileRef}
               type="file"
@@ -610,7 +524,6 @@ const AccountSettings: React.FC = () => {
               className="hidden"
               onChange={onFileChange}
             />
-
             {imgFile && (
               <button
                 type="button"
@@ -625,27 +538,21 @@ const AccountSettings: React.FC = () => {
         </div>
       </div>
 
-      {/* divider */}
       <div className="mb-8 h-px w-full bg-neutral-200" />
 
-      {/* 프로필 정보 */}
       <section className="mb-10">
         <h4 className="mb-4 text-[18px] font-bold text-neutral-900">
           프로필 정보
         </h4>
-
-        {/* 닉네임 */}
         <div className="mb-8">
           <div className="mb-1 text-[13px] font-semibold text-neutral-800">
             닉네임
           </div>
-
           {!isEditName ? (
             <div className="flex items-center justify-between">
               <span className="text-[15px] text-neutral-900">
                 {profile?.nickname ?? "NickName"}
               </span>
-
               <button
                 type="button"
                 onClick={() => setIsEditName(true)}
@@ -662,7 +569,6 @@ const AccountSettings: React.FC = () => {
                 onChange={(e) => setNickname(e.target.value)}
                 placeholder="닉네임을 입력하세요"
               />
-
               <button
                 type="button"
                 onClick={() => {
@@ -673,7 +579,6 @@ const AccountSettings: React.FC = () => {
               >
                 취소
               </button>
-
               <button
                 type="button"
                 onClick={submitNickname}
@@ -685,8 +590,6 @@ const AccountSettings: React.FC = () => {
             </div>
           )}
         </div>
-
-        {/* 이메일 */}
         {emailMasked && (
           <div className="mb-8">
             <div className="mb-1 text-[13px] font-semibold text-neutral-800">
@@ -695,9 +598,12 @@ const AccountSettings: React.FC = () => {
             <div className="text-[15px] text-neutral-900">{emailMasked}</div>
           </div>
         )}
-
-        {/* 비밀번호 변경 */}
-        <div>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            submitPassword();
+          }}
+        >
           <div className="mb-3 text-[14px] font-bold text-neutral-900">
             비밀번호 변경
           </div>
@@ -707,6 +613,7 @@ const AccountSettings: React.FC = () => {
           </label>
           <input
             type="password"
+            name="currentPassword"
             autoComplete="current-password"
             className={lineInput}
             value={pw.currentPassword}
@@ -714,9 +621,7 @@ const AccountSettings: React.FC = () => {
               setPw((s) => ({ ...s, currentPassword: e.target.value }))
             }
             placeholder="현재 비밀번호"
-            onKeyDown={(e) => {
-              if (e.key === "Enter") submitPassword();
-            }}
+            required
           />
 
           <div className="mt-4">
@@ -725,6 +630,7 @@ const AccountSettings: React.FC = () => {
             </label>
             <input
               type="password"
+              name="newPassword"
               autoComplete="new-password"
               className={lineInput}
               value={pw.newPassword}
@@ -733,9 +639,7 @@ const AccountSettings: React.FC = () => {
               }
               placeholder="새 비밀번호 (8자 이상)"
               minLength={8}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") submitPassword();
-              }}
+              required
             />
           </div>
 
@@ -746,6 +650,7 @@ const AccountSettings: React.FC = () => {
               </label>
               <input
                 type="password"
+                name="confirmNewPassword"
                 autoComplete="new-password"
                 className={lineInput}
                 value={pw.newPassword2}
@@ -754,66 +659,56 @@ const AccountSettings: React.FC = () => {
                 }
                 placeholder="새 비밀번호 확인"
                 minLength={8}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") submitPassword();
-                }}
+                required
               />
             </div>
 
             <button
-              type="button"
-              onClick={submitPassword}
-              disabled={pwLoading}
+              type="submit"
+              disabled={
+                pwLoading ||
+                !pw.currentPassword ||
+                !pw.newPassword ||
+                pw.newPassword !== pw.newPassword2
+              }
               className={btnPrimary}
-              aria-busy={pwLoading}
             >
               {pwLoading ? "변경 중…" : "변경"}
             </button>
           </div>
-        </div>
+        </form>
       </section>
 
-      {/* 주소 (단일) */}
       <section className="mb-10">
         <div className="mb-3 flex items-center justify-between">
           <h5 className="text-[16px] font-bold text-neutral-900">주소</h5>
         </div>
-
         {addrError && !mainAddress && (
-          <p className="mb-2 text-sm text-rose-600">{String(addrError)}</p>
+          <p className="mb-2 text-sm text-rose-600">{addrError}</p>
         )}
-
         <AddressDetails
           address={mainAddress}
           loading={addrLoading}
           error={addrError}
-          onEdit={() => {
-            setAddrOpen(true);
-          }}
+          onEdit={() => setAddrOpen(true)}
         />
       </section>
 
-      {/* 정산 계좌 (단일) */}
       <section className="mb-10">
         <div className="mb-3 flex items-center justify-between">
           <h5 className="text-[16px] font-bold text-neutral-900">정산 계좌</h5>
         </div>
-
         {bankError && !bankAccount && (
-          <p className="mb-2 text-sm text-rose-600">{String(bankError)}</p>
+          <p className="mb-2 text-sm text-rose-600">{bankError}</p>
         )}
-
         <BankAccountDetails
           account={bankAccount}
           loading={bankLoading}
           error={bankError}
-          onEdit={() => {
-            setBankOpen(true);
-          }}
+          onEdit={() => setBankOpen(true)}
         />
       </section>
 
-      {/* 하단: 탈퇴 */}
       <div className="mb-2 flex justify-end">
         <button
           type="button"
@@ -824,7 +719,6 @@ const AccountSettings: React.FC = () => {
         </button>
       </div>
 
-      {/* 탈퇴 모달 */}
       {deleteOpen && (
         <div
           role="dialog"
@@ -839,12 +733,10 @@ const AccountSettings: React.FC = () => {
             <h3 className="text-[18px] font-semibold text-neutral-900">
               정말 탈퇴하시겠어요?
             </h3>
-
             <p className="mt-1 text-sm text-neutral-600">
               계정과 거래/기록이 삭제될 수 있어요. 확인을 위해 비밀번호를 입력해
               주세요.
             </p>
-
             <label className="mt-4 mb-1 block text-[12px] text-neutral-500">
               비밀번호
             </label>
@@ -857,7 +749,6 @@ const AccountSettings: React.FC = () => {
               onKeyDown={(e) => e.key === "Enter" && submitDelete()}
               autoFocus
             />
-
             <div className="mt-4 flex justify-end gap-2">
               <button
                 type="button"
@@ -866,7 +757,6 @@ const AccountSettings: React.FC = () => {
               >
                 취소
               </button>
-
               <button
                 type="button"
                 className={btnDanger}
@@ -881,25 +771,18 @@ const AccountSettings: React.FC = () => {
         </div>
       )}
 
-      {/* 주소 모달 */}
       <AddressEditorModal
         open={addrOpen}
         initial={mainAddress}
         saving={addrSaving}
-        onClose={() => {
-          setAddrOpen(false);
-        }}
+        onClose={() => setAddrOpen(false)}
         onSave={handleSaveAddress}
       />
-
-      {/* 계좌 모달 */}
       <BankAccountEditorModal
         open={bankOpen}
         initial={bankAccount}
         saving={bankSaving}
-        onClose={() => {
-          setBankOpen(false);
-        }}
+        onClose={() => setBankOpen(false)}
         onSave={handleSaveBank}
       />
     </div>
