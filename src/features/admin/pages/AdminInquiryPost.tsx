@@ -36,16 +36,19 @@ const AdminInquiryPost = () => {
       <button
         type="button"
         onClick={() => navigate(-1)}
-        className="mb-4 flex cursor-pointer items-center gap-1.5 text-sm text-gray-500 transition-colors hover:text-purple"
+        className="hover:text-purple mb-4 flex cursor-pointer items-center gap-1.5 text-sm text-gray-500 transition-colors"
       >
         <ChevronLeft className="h-4 w-4" />
         <span>목록</span>
       </button>
 
       <div className="border-b pb-4">
-        <h3 className="text-[18px] font-bold text-neutral-900 sm:text-[20px] sm:leading-[1.4]">
-          {inquiry.title}
-        </h3>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+          <h3 className="text-[18px] font-bold text-neutral-900 sm:text-[20px] sm:leading-[1.4]">
+            {inquiry.title}
+          </h3>
+          <InquiryStatusBadge status={inquiry.status} />
+        </div>
 
         <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-[12px] text-neutral-500 sm:text-[13px]">
           <span className="flex items-center gap-1">
@@ -59,7 +62,7 @@ const AdminInquiryPost = () => {
             <span className="text-neutral-400">아이디(이메일)</span>
             <Link
               to={`/admin/users/${inquiry.userId}`}
-              className="text-neutral-700 cursor-pointer"
+              className="cursor-pointer text-neutral-700"
             >
               {inquiry.userEmail}
             </Link>
@@ -71,8 +74,6 @@ const AdminInquiryPost = () => {
               {formatDate(inquiry.createdAt)}
             </span>
           </span>
-
-          <InquiryStatusBadge status={inquiry.status} />
         </div>
       </div>
 
