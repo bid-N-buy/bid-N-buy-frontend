@@ -51,8 +51,8 @@ const AdminAsideMenu = () => {
               >
                 <LayoutDashboard color="#8322bf" />
 
-                <span className="invisible absolute start-full top-1/2 ms-4 -translate-y-1/2 rounded-sm bg-gray-900 px-2 py-1.5 text-xs font-medium text-white group-hover:visible">
-                  Main
+                <span className="invisible absolute start-full top-1/2 ms-4 -translate-y-1/2 whitespace-nowrap rounded-sm bg-gray-900 px-2 py-1.5 text-xs font-medium text-white group-hover:visible z-20">
+                  대시보드
                 </span>
               </Link>
             </div>
@@ -65,7 +65,7 @@ const AdminAsideMenu = () => {
                 >
                   <MessageCircleWarning />
 
-                  <span className="invisible absolute start-full top-1/2 ms-4 w-18.5 -translate-y-1/2 rounded-sm bg-gray-900 px-2 py-1.5 text-xs font-medium text-white group-hover:visible">
+                  <span className="invisible absolute start-full top-1/2 ms-4 w-18.5 -translate-y-1/2 rounded-sm bg-gray-900 px-2 py-1.5 text-xs font-medium text-white group-hover:visible z-20">
                     문의/신고 현황
                   </span>
                 </Link>
@@ -91,7 +91,7 @@ const AdminAsideMenu = () => {
                     />
                   </svg>
 
-                  <span className="invisible absolute start-full top-1/2 ms-4 w-14 -translate-y-1/2 rounded-sm bg-gray-900 px-2 py-1.5 text-xs font-medium text-white group-hover:visible">
+                  <span className="invisible absolute start-full top-1/2 ms-4 w-14 -translate-y-1/2 rounded-sm bg-gray-900 px-2 py-1.5 text-xs font-medium text-white group-hover:visible z-20">
                     회원 관리
                   </span>
                 </Link>
@@ -103,7 +103,7 @@ const AdminAsideMenu = () => {
                   className="group relative flex aspect-square size-10 items-center justify-center rounded-sm hover:bg-gray-50"
                 >
                   <NotebookText />
-                  <span className="invisible absolute start-full top-1/2 ms-4 w-16 -translate-y-1/2 rounded-sm bg-gray-900 px-2 py-1.5 text-xs font-medium text-white group-hover:visible">
+                  <span className="invisible absolute start-full top-1/2 ms-4 w-16 -translate-y-1/2 rounded-sm bg-gray-900 px-2 py-1.5 text-xs font-medium text-white group-hover:visible z-20">
                     거래글 관리
                   </span>
                 </Link>
@@ -117,8 +117,8 @@ const AdminAsideMenu = () => {
                 >
                   <Megaphone />
 
-                  <span className="invisible absolute start-full top-1/2 ms-4 w-18.5 -translate-y-1/2 rounded-sm bg-gray-900 px-2 py-1.5 text-xs font-medium text-white group-hover:visible">
-                    공지/경고 발송
+                  <span className="invisible absolute start-full top-1/2 ms-4 -translate-y-1/2 whitespace-nowrap rounded-sm bg-gray-900 px-2 py-1.5 text-xs font-medium text-white group-hover:visible z-20">
+                    알림 발송
                   </span>
                 </button>
               </li>
@@ -153,8 +153,8 @@ const AdminAsideMenu = () => {
               />
             </svg>
 
-            <span className="invisible absolute start-full top-1/2 ms-4 -translate-y-1/2 rounded-sm bg-gray-900 px-2 py-1.5 text-xs font-medium text-white group-hover:visible">
-              Logout
+            <span className="invisible absolute start-full top-1/2 ms-4 -translate-y-1/2 whitespace-nowrap rounded-sm bg-gray-900 px-2 py-1.5 text-xs font-medium text-white group-hover:visible z-20">
+              로그아웃
             </span>
           </button>
         </div>
