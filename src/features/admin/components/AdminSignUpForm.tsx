@@ -74,47 +74,43 @@ const AdminSignUpForm = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="m-auto w-full">
+    <form onSubmit={handleSubmit} className="space-y-5">
       {/* 이메일 + (선택) 중복확인/인증 */}
-      <div className="mb-[20px]">
+      <div>
         <h5 className="text-h5 mb-[10px] font-bold">이메일</h5>
-        <div>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="focus:border-purple mb-[15px] h-[40px] w-full rounded-md border px-3 outline-none focus:border-2"
-            placeholder="이메일을 입력해 주세요"
-            autoComplete="email"
-          />
-        </div>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="hover:border-purple w-full rounded-md border px-3 py-2"
+          placeholder="이메일을 입력해 주세요"
+          autoComplete="email"
+        />
       </div>
 
       {/* 비밀번호 */}
       <div>
-        <div className="mb-[20px]">
-          <h5 className="text-h5 mb-[10px] font-bold">비밀번호</h5>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="focus:border-purple mb-[5px] h-[40px] w-full rounded-md border px-3 outline-none focus:border-2"
-            placeholder="비밀번호를 입력해 주세요"
-            autoComplete="new-password"
-          />
-        </div>
+        <h5 className="text-h5 mb-[10px] font-bold">비밀번호</h5>
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="hover:border-purple w-full rounded-md border px-3 py-2"
+          placeholder="비밀번호를 입력해 주세요"
+          autoComplete="new-password"
+        />
+      </div>
 
-        <div className="mb-[20px]">
-          <h5 className="text-h5 mb-[10px] font-bold">비밀번호 확인</h5>
-          <input
-            type="password"
-            value={password2}
-            onChange={(e) => setPassword2(e.target.value)}
-            className="focus:border-purple mb-[5px] h-[40px] w-full rounded-md border px-3 outline-none focus:border-2"
-            placeholder="비밀번호를 다시 입력해 주세요"
-            autoComplete="new-password"
-          />
-        </div>
+      <div>
+        <h5 className="text-h5 mb-[10px] font-bold">비밀번호 확인</h5>
+        <input
+          type="password"
+          value={password2}
+          onChange={(e) => setPassword2(e.target.value)}
+          className="hover:border-purple w-full rounded-md border px-3 py-2"
+          placeholder="비밀번호를 다시 입력해 주세요"
+          autoComplete="new-password"
+        />
       </div>
 
       {/* 닉네임 */}
@@ -124,7 +120,7 @@ const AdminSignUpForm = () => {
           type="text"
           value={nickname}
           onChange={(e) => setNickname(e.target.value)}
-          className="focus:border-purple mb-[20px] h-[40px] w-full rounded-md border px-3 outline-none focus:border-2"
+          className="hover:border-purple w-full rounded-md border px-3 py-2"
           placeholder="닉네임을 입력해 주세요"
           autoComplete="nickname"
         />
@@ -149,7 +145,7 @@ const AdminSignUpForm = () => {
 
       {/* 서버 메시지 */}
       {msg && (
-        <p className="border-g400 bg-g500/40 text-g100 mb-[12px] rounded-md border py-2 text-center">
+        <p className="border-g400 bg-g500/40 text-g100 rounded-md border py-2 text-center">
           {msg}
         </p>
       )}
