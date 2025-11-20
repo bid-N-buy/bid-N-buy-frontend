@@ -7,9 +7,14 @@ import {
   Outlet,
 } from "react-router-dom";
 import { useAdminAuthStore } from "../features/admin/store/adminStore";
+import { useAuthInit } from "../features/auth/hooks/UseAuthInit";
+import AuthInitGate from "../features/auth/components/AuthInitGate";
 import ProtectedRoute from "../shared/routes/ProtectedRoute";
 import GuestOnlyRoute from "../shared/routes/GuestOnlyRoute";
-import { useAuthInit } from "../features/auth/hooks/UseAuthInit";
+import FcmInitializer from "../features/notification/components/FcmInitializer";
+import FcmListener from "../features/notification/hooks/FcmListener";
+import Toast from "../shared/components/Toast";
+import { useToastStore } from "../shared/store/useToastStore";
 
 import ProfileSetting from "../features/mypage/components/profile/ProfileSetting";
 import ResetPassword from "../features/auth/components/login/ResetPasswordForm";
@@ -21,15 +26,11 @@ import InquiryReportForm from "../features/mypage/components/support/InquiryRepo
 import AdminAsideMenu from "../features/admin/components/AdminAsideMenu";
 import InquiryDetailPage from "../features/mypage/pages/InquiryDetailPage";
 import NotificationTestPage from "../features/notification/pages/NotificationTestPage";
-import FcmInitializer from "../features/notification/components/FcmInitializer";
-import FcmListener from "../features/notification/hooks/FcmListener";
 import AdminAuctionPost from "../features/admin/pages/AdminAuctionPost";
 import AdminInquiryPost from "../features/admin/pages/AdminInquiryPost";
 import AdminUserDetail from "../features/admin/pages/AdminUserDetail";
-import AuthInitGate from "../features/auth/components/AuthInitGate";
 import ReportDetailPage from "../features/mypage/pages/ReportDetailPage";
-import Toast from "../shared/components/Toast";
-import { useToastStore } from "../shared/store/useToastStore";
+import AdminResetPassword from "../features/admin/pages/AdminResetPassword";
 
 // 공통
 const Header = React.lazy(() => import("../shared/components/Header"));
@@ -238,6 +239,7 @@ export default function App() {
           <Route element={<AdminGuestOnlyRoute />}>
             <Route path="login" element={<AdminLoginPage />} />
             <Route path="signup" element={<AdminSignUpPage />} />
+            <Route path="resetPassword" element={<AdminResetPassword />} />
           </Route>
 
           {/* 관리자 페이지 (로그인 필요) */}
