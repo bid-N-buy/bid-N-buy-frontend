@@ -74,7 +74,7 @@ const AdminSignUpForm = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="m-auto w-[420px]">
+    <form onSubmit={handleSubmit} className="m-auto w-full">
       {/* 이메일 + (선택) 중복확인/인증 */}
       <div className="mb-[20px]">
         <h5 className="text-h5 mb-[10px] font-bold">이메일</h5>
@@ -83,7 +83,7 @@ const AdminSignUpForm = () => {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="focus:border-purple mb-[15px] h-[40px] w-[420px] rounded-md border px-3 outline-none focus:border-2"
+            className="focus:border-purple mb-[15px] h-[40px] w-full rounded-md border px-3 outline-none focus:border-2"
             placeholder="이메일을 입력해 주세요"
             autoComplete="email"
           />
@@ -98,7 +98,7 @@ const AdminSignUpForm = () => {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="focus:border-purple mb-[5px] h-[40px] w-[420px] rounded-md border px-3 outline-none focus:border-2"
+            className="focus:border-purple mb-[5px] h-[40px] w-full rounded-md border px-3 outline-none focus:border-2"
             placeholder="비밀번호를 입력해 주세요"
             autoComplete="new-password"
           />
@@ -110,7 +110,7 @@ const AdminSignUpForm = () => {
             type="password"
             value={password2}
             onChange={(e) => setPassword2(e.target.value)}
-            className="focus:border-purple mb-[5px] h-[40px] w-[420px] rounded-md border px-3 outline-none focus:border-2"
+            className="focus:border-purple mb-[5px] h-[40px] w-full rounded-md border px-3 outline-none focus:border-2"
             placeholder="비밀번호를 다시 입력해 주세요"
             autoComplete="new-password"
           />
@@ -124,7 +124,7 @@ const AdminSignUpForm = () => {
           type="text"
           value={nickname}
           onChange={(e) => setNickname(e.target.value)}
-          className="focus:border-purple mb-[20px] h-[40px] w-[420px] rounded-md border px-3 outline-none focus:border-2"
+          className="focus:border-purple mb-[20px] h-[40px] w-full rounded-md border px-3 outline-none focus:border-2"
           placeholder="닉네임을 입력해 주세요"
           autoComplete="nickname"
         />
@@ -157,7 +157,7 @@ const AdminSignUpForm = () => {
       <button
         type="submit"
         disabled={loadingSubmit}
-        className="bg-purple hover:bg-deep-purple h-[50px] w-[420px] rounded-md text-white disabled:opacity-60"
+        className="bg-purple hover:bg-deep-purple h-[50px] w-full rounded-md text-white disabled:opacity-60"
       >
         {loadingSubmit ? "가입 중..." : "회원가입 하기"}
       </button>
