@@ -188,37 +188,6 @@ PW : admin123
 
 <br>
 
-[//]: # "## 📄 관련 문서"
-[//]: #
-[//]: # "<details>"
-[//]: #
-[//]: # "<summary><b>ERD</b></summary>"
-[//]: #
-[//]: # "<!-- ERD 링크 (추후 추가) -->"
-[//]: # "<!-- [ERD](링크) -->"
-[//]: #
-[//]: # "</details>"
-[//]: #
-[//]: # "<details>"
-[//]: #
-[//]: # "<summary><b>화면설계서(Figma)</b></summary>"
-[//]: #
-[//]: # "<!-- Figma 링크 (추후 추가) -->"
-[//]: # "<!-- [화면설계서(Figma)](링크) -->"
-[//]: #
-[//]: # "</details>"
-[//]: #
-[//]: # "<details>"
-[//]: #
-[//]: # "<summary><b>API 명세서 (Swagger)</b></summary>"
-[//]: #
-[//]: # "<!-- Swagger 링크 (추후 추가) -->"
-[//]: # '<!-- <img src="이미지URL" alt="API 명세서" width="900" /> -->'
-[//]: #
-[//]: # "</details>"
-[//]: #
-[//]: # "<br>"
-
 ## ✨ 주요 기능
 
 <table align="center" style="width: 100%; max-width: 900px; border-collapse: separate; border-spacing: 0 16px;">
@@ -441,5 +410,19 @@ PW : admin123
 - 부하 테스트 진행
 - 성능 최적화 (쿼리, 렌더링 등)
 - Redis 확장 및 운영 관리
+
+<br>
+
+## 📄 관련 문서
+
+<details>
+  <summary><b>테이블/기능 요구사항 명세서</b></summary>
+  https://docs.google.com/spreadsheets/d/1tiiuyDQZtwt7OPu5pqWtwo_Ot8-M8TjxheeOr6L5Mzs/edit?usp=sharing
+</details>
+
+<details>
+  <summary><b>ERD</b></summary>
+  https://www.erdcloud.com/d/YXqSYq86nJmWGgMvj
+</details>
 
 <br>
