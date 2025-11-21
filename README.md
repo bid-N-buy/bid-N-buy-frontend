@@ -1,11 +1,10 @@
 # Bid&Buy
 
-> **실시간 중고 경매 서비스**
+> **중고거래에 실시간 경매를 더한 서비스**
 
 <div align="center">
 
-<!-- 메인이미지(로고)(추후 추가) -->
-<!-- <img src="이미지URL" width="1000" /> -->
+<img src="./src/assets/Bid&Buy.svg" alt="Bid&Buy 로고" width="400" />
 
 </div><br>
 
