@@ -1,11 +1,9 @@
 # Bid&Buy
 
 > **중고거래에 실시간 경매를 더한 서비스**
-<br>
-<div align="center">
 
-<img src="./src/assets/Bid&Buy.svg" alt="Bid&Buy 로고" width="400" />
-
+<div align="center"><br>
+<img src="https://github.com/user-attachments/assets/59abd76a-c72a-47ce-88b5-4c9f929e7ce2" alt="Bid&Buy 로고" width="400" />
 </div><br>
 
 ## 🏷️ 프로젝트 소개
