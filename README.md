@@ -1,7 +1,7 @@
 # Bid&Buy
 
 > **중고거래에 실시간 경매를 더한 서비스**
-
+<br>
 <div align="center">
 
 <img src="./src/assets/Bid&Buy.svg" alt="Bid&Buy 로고" width="400" />
