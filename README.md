@@ -221,112 +221,51 @@ PW : admin123
 
 ## ✨ 주요 기능
 
-<table align="center" style="width: 100%; max-width: 1200px;">
-
-<tr>
-
-<td align="center" style="width: 100%; padding: 20px;">
-
-<strong>회원가입 & 로그인</strong><br>
-
-<!-- 이미지 (추후 추가 예정) -->
-<!-- <img src="이미지URL" alt="회원가입/로그인" width="370" /><br> -->
-
-<em>이메일 인증으로 안전하게, 소셜 로그인으로 간편하게</em>
-
-</td>
-
-<td align="center" style="width: 100%; padding: 20px;">
-
-<strong>경매 상품 조회 · 등록</strong><br>
-
-<!-- 이미지 (추후 추가 예정) -->
-<!-- <img src="이미지URL" alt="경매 상품 등록" width="370" /><br> -->
-
-<em>다양한 필터·정렬·카테고리로 직관적인 경매 상품 탐색 & 등록 기능</em>
-
-</td>
-
-</tr>
-
-<tr>
-
-<td align="center" style="width: 100%; padding: 20px;">
-
-<strong>입찰 프로세스</strong><br>
-
-<!-- 이미지 (추후 추가 예정) -->
-<!-- <img src="이미지URL" alt="입찰" width="370" /><br> -->
-
-<em>입찰 안내부터 낙찰 알림까지 친절하게 이어지는 흐름</em>
-
-</td>
-
-<td align="center" style="width: 100%; padding: 20px;">
-
-<strong>실시간 채팅</strong><br>
-
-<!-- 이미지 (추후 추가 예정) -->
-<!-- <img src="이미지URL" alt="실시간 채팅" width="370" /><br> -->
-
-<em>구매자-판매자 간 1:1 대화와 결제 요청·주소·이미지까지 주고받는 실시간 채팅 기능</em>
-
-</td>
-
-</tr>
-
-<tr>
-
-<td align="center" style="width: 100%; padding: 20px;">
-
-<strong>안전결제 시스템</strong><br>
-
-<!-- 이미지 (추후 추가 예정) -->
-<!-- <img src="이미지URL" alt="안전결제" width="370" /><br> -->
-
-<em>토스페이먼츠 연동으로 안심하고 결제하고, 주문 관리도 편하게</em>
-
-</td>
-
-<td align="center" style="width: 100%; padding: 20px;">
-
-<strong>찜 기능</strong><br>
-
-<!-- 이미지 (추후 추가 예정) -->
-<!-- <img src="이미지URL" alt="위시리스트" width="370" /><br> -->
-
-<em>마음에 드는 경매는 찜해두고 쉽게 찾아보기</em>
-
-</td>
-
-</tr>
-
-<tr>
-
-<td align="center" style="width: 100%; padding: 20px;">
-
-<strong>알림 서비스</strong><br>
-
-<!-- 이미지 (추후 추가 예정) -->
-<!-- <img src="이미지URL" alt="알림 시스템" width="370" /><br> -->
-
-<em>입찰·종료·공지까지 필요한 알림을 실시간으로</em>
-
-</td>
-
-<td align="center" style="width: 100%; padding: 20px;">
-
-<strong>관리자 기능</strong><br>
-
-<!-- 이미지 (추후 추가 예정) -->
-<!-- <img src="이미지URL" alt="관리자 페이지" width="370" /><br> -->
-
-<em>문의·신고 처리부터 회원·페널티 관리, 알림 발송까지 운영에 필요한 전반적인 관리 기능 제공</em>
-
-</td>
-
-</tr>
-
+<table align="center">
+  <colgroup>
+    <col width="50%">
+    <col width="50%">
+  </colgroup>
+  <tr>
+    <td width="50%" valign="top" style="height: 120px;">
+      <strong>회원가입 & 로그인</strong><br>
+      <em>이메일 인증으로 안전하게<br>소셜 로그인으로 간편하게</em>
+    </td>
+    <td width="50%" valign="top" style="height: 120px;">
+      <strong>경매 상품 조회 · 등록</strong><br>
+      <em>다양한 필터·정렬·카테고리로<br>직관적인 탐색 & 등록</em>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top" style="height: 120px;">
+      <strong>입찰 프로세스</strong><br>
+      <em>입찰 안내부터 낙찰 알림까지<br>친절하게 이어지는 흐름</em>
+    </td>
+    <td width="50%" valign="top" style="height: 120px;">
+      <strong>실시간 채팅</strong><br>
+      <em>구매자-판매자 간 1:1 대화와<br>이미지·주소·결제까지 주고받는 실시간 채팅</em>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top" style="height: 120px;">
+      <strong>안전결제 시스템</strong><br>
+      <em>토스페이먼츠 연동으로 안심하고 결제<br>주문 관리도 편하게</em>
+    </td>
+    <td width="50%" valign="top" style="height: 120px;">
+      <strong>찜 기능</strong><br>
+      <em>마음에 드는 경매는 찜해두고<br>바로바로 찾아보기</em>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top" style="height: 120px;">
+      <strong>알림 서비스</strong><br>
+      <em>입찰·종료·공지까지<br>필요한 알림을 실시간으로</em>
+    </td>
+    <td width="50%" valign="top" style="height: 120px;">
+      <strong>관리자 기능</strong><br>
+      <em>문의·신고부터 페널티·알림까지<br>운영에 필요한 관리 기능 제공</em>
+    </td>
+  </tr>
 </table>
 
 <br>
