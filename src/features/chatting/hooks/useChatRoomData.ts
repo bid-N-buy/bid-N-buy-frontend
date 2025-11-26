@@ -72,7 +72,7 @@ export const useChatRoomData = (chatroomId: number) => {
         const isAuctionDeleted = auctionRes.data.sellingStatus === "DELETED";
 
         if (isAuctionDeleted) {
-          const dummyData: ChatRoomProps = {
+          const deletedAucData: ChatRoomProps = {
             chatroomId: chatroomId,
             sellerId: null,
             chatroomInfo: {
@@ -90,7 +90,7 @@ export const useChatRoomData = (chatroomId: number) => {
             isLocked: true,
             lockReason: "AUCTION_DELETED",
           };
-          setChatRoomData(dummyData);
+          setChatRoomData(deletedAucData);
           setIsLoading(false);
           return;
         }

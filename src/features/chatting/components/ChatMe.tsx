@@ -14,13 +14,17 @@ const ChatMe = ({
   const userId = useAuthStore.getState().userId;
   const isSenderSeller = sellerId === userId;
 
-  return messageType === "CHAT" ? (
+  return messageType === "SYSTEM" ? (
     <div className="m-2 flex items-end justify-end gap-2 text-right">
       <div>
         <p className="text-g300 text-xs">{read ? "" : "전송됨"}</p>
         <p className="text-g300 text-xs">{formatMsgTime(createdAt)}</p>
       </div>
-      <div className="bg-light-purple max-w-80 rounded-md p-3">{message}</div>
+      <div className="bg-light-purple max-w-80 rounded-md p-3">
+        <p>주소를 전송합니다.</p>
+        <div className="bg-g300 my-2 h-[1px] border-0" />
+        {message.replace("주소를 전송합니다. ", "")}
+      </div>
     </div>
   ) : messageType === "REQUEST" && isSenderSeller ? (
     <div className="m-2 flex items-end justify-end gap-2 text-right">

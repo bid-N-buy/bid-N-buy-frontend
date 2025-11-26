@@ -65,13 +65,17 @@ const ChatYou = ({
     }
   }
 
-  return messageType === "CHAT" && sellerId === userId ? (
+  return messageType === "SYSTEM" ? (
     <div className="mx-2 my-4 flex gap-2">
       <Avatar size="10" imageUrl={counterpartProfileImageUrl} />
       <div>
         <p className="mb-2 font-bold">{counterpartNickname}</p>
         <div className="flex items-end">
-          <p className="bg-g400 mr-2 max-w-65 rounded-md p-3">{message}</p>
+          <p className="bg-g400 mr-2 max-w-65 rounded-md p-3">
+            <p>주소를 전송합니다.</p>
+            <div className="bg-g300 my-2 h-[1px] border-0" />
+            {message.replace("주소를 전송합니다. ", "")}
+          </p>
           <div>
             <p className="text-g300 text-xs">{read ? "" : "읽지 않음"}</p>
             <p className="text-g300 text-xs">{formatMsgTime(createdAt)}</p>
