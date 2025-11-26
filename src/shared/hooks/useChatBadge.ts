@@ -30,7 +30,6 @@ export const useChatBadge = () => {
               headers: { Authorization: `Bearer ${token}` },
             })
             .then((res) => {
-              console.log(res.data);
               res.data
                 .filter(
                   (chatRoom) =>

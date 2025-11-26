@@ -200,7 +200,7 @@ const ChatRoom = ({
       </div>
 
       <ChatInput
-        isConnected={isConnected && !chatRoomData?.isLocked}
+        isConnected={isConnected && !chatRoomData?.lockMessage}
         inputMessage={inputMessage}
         setInputMessage={setInputMessage}
         sendMessage={handleSendMessage}

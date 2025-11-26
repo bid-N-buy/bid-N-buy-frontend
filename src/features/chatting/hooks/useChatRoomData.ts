@@ -66,7 +66,6 @@ export const useChatRoomData = (chatroomId: number) => {
           };
           setChatRoomData(withdrawnRoomData);
           setIsLoading(false);
-          console.log(withdrawnRoomData);
           return;
         }
 
@@ -88,10 +87,11 @@ export const useChatRoomData = (chatroomId: number) => {
               sellingStatus: auctionRes.data.sellingStatus,
               currentPrice: null,
             },
+            isLocked: true,
+            lockReason: "AUCTION_DELETED",
           };
           setChatRoomData(dummyData);
           setIsLoading(false);
-          console.log(dummyData);
           return;
         }
 

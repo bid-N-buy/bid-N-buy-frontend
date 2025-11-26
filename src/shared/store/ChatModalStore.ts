@@ -94,7 +94,6 @@ export const useChatModalStore = create<ChatModalStoreProps>((set, get) => ({
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       const rawList: ChatListItemProps[] = response.data;
-      console.log(rawList);
       const standardizedList = rawList.map((item) => {
         if (item.counterpartNickname === "탈퇴회원") {
           return {
