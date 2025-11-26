@@ -150,7 +150,7 @@ export const useChatSocket = (chatroomId: number) => {
     const messageAddress = {
       chatroomId: chatroomId,
       senderId: userId,
-      message: address,
+      message: `주소를 전송합니다. ${address}`,
       messageType: "SYSTEM",
     };
 
