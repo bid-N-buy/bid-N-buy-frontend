@@ -32,6 +32,8 @@ const ChatAddressModal: React.FC<Props> = ({
 
   // 로컬 "지금 제출 중" 상태 (중복 클릭 방지용)
   const [submitting, setSubmitting] = useState(false);
+  // 폼 제출이 시도되었는지 추적하는 상태
+  const [submitted, setSubmitted] = useState(false);
 
   // 모달이 새로 열릴 때마다 initial 값으로 리셋
   useEffect(() => {
@@ -46,9 +48,21 @@ const ChatAddressModal: React.FC<Props> = ({
 
   if (!open) return null;
 
+  const isFormValid =
+    name.trim().length > 0 &&
+    phoneNumber.trim().length > 0 &&
+    zonecode.trim().length > 0 &&
+    detailAddress.trim().length > 0;
+
   const handleSave = async () => {
     // 중복 클릭 방지
     if (submitting || saving) return;
+
+    setSubmitted(true);
+
+    if (!isFormValid) {
+      return;
+    }
 
     setSubmitting(true);
 
@@ -66,6 +80,7 @@ const ChatAddressModal: React.FC<Props> = ({
       await onSave(payload);
       onClose(); // 성공하면 모달 닫기
     } finally {
+      setSubmitted(false);
       setSubmitting(false);
     }
   };
@@ -95,7 +110,7 @@ const ChatAddressModal: React.FC<Props> = ({
           onChange={(e) => setName(e.target.value)}
           placeholder="이름"
         />
-        {!name && (
+        {submitted && !name && (
           <span className="text-[13px] text-red-500">
             수령인 이름을 입력하세요.
           </span>
@@ -111,7 +126,7 @@ const ChatAddressModal: React.FC<Props> = ({
           onChange={(e) => setPhoneNumber(e.target.value)}
           placeholder="010-0000-0000"
         />
-        {!phoneNumber && (
+        {submitted && !phoneNumber && (
           <span className="text-[13px] text-red-500">
             전화번호를 입력하세요.
           </span>
@@ -143,7 +158,7 @@ const ChatAddressModal: React.FC<Props> = ({
             className="rounded-md bg-neutral-900 px-3 py-[8px] text-[13px] text-white hover:opacity-90"
           />
         </div>
-        {!zonecode && (
+        {submitted && !zonecode && (
           <span className="text-[13px] text-red-500">
             우편번호 및 주소를 입력하세요.
           </span>
@@ -172,7 +187,7 @@ const ChatAddressModal: React.FC<Props> = ({
           onChange={(e) => setDetailAddress(e.target.value)}
           placeholder="동/호수, 건물명 등"
         />
-        {!detailAddress && (
+        {submitted && !detailAddress && (
           <span className="text-[13px] text-red-500">
             상세 주소를 입력하세요.
           </span>
