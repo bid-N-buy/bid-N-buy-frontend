@@ -69,7 +69,8 @@ export const useChatRoomData = (chatroomId: number) => {
           return;
         }
 
-        const isAuctionDeleted = auctionRes.data.sellingStatus === "DELETED";
+        const isAuctionDeleted =
+          auctionRes.data.currentPrice === "" || null || undefined;
 
         if (isAuctionDeleted) {
           const deletedAucData: ChatRoomProps = {
@@ -78,13 +79,13 @@ export const useChatRoomData = (chatroomId: number) => {
             chatroomInfo: {
               auctionId: listItem.auctionId,
               auctionImageUrl: "",
-              auctionTitle: "삭제된 상품",
+              auctionTitle: listItem.auctionTitle,
               counterpartId: listItem.counterpartId,
               counterpartNickname: listItem.counterpartNickname,
               counterpartProfileImageUrl: listItem.counterpartProfileImageUrl,
             },
             productInfo: {
-              sellingStatus: auctionRes.data.sellingStatus,
+              sellingStatus: "",
               currentPrice: null,
             },
             isLocked: true,
