@@ -14,7 +14,19 @@ const ChatMe = ({
   const userId = useAuthStore.getState().userId;
   const isSenderSeller = sellerId === userId;
 
-  return messageType === "SYSTEM" ? (
+  return messageType === "SYSTEM" && message.includes("정산") ? (
+    <div className="m-2 flex items-end justify-end gap-2 text-right">
+      <div>
+        <p className="text-g300 text-xs">{read ? "" : "전송됨"}</p>
+        <p className="text-g300 text-xs">{formatMsgTime(createdAt)}</p>
+      </div>
+      <div className="bg-light-purple max-w-80 rounded-md p-3">
+        <p>정산이 완료되었습니다.</p>
+        <div className="bg-g300 my-2 h-[1px] border-0" />
+        {message.replace("정산이 완료되었습니다.", "")}
+      </div>
+    </div>
+  ) : messageType === "SYSTEM" && message.includes("주소") ? (
     <div className="m-2 flex items-end justify-end gap-2 text-right">
       <div>
         <p className="text-g300 text-xs">{read ? "" : "전송됨"}</p>

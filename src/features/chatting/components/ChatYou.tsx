@@ -65,7 +65,25 @@ const ChatYou = ({
     }
   }
 
-  return messageType === "SYSTEM" ? (
+  return messageType === "SYSTEM" && message.includes("정산") ? (
+    <div className="mx-2 my-4 flex gap-2">
+      <Avatar size="10" imageUrl={counterpartProfileImageUrl} />
+      <div>
+        <p className="mb-2 font-bold">{counterpartNickname}</p>
+        <div className="flex items-end">
+          <p className="bg-g400 mr-2 max-w-65 rounded-md p-3">
+            <p>정산이 완료되었습니다.</p>
+            <div className="bg-g300 my-2 h-[1px] border-0" />
+            {message.replace("정산이 완료되었습니다.", "")}
+          </p>
+          <div>
+            <p className="text-g300 text-xs">{read ? "" : "읽지 않음"}</p>
+            <p className="text-g300 text-xs">{formatMsgTime(createdAt)}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  ) : messageType === "SYSTEM" && message.includes("주소") ? (
     <div className="mx-2 my-4 flex gap-2">
       <Avatar size="10" imageUrl={counterpartProfileImageUrl} />
       <div>
