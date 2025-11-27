@@ -158,7 +158,7 @@ const ChatProductInfo = ({
       </div>
       <div
         className={`flex flex-col gap-1 text-sm ${
-          currentPrice ? `w-[80%]` : `min-w-[60%] md:w-[60%] lg:w-[72%]`
+          !currentPrice ? `w-[80%]` : `min-w-[60%] md:w-[60%] lg:w-[72%]`
         }`}
       >
         <p className="text-xs">{sellingStatus}</p>
@@ -170,7 +170,7 @@ const ChatProductInfo = ({
           {currentPrice ? currentPrice!.toString() : "삭제된 품목입니다."}
         </p>
       </div>
-      {currentPrice ? (
+      {!currentPrice ? null : (
         <div className="flex w-[23%] min-w-[15%] flex-col gap-2 md:w-[15%]">
           {userId === sellerId ? (
             <button
@@ -201,7 +201,7 @@ const ChatProductInfo = ({
             </>
           )}
         </div>
-      ) : null}
+      )}
       <ChatAddressModal
         open={addrOpen}
         initial={mainAddress}
