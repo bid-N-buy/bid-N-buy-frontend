@@ -158,7 +158,9 @@ const ChatProductInfo = ({
       </div>
       <div
         className={`flex flex-col gap-1 text-sm ${
-          !currentPrice ? `w-[80%]` : `min-w-[60%] md:w-[60%] lg:w-[72%]`
+          !currentPrice
+            ? `w-[85%] md:w-[80%]`
+            : `min-w-[60%] md:w-[60%] lg:w-[72%]`
         }`}
       >
         <p className="text-xs">{sellingStatus}</p>
