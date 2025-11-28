@@ -10,4 +10,6 @@ export interface NotiListProps {
   read: boolean;
   createdAt: string;
   deletedAt: string | null;
+  auctionId?: number;
+  sellerId?: number;
 }

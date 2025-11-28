@@ -9,21 +9,21 @@ import { useChatModalStore } from "../../../shared/store/ChatModalStore";
 const FcmListener = () => {
   const addNoti = useNotiStore((s) => s.addNoti);
   const token = useAuthStore((s) => s.accessToken);
-  const { makeChatRoomInAuc, openChatRoom } = useChatModalStore();
+  const { openChatRoom } = useChatModalStore();
 
   useEffect(() => {
-
     const unsubscribe = onMessage(messaging, async (payload) => {
-
       const data = payload.data || {};
 
-      const notificationId = data.notificationId ? BigInt(data.notificationId) : BigInt(0);
+      const notificationId = data.notificationId
+        ? BigInt(data.notificationId)
+        : BigInt(0);
       const type = data.type || "ALERT";
-      const content = data.body || payload.notification?.body || "새 알림이 있습니다.";
+      const content =
+        data.body || payload.notification?.body || "새 알림이 있습니다.";
       const createdAt = data.createdAt || new Date().toISOString();
       const auctionId = data.auctionId ? Number(data.auctionId) : undefined;
       const sellerId = data.sellerId ? Number(data.sellerId) : undefined;
-
 
       // ✅ Zustand에 알림 저장 (onClick 제외)
       addNoti({
@@ -41,7 +41,7 @@ const FcmListener = () => {
     return () => {
       unsubscribe();
     };
-  }, [addNoti, token, makeChatRoomInAuc, openChatRoom]);
+  }, [addNoti, token, openChatRoom]);
 
   return null;
 };
