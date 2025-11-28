@@ -305,10 +305,13 @@ const AccountSettings: React.FC = () => {
 
     try {
       const uid = await resolveUserId();
-      if (uid === 6)
-        return toast(null, "데모 계정의 비밀번호는 변경할 수 없습니다.");
 
       setPwLoading(true);
+
+      if (uid === 6) {
+        toast(null, "데모 계정의 비밀번호는 변경할 수 없습니다.");
+        return;
+      }
 
       const { data } = await api.post("/auth/user/password/change", {
         currentPassword,
@@ -391,8 +394,11 @@ const AccountSettings: React.FC = () => {
     if (!uid || !delPw) return toast(null, "userId 또는 비밀번호 확인 필요");
 
     try {
-      if (uid === 6) return toast(null, "데모 계정은 탈퇴하실 수 없습니다");
       setDelLoading(true);
+      if (uid === 6) {
+        toast(null, "데모 계정은 탈퇴하실 수 없습니다");
+        return;
+      }
       const { data } = await api.delete(`/auth/user/${uid}`, {
         data: { password: delPw },
         headers: { "Content-Type": "application/json" },
