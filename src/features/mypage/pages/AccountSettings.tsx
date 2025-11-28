@@ -304,7 +304,12 @@ const AccountSettings: React.FC = () => {
       return toast(null, "현재와 동일한 비밀번호입니다.");
 
     try {
+      const uid = await resolveUserId();
+      if (uid === 6)
+        return toast(null, "데모 계정의 비밀번호는 변경할 수 없습니다.");
+
       setPwLoading(true);
+
       const { data } = await api.post("/auth/user/password/change", {
         currentPassword,
         newPassword,
@@ -316,7 +321,7 @@ const AccountSettings: React.FC = () => {
     } finally {
       setPwLoading(false);
     }
-  }, [pw, toast]);
+  }, [pw, resolveUserId, toast]);
 
   // --- 이미지 업로드 ---
   const onPickImage = useCallback(() => fileRef.current?.click(), []);
@@ -386,6 +391,7 @@ const AccountSettings: React.FC = () => {
     if (!uid || !delPw) return toast(null, "userId 또는 비밀번호 확인 필요");
 
     try {
+      if (uid === 6) return toast(null, "데모 계정은 탈퇴하실 수 없습니다");
       setDelLoading(true);
       const { data } = await api.delete(`/auth/user/${uid}`, {
         data: { password: delPw },
