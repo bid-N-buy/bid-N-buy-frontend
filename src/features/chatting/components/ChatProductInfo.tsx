@@ -103,12 +103,10 @@ const ChatProductInfo = ({
 
       let response;
       if (isUpdate) {
-        console.log("update!");
         response = await api.put(`/address/${addressId}`, body, {
           withCredentials: true,
         });
       } else {
-        console.log("add!");
         response = await api.post("/address", body, {
           withCredentials: true,
         });

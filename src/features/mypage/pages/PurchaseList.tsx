@@ -295,16 +295,18 @@ const PurchasesPage: React.FC = () => {
       const endIso = getEndIso(it);
       const ended = isEndedByTime(it);
       const settled = isSettledOrDone(it, settledMap);
-      console.log(
-        `[PURCHASE#${i}] id=${it.id} orderId=${(it as any).orderId} end=`,
-        endIso,
-        " ended=",
-        ended,
-        " settled=",
-        settled,
-        " statusText=",
-        it.statusText
-      );
+      if (import.meta.env.DEV) {
+        console.log(
+          `[PURCHASE#${i}] id=${it.id} orderId=${(it as any).orderId} end=`,
+          endIso,
+          " ended=",
+          ended,
+          " settled=",
+          settled,
+          " statusText=",
+          it.statusText
+        );
+      }
     });
   }, [items, settledMap]);
 
