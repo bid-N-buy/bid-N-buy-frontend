@@ -66,8 +66,8 @@ const resolveUserIdFrom = (
 const isEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
 
 const LoginForm: React.FC = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("dinosaur7656@gmail.com");
+  const [password, setPassword] = useState("abcd1234");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
