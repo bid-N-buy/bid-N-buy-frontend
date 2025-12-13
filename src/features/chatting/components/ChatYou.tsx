@@ -7,8 +7,7 @@ import { useAuthStore } from "../../auth/store/authStore";
 import { loadTossPayments } from "@tosspayments/tosspayments-sdk";
 import { formatMsgTime } from "../../../shared/utils/datetime";
 
-// TODO: 추후 배포단계에서 .env로 옮길 예정
-const clientKey = "test_ck_DpexMgkW36PwLbonEpqwrGbR5ozO";
+const clientKey = import.meta.env.VITE_PAYMENT_CLIENT_KEY;
 
 const ChatYou = ({
   msgInfo,
