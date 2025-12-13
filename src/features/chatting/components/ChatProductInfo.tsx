@@ -12,7 +12,6 @@ const ChatProductInfo = ({
   sellingStatus,
   handleSendPaymentRequest,
   handleSendAddress,
-  isLocked,
 }: ChatProductInfoProps) => {
   const { auctionId, auctionImageUrl, auctionTitle, counterpartId } =
     auctionInfo;
