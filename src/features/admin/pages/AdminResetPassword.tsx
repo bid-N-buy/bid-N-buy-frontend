@@ -274,14 +274,14 @@ const AdminResetPassword = () => {
             <button
               type="button"
               onClick={() => setStep("request")}
-              className="flex-1 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50"
+              className="flex-1 rounded-md border border-gray-300 py-2 text-gray-700 hover:bg-gray-50"
             >
               이전
             </button>
             <button
               type="submit"
               disabled={loadingReset}
-              className="bg-purple flex-1 rounded-md text-white hover:opacity-90 disabled:opacity-60"
+              className="bg-purple flex-1 rounded-md py-2 text-white hover:opacity-90 disabled:opacity-60"
             >
               비밀번호 변경
             </button>
