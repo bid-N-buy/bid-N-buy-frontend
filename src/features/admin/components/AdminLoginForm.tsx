@@ -38,8 +38,8 @@ const resolveAdminIdFrom = (accessToken: string | null): number | null => {
 const isEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
 
 const AdminLoginForm = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("admin_demo@bidnbuy.com");
+  const [password, setPassword] = useState("admin123");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
