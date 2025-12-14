@@ -13,6 +13,7 @@ const STATUS_STYLE: Record<AuctionItem["sellingStatus"], string> = {
   진행중: "bg-purple text-white",
   완료: "bg-g300 text-white",
   종료: "bg-g300 text-white",
+  삭제: "bg-g300 text-white",
 };
 
 const ProductCard = React.memo(function ProductCard({
