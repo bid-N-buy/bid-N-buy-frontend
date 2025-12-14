@@ -6,6 +6,7 @@ import {
   Navigate,
   Outlet,
 } from "react-router-dom";
+import { ErrorBoundary } from "react-error-boundary";
 import { useAdminAuthStore } from "../features/admin/store/adminStore";
 import { useAuthInit } from "../features/auth/hooks/UseAuthInit";
 import AuthInitGate from "../features/auth/components/AuthInitGate";
@@ -45,7 +46,7 @@ const SignUpPage = React.lazy(
 const Main = React.lazy(() => import("../shared/pages/Main"));
 
 // const NotFoundPage = React.lazy(() => import("../shared/pages/NotFoundPage"));
-// const ErrorPage = React.lazy(() => import("../shared/pages/ErrorPage"));
+const ErrorPage = React.lazy(() => import("../shared/pages/ErrorPage"));
 
 // 경매
 const AuctionList = React.lazy(
@@ -159,103 +160,107 @@ export default function App() {
   if (!ready) return <div className="p-6 text-center">초기화 중...</div>;
 
   return (
-    <BrowserRouter>
-      <AuthInitGate />
-      {/* 알림 항상 유지되도록 최상단 배치 */}
-      <FcmInitializer />
-      <FcmListener />
-      {/* 전역 토스트 */}
-      {isVisible && <Toast message={message} type={type} onClose={hideToast} />}
-      <Routes>
-        {/* 기본 레이아웃 */}
-        <Route element={<AppLayout />}>
-          <Route index element={<Main />} />
+    <ErrorBoundary FallbackComponent={ErrorPage}>
+      <BrowserRouter>
+        <AuthInitGate />
+        {/* 알림 항상 유지되도록 최상단 배치 */}
+        <FcmInitializer />
+        <FcmListener />
+        {/* 전역 토스트 */}
+        {isVisible && (
+          <Toast message={message} type={type} onClose={hideToast} />
+        )}
+        <Routes>
+          {/* 기본 레이아웃 */}
+          <Route element={<AppLayout />}>
+            <Route index element={<Main />} />
 
-          {/* 로그인/회원가입 */}
-          <Route element={<GuestOnlyRoute />}>
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/signup" element={<SignUpPage />} />
-            <Route path="/resetPassword" element={<ResetPassword />} />
-          </Route>
-          <Route path="/oauth/callback" element={<OAuthCallback />} />
-
-          {/* 경매 */}
-          <Route path="/auctions">
-            <Route index element={<AuctionList />} />
-            <Route path=":id" element={<AuctionDetail />} />
-            <Route element={<ProtectedRoute />}>
-              <Route path="new" element={<AuctionForm />} />
+            {/* 로그인/회원가입 */}
+            <Route element={<GuestOnlyRoute />}>
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/signup" element={<SignUpPage />} />
+              <Route path="/resetPassword" element={<ResetPassword />} />
             </Route>
-          </Route>
+            <Route path="/oauth/callback" element={<OAuthCallback />} />
 
-          {/* 결제 관련 */}
-          <Route path="/payment/bridge" element={<PaymentBridge />} />
-          <Route path="/notice" element={<NotificationTestPage />} />
-
-          {/* 마이페이지 */}
-          <Route element={<ProtectedRoute />}>
-            <Route path="/mypage" element={<MypageLayout />}>
-              <Route index element={<MyPageMain />} />
-              <Route path="purchases" element={<PurchaseList />} />
-              <Route path="sales" element={<SaleList />} />
-              <Route path="wishlist" element={<WishList />} />
-              <Route path="account" element={<AccountSettings />} />
-              {/* <Route path="profile" element={<ProfileDetails />} /> */}
-              <Route path="profile/settings" element={<ProfileSetting />} />
-
-              {/* 문의/신고 */}
-              <Route path="inquiries" element={<InquiryList />} />
-
-              {/* 문의/신고 작성 (상대 경로로 묶기) */}
-              <Route path="support">
-                {/* /mypage/support -> /mypage/support/inquiries/new 로 리디렉트 */}
-                <Route
-                  index
-                  element={<Navigate to="inquiries/new" replace />}
-                />
-                <Route path="inquiries/new" element={<InquiryReportForm />} />
-                <Route path="reports/new" element={<InquiryReportForm />} />
-                <Route path="inquiries/:id" element={<InquiryDetailPage />} />
-                <Route path="reports/:id" element={<ReportDetailPage />} />
+            {/* 경매 */}
+            <Route path="/auctions">
+              <Route index element={<AuctionList />} />
+              <Route path=":id" element={<AuctionDetail />} />
+              <Route element={<ProtectedRoute />}>
+                <Route path="new" element={<AuctionForm />} />
               </Route>
-
-              {/* <Route path="inquiries/:id" element={<InquiryDetail />} /> */}
             </Route>
-            <Route path="/profile" element={<ProfileDetailsContainer />} />
-            <Route
-              path="/users/:targetUserId"
-              element={<ProfileDetailsContainer />}
-            />
-          </Route>
 
-          {/* 기타 */}
-          {/* <Route path="/error" element={<ErrorPage />} />
+            {/* 결제 관련 */}
+            <Route path="/payment/bridge" element={<PaymentBridge />} />
+            <Route path="/notice" element={<NotificationTestPage />} />
+
+            {/* 마이페이지 */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="/mypage" element={<MypageLayout />}>
+                <Route index element={<MyPageMain />} />
+                <Route path="purchases" element={<PurchaseList />} />
+                <Route path="sales" element={<SaleList />} />
+                <Route path="wishlist" element={<WishList />} />
+                <Route path="account" element={<AccountSettings />} />
+                {/* <Route path="profile" element={<ProfileDetails />} /> */}
+                <Route path="profile/settings" element={<ProfileSetting />} />
+
+                {/* 문의/신고 */}
+                <Route path="inquiries" element={<InquiryList />} />
+
+                {/* 문의/신고 작성 (상대 경로로 묶기) */}
+                <Route path="support">
+                  {/* /mypage/support -> /mypage/support/inquiries/new 로 리디렉트 */}
+                  <Route
+                    index
+                    element={<Navigate to="inquiries/new" replace />}
+                  />
+                  <Route path="inquiries/new" element={<InquiryReportForm />} />
+                  <Route path="reports/new" element={<InquiryReportForm />} />
+                  <Route path="inquiries/:id" element={<InquiryDetailPage />} />
+                  <Route path="reports/:id" element={<ReportDetailPage />} />
+                </Route>
+
+                {/* <Route path="inquiries/:id" element={<InquiryDetail />} /> */}
+              </Route>
+              <Route path="/profile" element={<ProfileDetailsContainer />} />
+              <Route
+                path="/users/:targetUserId"
+                element={<ProfileDetailsContainer />}
+              />
+            </Route>
+
+            {/* 기타 */}
+            {/* <Route path="/error" element={<ErrorPage />} />
           <Route path="*" element={<NotFoundPage />} /> */}
-        </Route>
-
-        {/* 관리자 */}
-        <Route path="/admin">
-          {/* 관리자 로그인/회원가입 */}
-          <Route element={<AdminGuestOnlyRoute />}>
-            <Route path="login" element={<AdminLoginPage />} />
-            <Route path="signup" element={<AdminSignUpPage />} />
-            <Route path="resetPassword" element={<AdminResetPassword />} />
           </Route>
 
-          {/* 관리자 페이지 (로그인 필요) */}
-          <Route element={<AdminProtectedRoute />}>
-            <Route element={<AdminLayout />}>
-              <Route index element={<AdminDashboard />} />
-              <Route path="inquiries" element={<AdminInquiryBoard />} />
-              <Route path="inquiries/:id" element={<AdminInquiryPost />} />
-              <Route path="users" element={<AdminUserBoard />} />
-              <Route path="users/:id" element={<AdminUserDetail />} />
-              <Route path="auctions" element={<AdminAuctionBoard />} />
-              <Route path="auctions/:id" element={<AdminAuctionPost />} />
+          {/* 관리자 */}
+          <Route path="/admin">
+            {/* 관리자 로그인/회원가입 */}
+            <Route element={<AdminGuestOnlyRoute />}>
+              <Route path="login" element={<AdminLoginPage />} />
+              <Route path="signup" element={<AdminSignUpPage />} />
+              <Route path="resetPassword" element={<AdminResetPassword />} />
+            </Route>
+
+            {/* 관리자 페이지 (로그인 필요) */}
+            <Route element={<AdminProtectedRoute />}>
+              <Route element={<AdminLayout />}>
+                <Route index element={<AdminDashboard />} />
+                <Route path="inquiries" element={<AdminInquiryBoard />} />
+                <Route path="inquiries/:id" element={<AdminInquiryPost />} />
+                <Route path="users" element={<AdminUserBoard />} />
+                <Route path="users/:id" element={<AdminUserDetail />} />
+                <Route path="auctions" element={<AdminAuctionBoard />} />
+                <Route path="auctions/:id" element={<AdminAuctionPost />} />
+              </Route>
             </Route>
           </Route>
-        </Route>
-      </Routes>
-    </BrowserRouter>
+        </Routes>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }
