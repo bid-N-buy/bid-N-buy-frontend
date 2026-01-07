@@ -204,43 +204,47 @@ export const useChatSocket = (chatroomId: number) => {
     }
 
     // 받아올 url 정의
-    let uploadedImageUrl: string;
-    const messageText = "사진을 보냈습니다.";
+    // let uploadedImageUrl: string;
+    // const messageText = "사진을 보냈습니다.";
 
     try {
       // 폼 데이터로 전송(요청 파라미터)
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("messageText", messageText);
+      formData.append("messageType", "IMAGE");
 
-      const url = await api.post(`/chat/${chatroomId}/image`, formData, {
+      await api.post(`/chat/${chatroomId}/image`, formData, {
         headers: {
           "content-type": "multipart/form-data",
           Authorization: `Bearer ${token}`,
         },
       });
 
-      uploadedImageUrl = url.data;
+      // uploadedImageUrl = url.data;
     } catch (e) {
       console.error("이미지 업로드 실패:", e);
       return;
     }
 
-    const messageImage = {
-      chatroomId: chatroomId,
-      senderId: userId,
-      imageUrl: uploadedImageUrl,
-      messageType: "IMAGE",
-    };
+    // const messageImage = {
+    //   chatroomId: chatroomId,
+    //   senderId: userId,
+    //   // imageUrl: uploadedImageUrl,
+    //   messageType: "IMAGE",
+    //   message: messageText,
+    // };
 
     // 낙관적 업데이트
-    useChatModalStore.getState().handleNewChatMessage(messageImage.imageUrl);
+    // useChatModalStore.getState().handleNewChatMessage(messageImage.imageUrl);
 
     // 이중 전송됨
     // client.publish({
     //   destination: `/app/chat/message`,
     //   body: JSON.stringify(messageImage),
-    //   headers: { "content-type": "multipart/form-data" },
+    //   headers: {
+    //     "content-type": "application/json",
+    //     Authorization: `Bearer ${token}`,
+    //   },
     // });
   };
 
