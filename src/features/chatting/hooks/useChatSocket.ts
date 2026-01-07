@@ -205,13 +205,14 @@ export const useChatSocket = (chatroomId: number) => {
 
     // 받아올 url 정의
     // let uploadedImageUrl: string;
-    // const messageText = "사진을 보냈습니다.";
+    const messageText = "사진을 보냈습니다.";
 
     try {
       // 폼 데이터로 전송(요청 파라미터)
       const formData = new FormData();
       formData.append("file", file);
       formData.append("messageType", "IMAGE");
+      formData.append("messageText", messageText);
 
       await api.post(`/chat/${chatroomId}/image`, formData, {
         headers: {
@@ -229,7 +230,7 @@ export const useChatSocket = (chatroomId: number) => {
     // const messageImage = {
     //   chatroomId: chatroomId,
     //   senderId: userId,
-    //   // imageUrl: uploadedImageUrl,
+    //   imageUrl: uploadedImageUrl,
     //   messageType: "IMAGE",
     //   message: messageText,
     // };

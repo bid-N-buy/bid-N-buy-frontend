@@ -73,10 +73,10 @@ const ChatInput = ({
           </button>
         </div>
       )}
-      <div className="bg-white px-3 py-2">
+      <div className="relative bg-white px-3 py-2">
         <form className="w-full" onSubmit={submitMessage}>
           <div
-            className={`relative block w-full rounded-md border-2 p-2 ${!isConnected ? `bg-g400 border-g500` : `border-purple`} ${preview ? `flex gap-2` : ""}`}
+            className={`block w-full rounded-md border-2 p-2 ${!isConnected ? `bg-g400 border-g500` : `border-purple`} ${preview ? `flex gap-2` : ""}`}
           >
             <input
               type="text"

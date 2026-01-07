@@ -156,9 +156,9 @@ const ChatRoom = ({
           const prevMsg = messages[index - 1];
           const prevMessageDate = prevMsg
             ? new Date(prevMsg.createdAt).toDateString()
-            : null; // 💡 이전 메시지 날짜
+            : null; // 이전 메시지 날짜
 
-          // 1. 날짜가 다르거나 (index > 0), 첫 번째 메시지일 때 (index === 0) 날짜 경계선을 표시합니다.
+          // 날짜 경계선을 표시
           const showDateSeparator =
             index === 0 || messageDate !== prevMessageDate;
           return (
