@@ -13,6 +13,30 @@ export const useChatBadge = () => {
   useEffect(() => {
     if (!token) return;
 
+    const fetchChatList = async () => {
+      const res = await api.get<ChatListItemProps[]>("/chatrooms/list", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return res.data;
+    };
+
+    const validRooms = async (
+      chatRooms: ChatListItemProps[],
+      client: Client
+    ) => {
+      chatRooms
+        .filter(
+          (chatRoom) =>
+            chatRoom.counterpartNickname !== "탈퇴회원" && !!chatRoom.chatroomId
+        )
+        .forEach((chatRoom) => {
+          client.subscribe(`/topic/chat/room/${chatRoom.chatroomId}`, (msg) => {
+            const data = JSON.parse(msg.body);
+            useChatModalStore.getState().handleNewChatMessage(data);
+          });
+        });
+    };
+
     const client = new Client({
       webSocketFactory: () => new SockJS(import.meta.env.VITE_WEBSOCKET_URL),
       connectHeaders: { "Auth-Token": token },
@@ -23,35 +47,41 @@ export const useChatBadge = () => {
       onWebSocketError: (error) => {
         console.error("❌ WebSocket 연결 에러 발생:", error);
       },
-      onConnect: () => {
+      onConnect: async () => {
         try {
-          api
-            .get<ChatListItemProps[]>("/chatrooms/list", {
-              headers: { Authorization: `Bearer ${token}` },
-            })
-            .then((res) => {
-              res.data
-                .filter(
-                  (chatRoom) =>
-                    chatRoom.counterpartNickname !== "탈퇴회원" &&
-                    !!chatRoom.chatroomId
-                )
-                .forEach((chatRoom) => {
-                  client.subscribe(
-                    `/topic/chat/room/${chatRoom.chatroomId}`,
-                    (msg) => {
-                      const data = JSON.parse(msg.body);
-                      useChatModalStore.getState().handleNewChatMessage(data);
-                    }
-                  );
-                });
-            })
-            .catch((error) => {
-              console.error("채팅방 목록 조회 중 오류 발생:", error);
-            });
-        } catch (e) {
-          console.error("웹소켓 구독 로직 중 심각한 오류 발생:", e);
+          const rooms = await fetchChatList();
+          validRooms(rooms, client);
+        } catch (error) {
+          console.error("채팅 연결 프로세스 중 오류:", error);
         }
+        // try {
+        //   api
+        //     .get<ChatListItemProps[]>("/chatrooms/list", {
+        //       headers: { Authorization: `Bearer ${token}` },
+        //     })
+        //     .then((res) => {
+        //       res.data
+        //         .filter(
+        //           (chatRoom) =>
+        //             chatRoom.counterpartNickname !== "탈퇴회원" &&
+        //             !!chatRoom.chatroomId
+        //         )
+        //         .forEach((chatRoom) => {
+        //           client.subscribe(
+        //             `/topic/chat/room/${chatRoom.chatroomId}`,
+        //             (msg) => {
+        //               const data = JSON.parse(msg.body);
+        //               useChatModalStore.getState().handleNewChatMessage(data);
+        //             }
+        //           );
+        //         });
+        //     })
+        //     .catch((error) => {
+        //       console.error("채팅방 목록 조회 중 오류 발생:", error);
+        //     });
+        // } catch (e) {
+        //   console.error("웹소켓 구독 로직 중 심각한 오류 발생:", e);
+        // }
       },
     });
 
