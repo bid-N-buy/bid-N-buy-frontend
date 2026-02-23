@@ -35,7 +35,7 @@ const ChatMe = ({
       <div className="bg-light-purple max-w-80 rounded-md p-3">
         <p>주소를 전송합니다.</p>
         <div className="bg-g300 my-2 h-[1px] border-0" />
-        {message.replace("주소를 전송합니다. ", "")}
+        {message}
       </div>
     </div>
   ) : messageType === "REQUEST" && isSenderSeller ? (
