@@ -91,7 +91,7 @@ const ChatYou = ({
           <p className="bg-g400 mr-2 max-w-65 rounded-md p-3">
             <p>주소를 전송합니다.</p>
             <div className="bg-g300 my-2 h-[1px] border-0" />
-            {message.replace("주소를 전송합니다. ", "")}
+            {message}
           </p>
           <div>
             <p className="text-g300 text-xs">{read ? "" : "읽지 않음"}</p>

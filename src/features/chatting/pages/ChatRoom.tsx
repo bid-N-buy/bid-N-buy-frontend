@@ -152,7 +152,7 @@ const ChatRoom = ({
           </div>
         )}
         {messages.map((msg, index) => {
-          const messageDate = new Date(msg.createdAt).toDateString(); // 💡 현재 메시지 날짜 (Day/Month/Year)
+          const messageDate = new Date(msg.createdAt).toDateString(); // 현재 메시지 날짜
           const prevMsg = messages[index - 1];
           const prevMessageDate = prevMsg
             ? new Date(prevMsg.createdAt).toDateString()

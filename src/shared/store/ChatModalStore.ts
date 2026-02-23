@@ -33,7 +33,7 @@ const calculateTotalUnread = (list: ChatListItemProps[]) =>
 const updateChatState = (newChatList: ChatListItemProps[], set) => {
   const newTotalUnreadCount = calculateTotalUnread(newChatList);
   set({
-    chatList: newChatList,
+    chatList: [...newChatList],
     totalUnreadCount: newTotalUnreadCount,
   });
 };
@@ -138,11 +138,17 @@ export const useChatModalStore = create<ChatModalStoreProps>((set, get) => ({
     let updatedRoom: ChatListItemProps | null = null;
     const updatedList = chatList.filter((item) => {
       if (item.chatroomId === message.chatroomId) {
+        const previewText =
+          message.messageType !== "IMAGE" || message.messageType !== "SYSTEM"
+            ? message.message
+            : message.messageType === "IMAGE"
+              ? "사진을 보냈습니다."
+              : "주소를 보냈습니다.";
         updatedRoom = {
           ...item,
           // 접속한 방이 맞는지와 보낸 사람이 나인지를 확인한 후 맞으면 unReadCount X
           unreadCount: isInThisRoom || isSenderMe ? 0 : item.unreadCount + 1,
-          lastMessagePreview: message.message,
+          lastMessagePreview: previewText,
           lastMessageTime: message.createdAt,
         };
         return false;
