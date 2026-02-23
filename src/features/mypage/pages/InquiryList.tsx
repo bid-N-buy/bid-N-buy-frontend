@@ -2,9 +2,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { API_BASE } from "../../../shared/api/axiosInstance";
 import { useAuthStore, type AuthState } from "../../auth/store/authStore";
-
-const BASE = import.meta.env.VITE_BACKEND_ADDRESS ?? "http://localhost:8080";
 
 /* ===========================
  *        API 타입
@@ -212,12 +211,15 @@ const InquiryList: React.FC = () => {
       try {
         const [inqRes, repRes] = await Promise.allSettled([
           axios.get<{ data: { inquiries: InquiryApiItem[] } }>(
-            `${BASE}/inquiries`,
+            `${API_BASE}/inquiries`,
             { headers }
           ),
-          axios.get<{ data: { reports: ReportApiItem[] } }>(`${BASE}/reports`, {
-            headers,
-          }),
+          axios.get<{ data: { reports: ReportApiItem[] } }>(
+            `${API_BASE}/reports`,
+            {
+              headers,
+            }
+          ),
         ]);
 
         const inqRows: Row[] =

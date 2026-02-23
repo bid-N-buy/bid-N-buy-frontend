@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
+import { API_BASE } from "../../../shared/api/axiosInstance";
 import { useAuthStore } from "../../auth/store/authStore";
-
-const BASE = import.meta.env.VITE_BACKEND_ADDRESS ?? "http://localhost:8080";
 
 type InquiryDetailDTO = {
   inquiriesId: number;
@@ -37,7 +36,7 @@ export function useInquiryDetail(inquiryId?: string) {
         setLoading(true);
         setErrMsg(null);
         const res = await axios.get<{ data: InquiryDetailDTO }>(
-          `${BASE}/inquiries/${inquiryId}`,
+          `${API_BASE}/inquiries/${inquiryId}`,
           { headers }
         );
         if (!alive) return;

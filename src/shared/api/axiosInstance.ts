@@ -7,7 +7,8 @@ import type {
 } from "axios";
 import { useAuthStore } from "../../features/auth/store/authStore";
 
-export const API_BASE = import.meta.env.VITE_BACKEND_ADDRESS as string;
+export const API_BASE =
+  (import.meta.env.VITE_BACKEND_ADDRESS as string) ?? "http://localhost:8080";
 
 const api: AxiosInstance = axios.create({
   baseURL: API_BASE,

@@ -1,13 +1,12 @@
 // src/features/auth/components/SignUpForm.tsx
 import React, { useEffect, useMemo, useState } from "react";
 import axios, { AxiosError } from "axios";
+import { API_BASE } from "../../../../shared/api/axiosInstance";
 import { useNavigate } from "react-router-dom";
 import Toast from "../../../../shared/components/Toast";
 
-const BASE = import.meta.env.VITE_BACKEND_ADDRESS ?? "http://localhost:8080";
-
 const publicApi = axios.create({
-  baseURL: BASE,
+  baseURL: API_BASE,
   withCredentials: true,
   timeout: 10_000,
 });

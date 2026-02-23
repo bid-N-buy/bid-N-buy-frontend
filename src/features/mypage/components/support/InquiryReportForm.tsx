@@ -1,6 +1,7 @@
 // src/features/support/components/InquiryReportForm.tsx
 import React, { useMemo, useState } from "react";
 import axios from "axios";
+import { API_BASE } from "../../../../shared/api/axiosInstance";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthStore, type AuthState } from "../../../auth/store/authStore";
 import Toast from "../../../../shared/components/Toast";
@@ -20,8 +21,6 @@ type InquiryResp = {
 };
 
 type ReportResp = { success: boolean; message: string; data?: unknown };
-
-const BASE = import.meta.env.VITE_BACKEND_ADDRESS ?? "http://localhost:8080";
 
 const modeToPath = (m: Mode) =>
   m === "inquiry"
@@ -92,14 +91,14 @@ const InquiryReportForm: React.FC = () => {
 
       if (mode === "inquiry") {
         const { data } = await axios.post<InquiryResp>(
-          `${BASE}/inquiries`,
+          `${API_BASE}/inquiries`,
           payload,
           { headers }
         );
         toast(data?.message ?? "문의가 등록되었습니다.", null);
       } else {
         const { data } = await axios.post<ReportResp>(
-          `${BASE}/reports`,
+          `${API_BASE}/reports`,
           payload,
           { headers }
         );

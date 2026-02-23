@@ -1,6 +1,7 @@
 // src/features/mypage/hooks/useProfileSalesPreview.ts
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
+import { API_BASE } from "../../../shared/api/axiosInstance";
 
 export type Item = {
   id: number | string;
@@ -115,8 +116,6 @@ type PurchaseItem = {
   statusText?: string; // "낙찰 완료", "거래 중" 등
 };
 
-const BASE = import.meta.env.VITE_BACKEND_ADDRESS ?? "http://localhost:8080";
-
 /**
  * 사용법:
  * const { sellingPreview, soldPreview, sellingCount, soldCount, loading, error } =
@@ -153,7 +152,7 @@ export function useProfileSalesPreview({
         const sellingDetails: AuctionDetail[] = await Promise.all(
           (ongoingIds ?? []).map(async (id) => {
             const { data } = await axios.get<AuctionDetail>(
-              `${BASE}/auctions/${id}`,
+              `${API_BASE}/auctions/${id}`,
               { withCredentials: true }
             );
             return data;
@@ -183,7 +182,7 @@ export function useProfileSalesPreview({
         if (targetUserId != null) {
           // ✅ 다른 유저 프로필: 그 유저의 "구매 완료"를 보여줌
           const { data: purchases } = await axios.get<PurchaseItem[]>(
-            `${BASE}/users/${targetUserId}/purchases`,
+            `${API_BASE}/users/${targetUserId}/purchases`,
             { withCredentials: true }
           );
 
@@ -203,7 +202,7 @@ export function useProfileSalesPreview({
         } else {
           // ✅ 내 마이페이지: 내가 올린 물건들의 상태(/mypage/sales)
           const { data: mySales } = await axios.get<MySalesItem[]>(
-            `${BASE}/mypage/sales`,
+            `${API_BASE}/mypage/sales`,
             { withCredentials: true }
           );
 
