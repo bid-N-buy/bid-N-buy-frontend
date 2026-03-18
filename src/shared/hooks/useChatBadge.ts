@@ -54,34 +54,6 @@ export const useChatBadge = () => {
         } catch (error) {
           console.error("채팅 연결 프로세스 중 오류:", error);
         }
-        // try {
-        //   api
-        //     .get<ChatListItemProps[]>("/chatrooms/list", {
-        //       headers: { Authorization: `Bearer ${token}` },
-        //     })
-        //     .then((res) => {
-        //       res.data
-        //         .filter(
-        //           (chatRoom) =>
-        //             chatRoom.counterpartNickname !== "탈퇴회원" &&
-        //             !!chatRoom.chatroomId
-        //         )
-        //         .forEach((chatRoom) => {
-        //           client.subscribe(
-        //             `/topic/chat/room/${chatRoom.chatroomId}`,
-        //             (msg) => {
-        //               const data = JSON.parse(msg.body);
-        //               useChatModalStore.getState().handleNewChatMessage(data);
-        //             }
-        //           );
-        //         });
-        //     })
-        //     .catch((error) => {
-        //       console.error("채팅방 목록 조회 중 오류 발생:", error);
-        //     });
-        // } catch (e) {
-        //   console.error("웹소켓 구독 로직 중 심각한 오류 발생:", e);
-        // }
       },
     });
 
