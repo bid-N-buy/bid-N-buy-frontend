@@ -3,7 +3,6 @@ import api from "../../../shared/api/axiosInstance";
 import Avatar from "../../../shared/components/Avatar";
 import type { ChatYouProps } from "../types/ChatType";
 import { useAuthStore } from "../../auth/store/authStore";
-import { buildImageUrl } from "../../../shared/utils/imageUrl";
 //토스페이먼츠
 import { loadTossPayments } from "@tosspayments/tosspayments-sdk";
 import { formatMsgTime } from "../../../shared/utils/datetime";
@@ -110,7 +109,7 @@ const ChatYou = ({
           <div className="bg-g400 mr-2 max-w-65 rounded-md p-3">
             <div className="flex gap-2">
               <img
-                src={buildImageUrl(auctionImageUrl) ?? ""}
+                src={auctionImageUrl ? auctionImageUrl : ""}
                 alt={`${auctionTitle}의 메인 이미지`}
                 className="size-15"
               />
@@ -153,7 +152,7 @@ const ChatYou = ({
         <div className="flex items-end">
           <div className="bg-g400 mr-2 max-w-65 rounded-md p-3">
             <img
-              src={buildImageUrl(imageUrl) ?? ""}
+              src={imageUrl!}
               alt="전송된 이미지"
               className="max-w-full object-cover"
             />

@@ -2,7 +2,6 @@ import React from "react";
 import { useAuthStore } from "../../auth/store/authStore";
 import type { ChatMeProps } from "../types/ChatType";
 import { formatMsgTime } from "../../../shared/utils/datetime";
-import { buildImageUrl } from "../../../shared/utils/imageUrl";
 
 const ChatMe = ({
   msgInfo,
@@ -48,7 +47,7 @@ const ChatMe = ({
       <div className="bg-light-purple max-w-80 rounded-md p-3">
         <div className="flex gap-2">
           <img
-            src={buildImageUrl(auctionImageUrl) ?? ""}
+            src={auctionImageUrl ? auctionImageUrl : ""}
             alt={`${auctionTitle}의 메인 이미지`}
             className="size-15"
           />
@@ -74,7 +73,7 @@ const ChatMe = ({
       </div>
       <div className="bg-light-purple max-w-80 rounded-md p-3">
         <img
-          src={buildImageUrl(imageUrl) ?? ""}
+          src={imageUrl!}
           alt="전송된 이미지"
           className="max-w-full object-cover"
         />
