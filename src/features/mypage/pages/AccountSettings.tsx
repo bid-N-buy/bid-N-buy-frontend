@@ -1,4 +1,3 @@
-// src/features/mypage/pages/AccountSettings.tsx
 import React, {
   useCallback,
   useEffect,
@@ -19,6 +18,7 @@ import type { BankAccountDraft } from "../types/bankAccount";
 
 // 기본 아바타
 import defaultAvatar from "../../../assets/avatar.svg";
+import { buildImageUrl } from "../../../shared/utils/imageUrl";
 
 // --- 타입 정의 ---
 type PasswordForm = {
@@ -190,7 +190,7 @@ const AccountSettings: React.FC = () => {
         try {
           const { data } = await api.get(`/auth/${uid}/profile`);
           const raw = data?.profileImageUrl ?? null;
-          const abs = makeAbsolute(raw) ?? DEFAULT_AVATAR;
+          const abs = buildImageUrl(raw) ?? DEFAULT_AVATAR;
           const bust = `${abs}${abs.includes("?") ? "&" : "?"}v=${Date.now()}`;
           setCurrentImageUrl(bust);
         } catch {
@@ -359,7 +359,7 @@ const AccountSettings: React.FC = () => {
       });
 
       const raw = data?.profileImageUrl ?? data?.imageUrl ?? null;
-      const abs = makeAbsolute(raw) ?? DEFAULT_AVATAR;
+      const abs = buildImageUrl(raw) ?? DEFAULT_AVATAR;
       const bust = `${abs}${abs.includes("?") ? "&" : "?"}v=${Date.now()}`;
       setCurrentImageUrl(bust);
       setProfile?.({
