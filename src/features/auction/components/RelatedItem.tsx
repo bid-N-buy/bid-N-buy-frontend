@@ -31,11 +31,7 @@ const RelatedItem = ({
           size: 5, // 현재 상품 제외 가능성 고려해 5개 요청
         };
         const data = await fetchAuctions(query);
-        const list =
-          (data as any).data ??
-          (data as any).items ??
-          (data as any).content ??
-          [];
+        const list = data.data ?? [];
 
         // 현재 상품 제외하고 4개만
         const filtered = (list as AuctionItem[])

@@ -41,11 +41,7 @@ const AuctionSection = ({
           ...(params ?? {}),
         };
         const data: AuctionsRes = await fetchAuctions(query);
-        const list =
-          (data as any).data ??
-          (data as any).items ??
-          (data as any).content ??
-          [];
+        const list = data.data ?? [];
         setItems(list as AuctionItem[]);
       } catch (e: any) {
         setError(e?.message ?? "경매 목록을 불러오지 못했습니다.");
