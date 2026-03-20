@@ -7,7 +7,6 @@ import AuctionGuide from "../components/AuctionGuide";
 import RelatedItem from "../components/RelatedItem";
 import { useAuctionDetailStore } from "../store/auctionDetailStore";
 import { useAuthStore } from "../../auth/store/authStore";
-import useToast from "../../../shared/hooks/useToast";
 
 const AuctionDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -22,7 +21,6 @@ const AuctionDetail = () => {
     reset,
     patch,
   } = useAuctionDetailStore();
-  const { showToast } = useToast();
 
   useEffect(() => {
     if (!id) return;
@@ -95,7 +93,6 @@ const AuctionDetail = () => {
                 reset(); // 상세 캐시 비우기
                 navigate("/", { replace: true }); // 메인으로
               }}
-              showToast={showToast}
             />
           </div>
         </div>

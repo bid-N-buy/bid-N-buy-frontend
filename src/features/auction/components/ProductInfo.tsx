@@ -37,8 +37,6 @@ export interface ProductInfoProps {
   onDeleteClick?: () => void;
 
   onAfterBid?: (next: { currentPrice?: number }) => void;
-
-  showToast?: (msg: string, type?: "success" | "error") => void;
 }
 
 const ProductInfo = ({
@@ -61,7 +59,6 @@ const ProductInfo = ({
   isSeller = false,
   onDeleteClick,
   onAfterBid,
-  showToast: propShowToast,
 }: ProductInfoProps) => {
   const [isBidModalOpen, setIsBidModalOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -136,7 +133,7 @@ const ProductInfo = ({
   // 입찰
   const { submitBid, loading } = useBid({
     onSuccess: (res) => {
-      propShowToast("입찰이 완료되었습니다.", "success");
+      showToast("입찰이 완료되었습니다.", "success");
       const nextPrice = res.item?.bidPrice;
       onAfterBid?.({
         currentPrice: Number.isFinite(nextPrice)
@@ -453,7 +450,6 @@ const ProductInfo = ({
         productTitle={title ?? ""}
         onBidSubmit={handleBidSubmit}
       />
-
 
       {/* 삭제 모달 */}
       {confirmOpen && (
