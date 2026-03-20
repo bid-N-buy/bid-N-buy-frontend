@@ -233,8 +233,18 @@ export function useProfileSalesPreview({
         setSoldPreview(soldItems.slice(0, 3));
         setSoldCount(soldItems.length);
         setErr(null);
-      } catch (e: any) {
-        setErr(e?.message ?? "failed to load");
+      } catch (e: unknown) {
+        let m = "failed to load";
+        if (axios.isAxiosError(e)) {
+          m =
+            e.response?.data?.message ||
+            e.response?.data?.error ||
+            e.message ||
+            m;
+        } else if (e instanceof Error) {
+          m = e.message;
+        }
+        setErr(m ?? "failed to load");
       } finally {
         if (alive) setLoading(false);
       }

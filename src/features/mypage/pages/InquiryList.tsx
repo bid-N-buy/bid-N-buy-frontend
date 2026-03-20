@@ -287,13 +287,19 @@ const InquiryList: React.FC = () => {
         ) {
           setErr("목록을 불러오지 못했습니다.");
         }
-      } catch (e: any) {
+      } catch (e: unknown) {
         if (mounted) {
-          setErr(
-            e?.response?.data?.message ||
-              e?.message ||
-              "목록을 불러오지 못했습니다."
-          );
+          let m = "목록을 불러오지 못했습니다.";
+          if (axios.isAxiosError(e)) {
+            m =
+              e.response?.data?.message ||
+              e.response?.data?.error ||
+              e.message ||
+              m;
+          } else if (e instanceof Error) {
+            m = e.message;
+          }
+          setErr(m ?? "목록을 불러오지 못했습니다.");
         }
       } finally {
         if (mounted) setLoading(false);

@@ -25,13 +25,19 @@ export function useSupport<T>(url?: string, id?: string) {
         const res = await axios.get<{ data: T }>(`${url}/${id}`, { headers });
         if (!alive) return;
         setData(res.data?.data ?? null);
-      } catch (e: any) {
+      } catch (e: unknown) {
         if (!alive) return;
-        setErrMsg(
-          e?.response?.data?.message ||
-            e?.message ||
-            "상세 내용을 불러오지 못했습니다."
-        );
+        let m = "상세 내용을 불러오지 못했습니다.";
+        if (axios.isAxiosError(e)) {
+          m =
+            e.response?.data?.message ||
+            e.response?.data?.error ||
+            e.message ||
+            m;
+        } else if (e instanceof Error) {
+          m = e.message;
+        }
+        setErrMsg(m ?? "상세 내용을 불러오지 못했습니다.");
       } finally {
         if (alive) setLoading(false);
       }
