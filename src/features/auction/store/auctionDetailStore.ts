@@ -25,8 +25,9 @@ export const useAuctionDetailStore = create<AuctionDetailState>((set) => ({
     try {
       const data = await getAuctionById(id);
       set({ detail: data, loading: false });
-    } catch (e: any) {
-      set({ error: e?.message ?? "불러오기 실패", loading: false });
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "불러오기 실패";
+      set({ error: msg, loading: false });
     }
   },
   reset: () => set({ detail: null, loading: false, error: null }),

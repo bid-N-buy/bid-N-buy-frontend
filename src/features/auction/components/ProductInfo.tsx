@@ -99,8 +99,8 @@ const ProductInfo = ({
         await navigator.clipboard.writeText(window.location.href);
         showToast("링크가 복사되었습니다.", "success");
       }
-    } catch (err: any) {
-      if (err.name !== "AbortError") {
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name !== "AbortError") {
         showToast("공유에 실패했습니다.", "error");
       }
     } finally {
@@ -120,9 +120,10 @@ const ProductInfo = ({
       if (adminToken) await adminDeleteAuction(auctionId);
       showToast("경매가 삭제되었습니다.", "success");
       onDeleteClick?.();
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const e = err as any;
       const msg =
-        err?.response?.data?.message ?? err?.message ?? "삭제에 실패했습니다.";
+        e?.response?.data?.message ?? e?.message ?? "삭제에 실패했습니다.";
       showToast(msg, "error");
     } finally {
       setIsMenuOpen(false);

@@ -24,12 +24,9 @@ export function useBid({ onSuccess, onError }: UseBidOptions = {}) {
         }
         onSuccess?.(res);
         return res;
-      } catch (e: any) {
+      } catch (e: unknown) {
         const msg =
-          e?.response?.data?.error ||
-          e?.response?.data?.message ||
-          e?.message ||
-          "입찰 처리 중 오류가 발생했습니다.";
+          e instanceof Error ? e.message : "입찰 처리 중 오류가 발생했습니다.";
         onError?.(msg);
         throw e;
       } finally {

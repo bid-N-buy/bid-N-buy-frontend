@@ -42,9 +42,8 @@ const AdminAuctionPost = () => {
       if (adminToken) await adminDeleteAuction(auctionId);
       showToast("경매가 삭제되었습니다.", "success");
       navigate(-1);
-    } catch (err: any) {
-      const msg =
-        err?.response?.data?.message ?? err?.message ?? "삭제에 실패했습니다.";
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "삭제에 실패했습니다.";
       showToast(msg, "error");
     } finally {
       setConfirmOpen(false);
@@ -66,7 +65,7 @@ const AdminAuctionPost = () => {
       <button
         type="button"
         onClick={() => navigate(-1)}
-        className="mb-4 flex cursor-pointer items-center gap-1.5 text-sm text-gray-500 transition-colors hover:text-purple"
+        className="hover:text-purple mb-4 flex cursor-pointer items-center gap-1.5 text-sm text-gray-500 transition-colors"
       >
         <ChevronLeft className="h-4 w-4" />
         <span>목록</span>
@@ -87,7 +86,7 @@ const AdminAuctionPost = () => {
             </Link>
             <button
               type="button"
-              className="hover:border-red hover:text-red cursor-pointer border border-gray-300 rounded-md px-2.5 py-1.5 text-sm font-semibold text-gray-600 transition-colors"
+              className="hover:border-red hover:text-red cursor-pointer rounded-md border border-gray-300 px-2.5 py-1.5 text-sm font-semibold text-gray-600 transition-colors"
               onClick={() => handleDeleteAuc()}
             >
               삭제
@@ -101,7 +100,7 @@ const AdminAuctionPost = () => {
             {auction.sellerId ? (
               <Link
                 to={`/admin/users/${auction.sellerId}`}
-                className="font-medium text-neutral-700 cursor-pointer"
+                className="cursor-pointer font-medium text-neutral-700"
               >
                 {auction.sellerNickname}
               </Link>
