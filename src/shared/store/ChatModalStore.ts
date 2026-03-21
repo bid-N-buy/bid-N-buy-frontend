@@ -30,7 +30,10 @@ type ChatModalStoreProps = ChatModalAction & ChatModalState;
 const calculateTotalUnread = (list: ChatListItemProps[]) =>
   list.reduce((total, item) => total + item.unreadCount, 0);
 
-const updateChatState = (newChatList: ChatListItemProps[], set) => {
+const updateChatState = (
+  newChatList: ChatListItemProps[],
+  set: (partial: Partial<ChatModalState>) => void
+) => {
   const newTotalUnreadCount = calculateTotalUnread(newChatList);
   set({
     chatList: [...newChatList],
