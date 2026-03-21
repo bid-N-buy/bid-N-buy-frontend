@@ -14,6 +14,7 @@ import { useAdminAuthStore } from "../../admin/store/adminStore";
 import { adminDeleteAuction } from "../../admin/api/admin";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import avatar from "../../../assets/avatar.svg";
+import { handleError, isCanceledError } from "../../../shared/utils/getError";
 
 export interface ProductInfoProps {
   auctionId: number;
@@ -99,10 +100,9 @@ const ProductInfo = ({
         await navigator.clipboard.writeText(window.location.href);
         showToast("링크가 복사되었습니다.", "success");
       }
-    } catch (err: unknown) {
-      if (err instanceof Error && err.name !== "AbortError") {
-        showToast("공유에 실패했습니다.", "error");
-      }
+    } catch (err) {
+      if (isCanceledError(err)) return;
+      handleError(err, "공유에 실패했습니다.");
     } finally {
       setIsMenuOpen(false);
     }
@@ -120,11 +120,8 @@ const ProductInfo = ({
       if (adminToken) await adminDeleteAuction(auctionId);
       showToast("경매가 삭제되었습니다.", "success");
       onDeleteClick?.();
-    } catch (err: unknown) {
-      const e = err as any;
-      const msg =
-        e?.response?.data?.message ?? e?.message ?? "삭제에 실패했습니다.";
-      showToast(msg, "error");
+    } catch (err) {
+      handleError(err, "삭제에 실패했습니다.");
     } finally {
       setIsMenuOpen(false);
       setConfirmOpen(false);

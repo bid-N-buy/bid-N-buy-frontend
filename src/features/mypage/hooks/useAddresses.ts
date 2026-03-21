@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import api from "../../../shared/api/axiosInstance";
 import type { Address, AddressDraft } from "../types/address";
+import { getError } from "../../../shared/utils/getError";
 
 /**
  * 주소 훅
@@ -135,12 +136,8 @@ export function useAddresses() {
       }
 
       setAddresses(items);
-    } catch (e: any) {
-      setError(
-        e?.response?.data?.message ||
-          e?.message ||
-          "주소 목록을 불러오지 못했습니다."
-      );
+    } catch (e) {
+      setError(getError(e, "주소 목록을 불러오지 못했습니다."));
     } finally {
       setLoading(false);
     }

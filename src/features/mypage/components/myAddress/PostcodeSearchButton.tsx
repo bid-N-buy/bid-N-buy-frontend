@@ -29,7 +29,7 @@ const PostcodeSearchButton: React.FC<Props> = ({ className, onSelected }) => {
         },
         // 팝업 대신 레이어로 쓰고 싶으면 onresize 사용 가능
       }).open(); // .open()은 기본 팝업; .embed(container)로 레이어도 가능
-    } catch (e) {
+    } catch {
       alert("주소 검색 스크립트를 불러오지 못했습니다.");
     }
   };

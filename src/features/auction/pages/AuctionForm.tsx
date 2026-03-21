@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryStore } from "../store/categoryStore";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { handleError } from "../../../shared/utils/getError";
 
 // 숫자 파싱
 const parseNum = (s: string) => {
@@ -234,10 +235,8 @@ const AuctionForm = () => {
       setSelectedFiles([]);
 
       navigate(`/auctions/${id}`, { replace: true });
-    } catch (err: any) {
-      const msg =
-        err?.message ?? err?.response?.data?.message ?? "등록에 실패했습니다.";
-      showToast(msg, "error");
+    } catch (err) {
+      handleError(err, "등록에 실패했습니다.");
     } finally {
       setLoading(false);
     }

@@ -16,6 +16,7 @@ import type { AddressDraft } from "../types/address";
 import BankAccountDetails from "../components/bankAccount/BankAccountDetails";
 import BankAccountEditorModal from "../components/bankAccount/BankAccountEditorModal";
 import type { BankAccountDraft } from "../types/bankAccount";
+import { getError } from "../../../shared/utils/getError";
 
 // 기본 아바타
 import defaultAvatar from "../../../assets/avatar.svg";
@@ -177,11 +178,8 @@ const AccountSettings: React.FC = () => {
         if (!profile || profile.nickname !== nick || profile.email !== email) {
           setProfile?.({ nickname: nick, email });
         }
-      } catch (e: any) {
-        toast(
-          null,
-          e?.response?.data?.message ?? "프로필 정보를 불러오지 못했습니다."
-        );
+      } catch (e) {
+        toast(null, getError(e, "프로필 정보를 불러오지 못했습니다."));
       }
 
       // 2. userId 확보 후 프로필 이미지
@@ -232,8 +230,8 @@ const AccountSettings: React.FC = () => {
           setMainAddress(null);
         }
         setAddrError(null);
-      } catch (e: any) {
-        setAddrError(e?.response?.data?.message ?? "주소 불러오기 실패");
+      } catch (e) {
+        setAddrError(getError(e, "주소 불러오기 실패"));
       } finally {
         if (mounted) setAddrLoading(false);
       }
@@ -256,8 +254,8 @@ const AccountSettings: React.FC = () => {
           setBankAccount(null);
         }
         setBankError(null);
-      } catch (e: any) {
-        setBankError(e?.response?.data?.message ?? "계좌 불러오기 실패");
+      } catch (e) {
+        setBankError(getError(e, "계좌 불러오기 실패"));
       } finally {
         if (mounted) setBankLoading(false);
       }
@@ -284,8 +282,8 @@ const AccountSettings: React.FC = () => {
       setProfile?.({ nickname: v, email: profile?.email });
       toast(data?.message ?? "닉네임이 변경되었습니다.", null);
       setIsEditName(false);
-    } catch (e: any) {
-      toast(null, e?.response?.data?.message ?? "닉네임 변경 실패");
+    } catch (e) {
+      toast(null, getError(e, "닉네임 변경 실패"));
     } finally {
       setNickLoading(false);
     }
@@ -319,8 +317,8 @@ const AccountSettings: React.FC = () => {
       });
       toast(data?.message ?? "비밀번호가 변경되었습니다.", null);
       setPw({ currentPassword: "", newPassword: "", newPassword2: "" });
-    } catch (e: any) {
-      toast(null, e?.response?.data?.message ?? "비밀번호 변경 실패");
+    } catch (e) {
+      toast(null, getError(e, "비밀번호 변경 실패"));
     } finally {
       setPwLoading(false);
     }
@@ -367,9 +365,9 @@ const AccountSettings: React.FC = () => {
         email: profile?.email ?? "",
       });
       toast("프로필 이미지가 변경되었습니다.", null);
-    } catch (e: any) {
+    } catch (e) {
       setCurrentImageUrl(DEFAULT_AVATAR);
-      toast(null, e?.response?.data?.message ?? "이미지 업로드 실패");
+      toast(null, getError(e, "이미지 업로드 실패"));
     } finally {
       setImgLoading(false);
       URL.revokeObjectURL(optimisticUrl);
@@ -407,8 +405,8 @@ const AccountSettings: React.FC = () => {
       toast(data?.message ?? "탈퇴 완료", null);
       clearAuth?.();
       navigate("/login", { replace: true });
-    } catch (e: any) {
-      toast(null, e?.response?.data?.message ?? "탈퇴 실패");
+    } catch (e) {
+      toast(null, getError(e, "탈퇴 실패"));
     } finally {
       setDelLoading(false);
       setDeleteOpen(false);
@@ -441,8 +439,8 @@ const AccountSettings: React.FC = () => {
         setMainAddress(body);
         toast(data?.message ?? "주소 저장 성공", null);
         setAddrOpen(false);
-      } catch (e: any) {
-        toast(null, e?.response?.data?.message ?? "주소 저장 실패");
+      } catch (e) {
+        toast(null, getError(e, "주소 저장 실패"));
       } finally {
         setAddrSaving(false);
       }
@@ -473,8 +471,8 @@ const AccountSettings: React.FC = () => {
         setBankAccount(body);
         toast(data?.message ?? "계좌 저장 성공", null);
         setBankOpen(false);
-      } catch (e: any) {
-        toast(null, e?.response?.data?.message ?? "계좌 저장 실패");
+      } catch (e) {
+        toast(null, getError(e, "계좌 저장 실패"));
       } finally {
         setBankSaving(false);
       }

@@ -11,6 +11,7 @@ import {
 } from "../../mypage/utils/tradeMappers";
 
 import { compareTradeItems } from "../../mypage/utils/tradeStatus";
+import { getError } from "../../../shared/utils/getError";
 /* =========================
  *        Types
  * ========================= */
@@ -377,8 +378,8 @@ const TradeHistoryPage: React.FC = () => {
         setSumLoading(true);
         const s = await fetchSummary();
         if (alive) setSummary(s);
-      } catch (e: any) {
-        if (alive) setSumError(e?.message ?? "요약 정보를 불러오지 못했어요.");
+      } catch (e) {
+        if (alive) setSumError(getError(e, "요약 정보를 불러오지 못했어요."));
       } finally {
         if (alive) setSumLoading(false);
       }
@@ -395,8 +396,8 @@ const TradeHistoryPage: React.FC = () => {
         const finalItems = normalizedPurchaseLike.map(fromPurchase);
 
         if (alive) setBuyItems(finalItems);
-      } catch (e: any) {
-        if (alive) setBuyError(e?.message ?? "구매 내역을 불러오지 못했어요.");
+      } catch (e) {
+        if (alive) setBuyError(getError(e, "구매 내역을 불러오지 못했어요."));
       } finally {
         if (alive) setBuyLoading(false);
       }
@@ -413,8 +414,8 @@ const TradeHistoryPage: React.FC = () => {
         const finalItems = normalizedSaleLike.map(fromSale);
 
         if (alive) setSellItems(finalItems);
-      } catch (e: any) {
-        if (alive) setSellError(e?.message ?? "판매 내역을 불러오지 못했어요.");
+      } catch (e) {
+        if (alive) setSellError(getError(e, "판매 내역을 불러오지 못했어요."));
       } finally {
         if (alive) setSellLoading(false);
       }

@@ -4,7 +4,7 @@ import type { Address } from "../../types/address";
 type Props = {
   address: Address | null;
   loading: boolean;
-  error: any;
+  error: unknown;
   onEdit: () => void;
 };
 

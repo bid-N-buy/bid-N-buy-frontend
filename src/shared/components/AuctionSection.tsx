@@ -9,6 +9,7 @@ import type {
   AuctionItem,
   AuctionsRes,
 } from "../../features/auction/types/auctions";
+import { getError } from "../utils/getError";
 
 type Props = {
   title?: string;
@@ -43,8 +44,8 @@ const AuctionSection = ({
         const data: AuctionsRes = await fetchAuctions(query);
         const list = data.data ?? [];
         setItems(list as AuctionItem[]);
-      } catch (e: any) {
-        setError(e?.message ?? "경매 목록을 불러오지 못했습니다.");
+      } catch (e) {
+        setError(getError(e, "경매 목록을 불러오지 못했습니다."));
       } finally {
         setLoading(false);
       }

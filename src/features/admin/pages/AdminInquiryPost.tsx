@@ -17,7 +17,7 @@ const AdminInquiryPost = () => {
     try {
       const post = (await adminApi.get(`/admin/inquiries/${id}`)).data;
       setInquiry(post);
-    } catch (error) {
+    } catch {
       setInquiry(null);
       return;
     }

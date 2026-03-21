@@ -7,6 +7,7 @@ import ProductImage from "../../auction/components/ProductImage";
 import { useAdminAuthStore } from "../store/adminStore";
 import useToast from "../../../shared/hooks/useToast";
 import { adminDeleteAuction } from "../api/admin";
+import { handleError } from "../../../shared/utils/getError";
 
 const AdminAuctionPost = () => {
   const navigate = useNavigate();
@@ -42,9 +43,8 @@ const AdminAuctionPost = () => {
       if (adminToken) await adminDeleteAuction(auctionId);
       showToast("경매가 삭제되었습니다.", "success");
       navigate(-1);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "삭제에 실패했습니다.";
-      showToast(msg, "error");
+    } catch (err) {
+      handleError(err, "삭제에 실패했습니다.");
     } finally {
       setConfirmOpen(false);
     }

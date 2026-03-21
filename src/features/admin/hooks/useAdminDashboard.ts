@@ -11,6 +11,7 @@ import {
   type FetchAuctionsParams,
 } from "../../auction/api/auctions";
 import type { AuctionItem, AuctionsRes } from "../../auction/types/auctions";
+import { getError } from "../../../shared/utils/getError";
 
 export type InquiryFilterParams = {
   title?: string;
@@ -135,11 +136,9 @@ export const useAuctionList = ({ params }: AdminAuctionProps) => {
       const data = await fetchAuctions(query);
       setAuctions(data.data);
       setPages(data);
-    } catch (e: unknown) {
+    } catch (e) {
       console.error("데이터 불러오기 실패:", e);
-      setError(
-        e instanceof Error ? e.message : "알 수 없는 오류가 발생했습니다."
-      );
+      setError(getError(e, "알 수 없는 오류가 발생했습니다."));
       if (import.meta.env.DEV) {
         const error = e as {
           message?: string;

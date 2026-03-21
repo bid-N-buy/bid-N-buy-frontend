@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { fetchAuctions, type FetchAuctionsParams } from "../api/auctions";
 import type { AuctionItem } from "../types/auctions";
 import { useAuthStore } from "../../auth/store/authStore";
+import { getError, isCanceledError } from "../../../shared/utils/getError";
 
 type UseAuctionSearchParams = Omit<FetchAuctionsParams, "page" | "size"> & {
   size?: number;
@@ -110,13 +111,9 @@ export const useAuctionSearch = ({
         setItems(res.data);
         setLast(res.last);
         setInitialLoadComplete(true); // 초기 로드 완료 표시
-      } catch (e: any) {
-        const canceled =
-          e?.name === "CanceledError" ||
-          e?.code === "ERR_CANCELED" ||
-          e?.name === "AbortError" ||
-          (e instanceof Error && e.name === "AbortError");
-        if (!canceled) setError("목록을 불러오지 못했습니다.");
+      } catch (e) {
+        if (isCanceledError(e)) return;
+        setError(getError(e, "목록을 불러오지 못했습니다."));
       } finally {
         setLoading(false);
         abortRef.current = null;
@@ -172,13 +169,9 @@ export const useAuctionSearch = ({
         );
         setItems((prev) => [...prev, ...res.data]);
         setLast(res.last);
-      } catch (e: any) {
-        const canceled =
-          e?.name === "CanceledError" ||
-          e?.code === "ERR_CANCELED" ||
-          e?.name === "AbortError" ||
-          (e instanceof Error && e.name === "AbortError");
-        if (!canceled) setError("목록을 불러오지 못했습니다.");
+      } catch (e) {
+        if (isCanceledError(e)) return;
+        setError("목록을 불러오지 못했습니다.");
       } finally {
         setLoading(false);
         abortRef.current = null;
@@ -231,13 +224,9 @@ export const useAuctionSearch = ({
           ? Math.max(1000, Number(top.currentPrice) || 0)
           : 1_000_000;
         setTopPrice(ceil);
-      } catch (e: any) {
-        const canceled =
-          e?.name === "CanceledError" ||
-          e?.code === "ERR_CANCELED" ||
-          e?.name === "AbortError" ||
-          (e instanceof Error && e.name === "AbortError");
-        if (!canceled) setTopPrice(1_000_000); // 실패 시 기본값 100만 원으로
+      } catch (e) {
+        if (isCanceledError(e)) return;
+        setTopPrice(1_000_000); // 실패 시 기본값 100만 원으로
       }
     })();
 
