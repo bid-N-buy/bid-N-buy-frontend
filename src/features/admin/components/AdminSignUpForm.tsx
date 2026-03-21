@@ -21,7 +21,7 @@ const AdminSignUpForm = () => {
   const [msg, setMsg] = useState<string | null>(null);
   const { showToast } = useToast();
 
-  const handleIpConsentAgreed = (e) => {
+  const handleIpConsentAgreed = (e: React.ChangeEvent<HTMLInputElement>) => {
     const isChecked = e.target.checked;
     setIpConsentAgreed(isChecked);
   };

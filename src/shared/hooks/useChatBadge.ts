@@ -42,10 +42,10 @@ export const useChatBadge = () => {
       connectHeaders: { "Auth-Token": token },
       reconnectDelay: 5000,
       onStompError: (frame) => {
-        console.error("❌ STOMP 에러 발생:", frame);
+        console.error("STOMP 에러 발생:", frame);
       },
       onWebSocketError: (error) => {
-        console.error("❌ WebSocket 연결 에러 발생:", error);
+        console.error("WebSocket 연결 에러 발생:", error);
       },
       onConnect: async () => {
         try {
