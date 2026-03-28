@@ -17,21 +17,51 @@ import FcmListener from "../features/notification/hooks/FcmListener";
 import Toast from "../shared/components/Toast";
 import { useToastStore } from "../shared/store/useToastStore";
 
-import ProfileSetting from "../features/mypage/components/profile/ProfileSetting";
-import ResetPassword from "../features/auth/components/login/ResetPasswordForm";
-import MypageLayout from "../features/mypage/pages/MypageLayout";
-import PaymentBridge from "../features/payment/pages/PaymentBridge";
-import OAuthCallback from "../features/auth/components/OAuthCallback";
-import ProfileDetailsContainer from "../features/mypage/pages/ProfileDetailsContainer";
-import InquiryReportForm from "../features/mypage/components/support/InquiryReportForm";
-import AdminAsideMenu from "../features/admin/components/AdminAsideMenu";
-import InquiryDetailPage from "../features/mypage/pages/InquiryDetailPage";
-import NotificationTestPage from "../features/notification/pages/NotificationTestPage";
-import AdminAuctionPost from "../features/admin/pages/AdminAuctionPost";
-import AdminInquiryPost from "../features/admin/pages/AdminInquiryPost";
-import AdminUserDetail from "../features/admin/pages/AdminUserDetail";
-import ReportDetailPage from "../features/mypage/pages/ReportDetailPage";
-import AdminResetPassword from "../features/admin/pages/AdminResetPassword";
+const ProfileSetting = React.lazy(
+  () => import("../features/mypage/components/profile/ProfileSetting")
+);
+const ResetPassword = React.lazy(
+  () => import("../features/auth/components/login/ResetPasswordForm")
+);
+const MypageLayout = React.lazy(
+  () => import("../features/mypage/pages/MypageLayout")
+);
+const PaymentBridge = React.lazy(
+  () => import("../features/payment/pages/PaymentBridge")
+);
+const OAuthCallback = React.lazy(
+  () => import("../features/auth/components/OAuthCallback")
+);
+const ProfileDetailsContainer = React.lazy(
+  () => import("../features/mypage/pages/ProfileDetailsContainer")
+);
+const InquiryReportForm = React.lazy(
+  () => import("../features/mypage/components/support/InquiryReportForm")
+);
+const AdminAsideMenu = React.lazy(
+  () => import("../features/admin/components/AdminAsideMenu")
+);
+const InquiryDetailPage = React.lazy(
+  () => import("../features/mypage/pages/InquiryDetailPage")
+);
+const NotificationTestPage = React.lazy(
+  () => import("../features/notification/pages/NotificationTestPage")
+);
+const AdminAuctionPost = React.lazy(
+  () => import("../features/admin/pages/AdminAuctionPost")
+);
+const AdminInquiryPost = React.lazy(
+  () => import("../features/admin/pages/AdminInquiryPost")
+);
+const AdminUserDetail = React.lazy(
+  () => import("../features/admin/pages/AdminUserDetail")
+);
+const ReportDetailPage = React.lazy(
+  () => import("../features/mypage/pages/ReportDetailPage")
+);
+const AdminResetPassword = React.lazy(
+  () => import("../features/admin/pages/AdminResetPassword")
+);
 
 // 공통
 const Header = React.lazy(() => import("../shared/components/Header"));
@@ -145,7 +175,9 @@ function AdminLayout() {
   return (
     <div className="min-h-screen bg-white">
       <main className="relative flex">
-        <AdminAsideMenu />
+        <Suspense fallback={null}>
+          <AdminAsideMenu />
+        </Suspense>
         <section className="h-screen w-full overflow-y-auto p-10">
           <Outlet />
         </section>

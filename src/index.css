@@ -62,6 +62,13 @@
   font-weight: 900;
   font-display: swap;
 }
+@font-face {
+  font-family: "GhanaChocolate";
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_20-04@1.0/ghanachoco.woff")
+    format("woff");
+  font-weight: 400;
+  font-display: swap;
+}
 
 /* react-datepicker */
 @import "react-datepicker/dist/react-datepicker.css";
