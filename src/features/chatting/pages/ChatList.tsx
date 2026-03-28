@@ -17,7 +17,9 @@ const ChatList = ({ chatList, onSelectRoom }: ChatListProps) => {
         </div>
       )}
       {sortedChatRooms.map((chat) => {
-        console.log(chat);
+        if (import.meta.env.DEV) {
+          console.log(chat);
+        }
         return (
           <li
             key={chat.chatroomId}
