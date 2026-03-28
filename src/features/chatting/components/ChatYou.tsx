@@ -82,7 +82,7 @@ const ChatYou = ({
         </div>
       </div>
     </div>
-  ) : messageType === "SYSTEM" && message.includes("주소") ? (
+  ) : messageType === "SYSTEM" && message.includes("/") ? (
     <div className="mx-2 my-4 flex gap-2">
       <Avatar size="10" imageUrl={counterpartProfileImageUrl} />
       <div>

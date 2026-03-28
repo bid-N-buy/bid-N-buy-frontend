@@ -112,6 +112,7 @@ const BannerSlider = ({
               alt={item.alt ?? "배너"}
               className="h-full w-full object-cover"
               draggable={false}
+              fetchPriority="high"
             />
           </Link>
         ))}

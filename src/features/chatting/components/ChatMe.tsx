@@ -26,7 +26,7 @@ const ChatMe = ({
         {message.replace("정산이 완료되었습니다.", "")}
       </div>
     </div>
-  ) : messageType === "SYSTEM" && message.includes("주소") ? (
+  ) : messageType === "SYSTEM" && message.includes("/") ? (
     <div className="m-2 flex items-end justify-end gap-2 text-right">
       <div>
         <p className="text-g300 text-xs">{read ? "" : "전송됨"}</p>
