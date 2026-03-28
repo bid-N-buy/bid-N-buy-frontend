@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import Banner1 from "../../assets/banner1.svg";
-import Banner2 from "../../assets/banner2.svg";
-import Banner3 from "../../assets/banner3.svg";
+import Banner2 from "../../assets/banner2.png";
+import Banner3 from "../../assets/banner3.webp";
 import BannerSlider from "../components/BannerSlider";
 import { useNavigate } from "react-router-dom";
 import { useCategoryStore } from "../../features/auction/store/categoryStore";
