@@ -41,10 +41,11 @@ const ChatList = ({ chatList, onSelectRoom }: ChatListProps) => {
                   {chat.lastMessagePreview
                     ? chat.lastMessagePreview.includes("/")
                       ? "주소를 전송했습니다."
-                      : chat.lastMessagePreview.substring(0, 27)
+                      : chat.lastMessagePreview.substring(0, 30)
                     : "메시지를 보내 보세요."}
                   {chat.lastMessagePreview &&
-                  chat.lastMessagePreview.length > 27
+                  chat.lastMessagePreview.length > 30 &&
+                  !chat.lastMessagePreview.includes("/")
                     ? "..."
                     : null}
                 </p>
