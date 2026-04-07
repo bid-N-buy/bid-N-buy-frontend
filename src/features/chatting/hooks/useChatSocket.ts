@@ -212,30 +212,37 @@ export const useChatSocket = (chatroomId: number) => {
       formData.append("messageType", "IMAGE");
       formData.append("messageText", messageText);
 
-      const response = await api.post(`/chat/${chatroomId}/image`, formData, {
+      await api.post(`/chat/${chatroomId}/image`, formData, {
         headers: {
-          // "content-type": "multipart/form-data",
+          "content-type": "multipart/form-data",
           Authorization: `Bearer ${token}`,
         },
       });
 
-      const imageUrl = response.data;
+      // const response = await api.post(`/chat/${chatroomId}/image`, formData, {
+      //   headers: {
+      //     // "content-type": "multipart/form-data",
+      //     Authorization: `Bearer ${token}`,
+      //   },
+      // });
 
-      const messageImage = {
-        chatroomId: chatroomId,
-        senderId: userId,
-        imageUrl: imageUrl,
-        messageType: "IMAGE",
-        message: messageText,
-      };
+      // const imageUrl = response.data;
 
-      client.publish({
-        destination: `/app/chat/message`,
-        body: JSON.stringify(messageImage),
-        headers: {
-          "content-type": "application/json",
-        },
-      });
+      // const messageImage = {
+      //   chatroomId: chatroomId,
+      //   senderId: userId,
+      //   imageUrl: imageUrl,
+      //   messageType: "IMAGE",
+      //   message: messageText,
+      // };
+
+      // client.publish({
+      //   destination: `/app/chat/message`,
+      //   body: JSON.stringify(messageImage),
+      //   headers: {
+      //     "content-type": "application/json",
+      //   },
+      // });
     } catch (e) {
       console.error("이미지 업로드 실패:", e);
       return;
