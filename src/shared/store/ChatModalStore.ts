@@ -149,7 +149,7 @@ export const useChatModalStore = create<ChatModalStoreProps>((set, get) => ({
           // 접속한 방이 맞는지와 보낸 사람이 나인지를 확인한 후 맞으면 unReadCount X
           unreadCount: isInThisRoom || isSenderMe ? 0 : item.unreadCount + 1,
           lastMessagePreview: previewText,
-          lastMessageTime: message.createdAt,
+          lastMessageTime: message.createdAt || new Date().toISOString(),
         };
         return false;
       }
